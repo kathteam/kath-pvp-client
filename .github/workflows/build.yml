@@ -1,0 +1,61 @@
+name: Build for all platforms
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+            python-version: '3.x'
+      - name: Install dependencies
+        run: |
+            npm run init
+            python -m venv .venv
+            .venv\Scripts\pip install -r requirements.txt
+      - name: Build for Windows
+        run: npm run build:windows
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          npm run init
+          python -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+      - name: Build for macOS
+        run: npm run build:macos
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: |
+          npm run init
+          python -m venv .venv
+          .venv/bin/pip install -r requirements.txt
+      - name: Build for Linux
+        run: npm run build:linux

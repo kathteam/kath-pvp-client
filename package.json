@@ -1,0 +1,29 @@
+{
+  "name": "kath-pvp-client",
+  "version": "0.3.0",
+  "description": "Client side of Product Development Project module at KTU.",
+  "scripts": {
+    "init": "npm install && npm run init-frontend",
+    "init-frontend": "cd frontend && npm install",
+    "dev-frontend": "cd frontend && npm run dev",
+    "build-frontend": "cd frontend && npm run build",
+    "start": "npm run build-frontend && run-script-os",
+    "start:windows": ".venv\\Scripts\\python backend\\main.py",
+    "start:default": ".venv/bin/python backend/main.py",
+    "build": "npm run clean && npm run build-frontend && run-script-os",
+    "build:macos": ".venv/bin/python build-macos.py py2app",
+    "build:windows": ".venv\\Scripts\\pyinstaller build-windows.spec",
+    "build:linux": ".venv/bin/pyinstaller build-linux.spec",
+    "clean": "run-script-os",
+    "clean:default": "rm -rf dist 2>/dev/null; rm -rf gui 2>/dev/null; rm -rf build 2>/dev/null; ",
+    "clean:windows": "if exist dist rd /S /Q dist & if exist build rd /S /Q build & if exist gui rd /S /Q gui"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kathteam/kath-pvp-client"
+  },
+  "author": "kathteam",
+  "devDependencies": {
+    "run-script-os": "^1.1.6"
+  }
+}

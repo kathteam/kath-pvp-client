@@ -38,7 +38,7 @@ reviews:
     ruff:
       enabled: true
     markdownlint:
-      enabled: flase
+      enabled: false
     github-checks:
       enabled: true
       timeout_ms: 60000

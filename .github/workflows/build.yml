@@ -22,7 +22,8 @@ jobs:
         run: |
             npm run init
             python -m venv .venv
-            .venv\Scripts\pip install -r requirements.txt
+            .venv\Scripts\activate
+            pip install -r requirements.txt
       - name: Build for Windows
         run: npm run build
       - name: Upload Windows build artifacts
@@ -44,7 +45,8 @@ jobs:
         run: |
           npm run init
           python -m venv .venv
-          .venv/bin/pip install -r requirements.txt
+          source .venv/bin/activate
+          pip install -r requirements.txt
       - name: Build for macOS
         run: npm run build
       - name: Upload macOS build artifacts
@@ -66,7 +68,8 @@ jobs:
         run: |
           npm run init
           python -m venv .venv
-          .venv/bin/pip install -r requirements.txt
+          source .venv/bin/activate
+          pip install -r requirements.txt
       - name: Build for Linux
         run: npm run build
       - name: Upload Linux build artifacts

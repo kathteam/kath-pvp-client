@@ -23,7 +23,7 @@ OPTIONS = {
     "argv_emulation": True,
     "strip": False,
     "iconfile": "backend/assets/logo.icns",
-    "packages": ["WebKit", "Foundation", "webview", "certifi"],
+    "packages": ["WebKit", "Foundation", "webview"],
     "plist": {
         "CFBundleName": "MainApp",
         "CFBundleShortVersionString": "0.1.0",

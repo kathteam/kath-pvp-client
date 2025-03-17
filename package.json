@@ -11,7 +11,7 @@
     "start:windows": ".venv\\Scripts\\python backend\\main.py",
     "start:default": ".venv/bin/python backend/main.py",
     "build": "npm run clean && npm run build-frontend && run-script-os",
-    "build:macos": ".venv/bin/python build-macos.py py2app -A",
+    "build:macos": ".venv/bin/python build-macos.py py2app",
     "build:windows": ".venv\\Scripts\\pyinstaller build-windows.spec",
     "build:linux": ".venv/bin/pyinstaller build-linux.spec",
     "clean": "run-script-os",

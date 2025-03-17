@@ -82,25 +82,3 @@ jobs:
         with:
           name: linux-build
           path: ./dist
-
-  download-artifacts:
-    runs-on: ubuntu-latest
-    needs: [build-windows, build-macos, build-linux]
-    steps:
-      - name: Download Windows build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-build
-          path: ./artifacts/windows
-      - name: Download macOS build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-build
-          path: ./artifacts/macos
-      - name: Download Linux build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: linux-build
-          path: ./artifacts/linux
-      - name: List downloaded files
-        run: ls -R ./artifacts

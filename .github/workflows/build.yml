@@ -47,6 +47,10 @@ jobs:
           python -m venv .venv
           source .venv/bin/activate
           pip install -r requirements.txt
+      - name: Clean build directory
+        run: |
+          rm -rf build/
+          mkdir -p build/bdist.macosx-10.13-universal2/python3.13-standalone/app/collect
       - name: Build for macOS
         run: npm run build
       - name: Upload macOS build artifacts

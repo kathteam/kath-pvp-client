@@ -13,14 +13,14 @@ def tree(src):
 if os.path.exists("build"):
     shutil.rmtree("build")
 
-if os.path.exists("dist/main.app"):
-    shutil.rmtree("dist/main.app")
+if os.path.exists("dist/Kath.app"):
+    shutil.rmtree("dist/Kath.app")
 
 ENTRY_POINT = ["backend/main.py"]
 
 DATA_FILES = tree("gui")
 OPTIONS = {
-    "argv_emulation": False,
+    "argv_emulation": True,
     "strip": False,
     "iconfile": "backend/assets/logo.icns",
     "packages": ["WebKit", "Foundation", "webview"],
@@ -29,6 +29,7 @@ OPTIONS = {
 }
 
 setup(
+    name="Kath",
     app=ENTRY_POINT,
     options={"py2app": OPTIONS},
     setup_requires=["py2app"],

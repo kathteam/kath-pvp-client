@@ -1,3 +1,5 @@
+# TODO Fix the following block to enable macOS builds
+
 import os
 import shutil
 from distutils.core import setup

@@ -24,7 +24,7 @@ jobs:
             python -m venv .venv
             .venv\Scripts\pip install -r requirements.txt
       - name: Build for Windows
-        run: npm run build:windows
+        run: npm run build
 
   build-macos:
     runs-on: macos-latest
@@ -41,7 +41,7 @@ jobs:
           python -m venv .venv
           .venv/bin/pip install -r requirements.txt
       - name: Build for macOS
-        run: npm run build:macos
+        run: npm run build
 
   build-linux:
     runs-on: ubuntu-latest
@@ -58,4 +58,4 @@ jobs:
           python -m venv .venv
           .venv/bin/pip install -r requirements.txt
       - name: Build for Linux
-        run: npm run build:linux
+        run: npm run build

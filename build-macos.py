@@ -20,11 +20,18 @@ ENTRY_POINT = ["backend/main.py"]
 
 DATA_FILES = tree("gui")
 OPTIONS = {
-    "argv_emulation": False,
+    "argv_emulation": True,
     "strip": False,
     "iconfile": "backend/assets/logo.icns",
-    "packages": ["WebKit", "Foundation", "webview"],
-    "plist": {"NSRequiresAquaSystemAppearance": False},
+    "packages": ["WebKit", "Foundation", "webview", "certifi"],
+    "plist": {
+        "CFBundleName": "MainApp",
+        "CFBundleShortVersionString": "0.1.0",
+        "CFBundleVersion": "0.1.0",
+        "CFBundleIdentifier": "com.example.mainapp",
+    },
+    # "codesign_identity": "Developer ID Application: Your Name (Team ID)",
+    # "entitlements_file": "path/to/your/entitlements.plist",
     "resources": DATA_FILES,
 }
 

@@ -13,9 +13,9 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
             python-version: '3.x'
       - name: Install dependencies
@@ -26,7 +26,7 @@ jobs:
       - name: Build for Windows
         run: npm run build
       - name: Upload Windows build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: windows-build
           path: ./dist
@@ -35,9 +35,9 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -48,7 +48,7 @@ jobs:
       - name: Build for macOS
         run: npm run build
       - name: Upload macOS build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: macos-build
           path: ./dist
@@ -57,9 +57,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
       - name: Install dependencies
@@ -70,7 +70,7 @@ jobs:
       - name: Build for Linux
         run: npm run build
       - name: Upload Linux build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: ./dist
@@ -80,17 +80,17 @@ jobs:
     needs: [build-windows, build-macos, build-linux]
     steps:
       - name: Download Windows build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: windows-build
           path: ./artifacts/windows
       - name: Download macOS build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: macos-build
           path: ./artifacts/macos
       - name: Download Linux build artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: linux-build
           path: ./artifacts/linux

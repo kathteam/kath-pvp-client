@@ -28,9 +28,7 @@ pip install -r requirements.txt
 
 ### Mac OS
 
-```shell
-good luck
-```
+Currently not supported (good luck).
 
 ## Development
 

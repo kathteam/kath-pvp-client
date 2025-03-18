@@ -1,13 +1,14 @@
-import logging
 import os
+import logging
 
 
 def init_logging() -> None:
     # Create logs directory in the backend directory if it doesn't exist
-    log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+    log_dir: str = os.path.join(os.path.dirname(__file__), "..", "logs")
     if not os.path.exists(log_dir):
         os.makedirs(log_dir)
 
+    # Basic logging configuration
     logging.basicConfig(
         level=logging.DEBUG,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -18,9 +19,5 @@ def init_logging() -> None:
     )
 
 
-# Initialize logging when this module is imported
-init_logging()
-
-
-def get_logger(name) -> logging.Logger:
+def get_logger(name: str) -> logging.Logger:
     return logging.getLogger(name)

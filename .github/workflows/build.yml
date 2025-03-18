@@ -2,6 +2,7 @@ name: Build for all platforms
 
 on:
   push:
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -35,16 +36,15 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Install Node.js dependencies
+        run: npm run init
+
       - name: Create and activate virtual environment
         run: |
           ${{ matrix.venv_cmd}}
           echo "Activating virtual environment..."
           ${{ matrix.activate_cmd }}
           pip install -r requirements.txt
-        shell: bash
-
-      - name: Install Node.js dependencies
-        run: npm run init
 
       - name: Build for ${{ matrix.os }}
         run: npm run build

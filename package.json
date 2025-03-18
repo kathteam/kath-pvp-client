@@ -7,6 +7,7 @@
     "init-frontend": "cd frontend && npm install",
     "dev-frontend": "cd frontend && npm run dev",
     "build-frontend": "cd frontend && npm run build",
+    "dev": "npm run dev-frontend",
     "start": "npm run build-frontend && run-script-os",
     "start:windows": ".venv\\Scripts\\python backend\\main.py",
     "start:default": ".venv/bin/python backend/main.py",

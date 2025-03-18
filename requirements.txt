@@ -1,4 +1,5 @@
 setuptools==70.3.0
-pywebview
+pywebview; sys_platform != 'linux'
+pywebview[qt]; sys_platform == 'linux'
 pyinstaller; sys_platform != 'darwin'
 py2app; sys_platform == 'darwin'

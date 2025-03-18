@@ -3,8 +3,8 @@
 The desktop application frontend is developed using Vite, TypeScript and React for user interface. On the backend, Python is used in combination with the PyWebView library, which enables embedding a web-based UI inside a native desktop window. PyWebView acts as a bridge between the frontend and backend, facilitating seamless communication for executing logic, handling user actions and processing data.
 
 ## Prerequisites
-- [Python 3](https://www.python.org/downloads/)
-- [Node.js](https://nodejs.org/en/download)
+- [Python 3](https://www.python.org/downloads/) (≥ 3.12)
+- [Node.js](https://nodejs.org/en/download/) (≥ 22.x)
 
 ## Initialization
 
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 ```shell
 npm run init
-python -m venv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
@@ -29,10 +29,7 @@ pip install -r requirements.txt
 ### Mac OS
 
 ```shell
-npm run init
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+good luck
 ```
 
 ## Development

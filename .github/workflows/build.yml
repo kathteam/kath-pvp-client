@@ -2,84 +2,55 @@ name: Build for all platforms
 
 on:
   push:
-    branches:
-      - main
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            name: windows
+            venv_cmd: python -m venv .venv
+            activate_cmd: .venv\\Scripts\\activate
+          - os: ubuntu-latest
+            name: linux
+            venv_cmd: python3 -m venv .venv
+            activate_cmd: source .venv/bin/activate
+    runs-on: ${{ matrix.os }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-            python-version: '3.x'
-      - name: Install dependencies
-        run: |
-            npm run init
-            python -m venv .venv
-            .venv\Scripts\activate
-            pip install -r requirements.txt
-      - name: Build for Windows
-        run: npm run build
-      - name: Upload Windows build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-build
-          path: ./dist
+          python-version: '3.12'
 
-  # TODO Fix the following block to enable macOS builds
-  # build-macos:
-  #   runs-on: macos-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v5
-  #       with:
-  #         python-version: '3.x'
-  #     - name: Install dependencies
-  #       run: |
-  #         npm run init
-  #         python -m venv .venv
-  #         source .venv/bin/activate
-  #         pip install -r requirements.txt
-  #         pip install py2app
-  #     - name: Clean build directory
-  #       run: |
-  #         rm -rf build/
-  #         mkdir -p build/bdist.macosx-10.13-universal2/python3.13-standalone/app/collect
-  #     - name: Build for macOS
-  #       run: npm run build
-  #     - name: Upload macOS build artifacts
-  #       uses: actions/upload-artifact@v4
-  #       with:
-  #         name: macos-build
-  #         path: ./dist
-
-  build-linux:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          python-version: '3.x'
-      - name: Install dependencies
+          node-version: '22'
+
+      - name: Create and activate virtual environment
         run: |
-          npm run init
-          python -m venv .venv
-          source .venv/bin/activate
+          ${{ matrix.venv_cmd}}
+          echo "Activating virtual environment..."
+          ${{ matrix.activate_cmd }}
           pip install -r requirements.txt
-      - name: Build for Linux
+        shell: bash
+
+      - name: Install Node.js dependencies
+        run: npm run init
+
+      - name: Build for ${{ matrix.os }}
         run: npm run build
-      - name: Upload Linux build artifacts
+
+      - name: Upload ${{ matrix.os }} build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-build
+          name: ${{ matrix.os }}-build
           path: ./dist

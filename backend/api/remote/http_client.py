@@ -14,12 +14,12 @@ class HttpClient:
         """Set authentication token for all requests"""
         self.session.headers.update({"Authorization": f"Bearer {token}"})
 
-    def get(self, endpoint: str, params: dict = None) -> dict:
+    def get(self, endpoint: str, params: dict = None, timeout: int = 30) -> dict:
         """Make a GET request to the remote API"""
         url: str = f"{self.base_url}/{endpoint}"
         self.logger.info(f"Making GET request to {url}")
         try:
-            response: Response = self.session.get(url, params=params)
+            response: Response = self.session.get(url, params=params, timeout=timeout)
             response.raise_for_status()
             return response.json()
         except exceptions.RequestException as e:

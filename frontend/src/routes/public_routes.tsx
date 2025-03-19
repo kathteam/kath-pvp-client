@@ -1,4 +1,4 @@
-import { RouteObject } from "react-router-dom";
+import { Navigate, RouteObject } from "react-router-dom";
 import App from "@/App";
 import { MainLayout } from "@/layouts";
 import { Dashboard, GVATool, FileManager, Macros, Manual } from "@/pages";
@@ -12,7 +12,11 @@ const publicRoutes: RouteObject[] = [
         Component: MainLayout,
         children: [
           {
-            path: 'index.html',
+            index: true,
+            element: <Navigate to="dashboard" replace />
+          },
+          {
+            path: "dashboard",
             Component: Dashboard
           },
           {

@@ -4,7 +4,7 @@ from webview import Window, create_window, start
 from api import Api
 
 from utils.logger import init_logging, get_logger
-from utils.helpers import get_entrypoint
+from utils.helpers import get_entrypoint, initial_route
 
 # Initialize logging
 init_logging()
@@ -24,7 +24,7 @@ if __name__ == "__main__":
             maximized=True,
             draggable=True,
         )
-        start(icon="assets/logo.png", debug=True)
+        start(func=initial_route, args=window, icon="assets/logo.png", debug=True)
         logger.info("Application closed successfully")
     except FileNotFoundError as e:
         logger.exception("Failed to find required files to start the application", exc_info=e)

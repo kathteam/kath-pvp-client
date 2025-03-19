@@ -1,16 +1,42 @@
-import { JSX } from "react"
-import { useNavigate } from "react-router-dom"
+import { JSX } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Typography,
+  Box,
+  Button,
+  Container,
+  Paper
+} from "@mui/material";
 
 export default function Manual(): JSX.Element {
-  const navigate = useNavigate()
-  
+  const navigate = useNavigate();
+
   return (
-    <div>
-      <h1>Manual Page</h1>
-      <p>This is the manual page of our application.</p>
-      <button onClick={() => navigate('/index.html')}>
-        Back to Dashboard
-      </button>    
-    </div>
-  )
+    <Container
+      maxWidth="md"
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        py: 4
+      }}
+    >
+      <Paper elevation={3} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Manual Page
+        </Typography>
+        <Typography variant="body1">
+          This is the manual page of our application.
+        </Typography>
+        <Box sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => navigate('/dashboard')}
+          >
+            Back to Dashboard
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
+  );
 }

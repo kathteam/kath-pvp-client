@@ -16,7 +16,14 @@ if __name__ == "__main__":
     try:
         entrypoint: str = get_entrypoint()
         logger.info("Starting the application")
-        window: Window = create_window(title="Kath", url=entrypoint, js_api=Api())
+        window: Window = create_window(
+            title="Kath",
+            url=entrypoint,
+            js_api=Api(),
+            min_size=(640, 480),
+            maximized=True,
+            draggable=True,
+        )
         start(icon="assets/logo.png", debug=True)
         logger.info("Application closed successfully")
     except Exception as e:

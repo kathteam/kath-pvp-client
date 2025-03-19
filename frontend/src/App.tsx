@@ -9,7 +9,7 @@ import {
   AutoAwesome as AutoAwesomeIcon,
   MenuBook as MenuBookIcon
 } from '@mui/icons-material';
-import { Box } from '@mui/material';
+import { createTheme } from '@mui/material';
 
 const NAVIGATION: Navigation = [
   {
@@ -60,16 +60,60 @@ const NAVIGATION: Navigation = [
   },
 ];
 
-// TODO: Fix the logo
-const BRANDING = {
-  logo: <Box sx={{p: '8px'}}><img src='logo.svg' alt="Kath logo" width={'24px'} height={'24px'}></img></Box>,
-  title: "Kath",
-  homeUrl: '/index.html'
-};
+const theme = createTheme({
+  cssVariables: {
+    colorSchemeSelector: 'data-toolpad-color-scheme',
+  },
+  defaultColorScheme: 'light',
+  colorSchemes: {
+    light: {
+      palette: {
+        primary: {
+          main: '#4C7380',
+        },
+        secondary: {
+          main: '#5D8D9D',
+        },
+        background: {
+          default: '#f7f8fa',
+          paper: '#ffffff',
+        },
+        divider: '#ebecf0',
+        text: {
+          primary: '#404040',
+          secondary: '#bdbdbd',
+        },
+      }
+    },
+    dark: {
+      palette: {
+        mode: 'dark',
+        primary: {
+          main: '#4C7380',
+        },
+        secondary: {
+          main: '#5D8D9D',
+        },
+        background: {
+          default: '#1F1F1F',
+          paper: '#181818',
+        },
+        divider: '#2B2B2B',
+        text: {
+          primary: '#F6F6F6',
+          secondary: '#757575',
+        },
+      },
+    },
+  },
+  typography: {
+    fontFamily: 'Inter',
+  },
+});
 
 export default function App(): JSX.Element {
   return (
-    <ReactRouterAppProvider navigation={NAVIGATION} branding={BRANDING}>
+    <ReactRouterAppProvider navigation={navigation} theme={theme}>
       <Outlet />
     </ReactRouterAppProvider>
   );

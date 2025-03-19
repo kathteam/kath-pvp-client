@@ -10,7 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
             name: windows
@@ -18,6 +18,10 @@ jobs:
             activate_cmd: .venv\\Scripts\\activate
           - os: ubuntu-latest
             name: linux
+            venv_cmd: python3 -m venv .venv
+            activate_cmd: source .venv/bin/activate
+          - os: macos-latest
+            name: macos
             venv_cmd: python3 -m venv .venv
             activate_cmd: source .venv/bin/activate
     runs-on: ${{ matrix.os }}

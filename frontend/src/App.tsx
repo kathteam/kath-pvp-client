@@ -62,7 +62,7 @@ const NAVIGATION: Navigation = [
 
 // TODO: Fix the logo
 const BRANDING = {
-  logo: <Box sx={{p: '8px'}}><img src='logo.svg' width={'24px'} height={'24px'}></img></Box>,
+  logo: <Box sx={{p: '8px'}}><img src='logo.svg' alt="Kath logo" width={'24px'} height={'24px'}></img></Box>,
   title: "Kath",
   homeUrl: '/index.html'
 };

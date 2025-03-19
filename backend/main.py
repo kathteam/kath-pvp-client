@@ -26,5 +26,9 @@ if __name__ == "__main__":
         )
         start(icon="assets/logo.png", debug=True)
         logger.info("Application closed successfully")
+    except FileNotFoundError as e:
+        logger.exception("Failed to find required files to start the application", exc_info=e)
+    except ImportError as e:
+        logger.exception("Failed to import required modules", exc_info=e)
     except Exception as e:
-        logger.exception(f"Failed to start the application", exc_info=e)
+        logger.exception("Unexpected error when starting the application", exc_info=e)

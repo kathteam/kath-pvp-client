@@ -8,6 +8,10 @@ declare global {
   interface Window {
     pywebview: {
       api: {
+        // Known methods
+        fullscreen: () => Promise<void>;
+
+        // Generic type definition
         [key: string]: (...args: unknown[]) => Promise<unknown>;
       };
       [key: string]: unknown;

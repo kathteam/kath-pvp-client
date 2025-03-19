@@ -11,9 +11,9 @@ import {
 } from '@mui/icons-material';
 import { createTheme } from '@mui/material';
 
-const NAVIGATION: Navigation = [
+const navigation: Navigation = [
   {
-    segment: 'index.html',
+    segment: 'dashboard',
     title: 'Dashboard',
     icon: <DashboardIcon />,
   },

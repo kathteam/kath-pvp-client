@@ -1,5 +1,6 @@
 import os
 from logging import Logger
+from webview import Window
 
 from utils.logger import get_logger
 
@@ -23,3 +24,7 @@ def get_entrypoint() -> str:
 
     logger.error(f"No index.html found. Checked paths: {possible_paths}")
     raise FileNotFoundError(f"No index.html found.")
+
+
+def initial_route(window: Window) -> None:
+    window.evaluate_js("window.location.href = '#/dashboard'")

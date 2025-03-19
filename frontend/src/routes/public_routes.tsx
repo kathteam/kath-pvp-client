@@ -12,7 +12,7 @@ const publicRoutes: RouteObject[] = [
         Component: MainLayout,
         children: [
           {
-            path: 'index.html',
+            path: "dashboard",
             Component: Dashboard
           },
           {

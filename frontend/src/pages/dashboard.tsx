@@ -21,7 +21,7 @@ export default function Dashboard(): JSX.Element {
         py: 4
       }}
     >
-      <Paper elevation={3} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
+      <Paper elevation={0} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Dashboard Page
         </Typography>

@@ -21,7 +21,7 @@ jobs:
     - name: Analyzing the code with eslint
       run: |
         cd frontend
-        eslint .
+        npm run lint-action
 
   backend-lint:
     runs-on: ubuntu-latest

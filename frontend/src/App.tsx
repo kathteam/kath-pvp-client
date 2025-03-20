@@ -13,7 +13,7 @@ import { createTheme } from '@mui/material';
 
 const navigation: Navigation = [
   {
-    segment: "dashboard",
+    segment: 'dashboard',
     title: 'Dashboard',
     icon: <DashboardIcon />,
   },

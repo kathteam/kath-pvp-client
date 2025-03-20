@@ -19,7 +19,9 @@ jobs:
       run: npm run init
 
     - name: Analyzing the code with eslint
-      run: npm run lint-frontend
+      run: |
+        cd frontend
+        eslint .
 
   backend-lint:
     runs-on: ubuntu-latest

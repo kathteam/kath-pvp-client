@@ -1,8 +1,8 @@
-import { JSX } from "react";
-import { Outlet } from "react-router-dom";
+import { JSX } from 'react';
+import { Outlet } from 'react-router-dom';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { Box, Stack } from "@mui/material";
-import { LogoIcon, TitleIcon} from "@/components/icons";
+import { Box, Stack } from '@mui/material';
+import { LogoIcon, TitleIcon } from '@/components/icons';
 
 function customAppTitle(): JSX.Element {
   return (
@@ -10,7 +10,7 @@ function customAppTitle(): JSX.Element {
       <LogoIcon />
       <TitleIcon />
     </Stack>
-  )
+  );
 }
 
 export default function MainLayout(): JSX.Element {
@@ -18,7 +18,7 @@ export default function MainLayout(): JSX.Element {
     <DashboardLayout slots={{
       appTitle: customAppTitle,
     }}>
-      <Box sx={{ flex: 1, border: 0}}>
+      <Box sx={{ flex: 1, border: 0 }}>
         <Outlet />
       </Box>
     </DashboardLayout>

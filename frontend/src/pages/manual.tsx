@@ -1,12 +1,12 @@
-import { JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { JSX } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
   Button,
   Container,
   Paper
-} from "@mui/material";
+} from '@mui/material';
 
 export default function Manual(): JSX.Element {
   const navigate = useNavigate();

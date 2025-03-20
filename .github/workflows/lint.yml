@@ -1,4 +1,4 @@
-name: Lint development code
+name: Lint code
 
 on:
   push:
@@ -6,7 +6,24 @@ on:
     branches: [ main ]
 
 jobs:
-  lint:
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+  
+    - name: Install Node.js dependencies
+      run: npm run init
+
+    - name: Analyzing the code with eslint
+      run: npm run lint-frontend
+
+  backend-lint:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -25,5 +42,4 @@ jobs:
         if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
 
     - name: Analyzing the code with pylint
-      run: |
-        pylint --fail-under=10 --recursive=y --disable=fixme backend/
+      run: pylint --fail-under=10 --recursive=y --disable=fixme backend/

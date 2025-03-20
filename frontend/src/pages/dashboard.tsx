@@ -1,5 +1,5 @@
-import { JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { JSX } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -7,7 +7,7 @@ import {
   Container,
   Stack,
   Paper
-} from "@mui/material";
+} from '@mui/material';
 
 export default function Dashboard(): JSX.Element {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ export default function Dashboard(): JSX.Element {
             spacing={2}
             justifyContent="center"
             flexWrap="wrap"
-            >
+          >
             <Button
               variant="outlined"
               onClick={() => navigate('/features/gvatool')}

@@ -1,4 +1,4 @@
-﻿[MASTER]
+[MASTER]
 
 # Maximum number of boolean expressions in an if statement (see R0916).
 max-bool-expr=5

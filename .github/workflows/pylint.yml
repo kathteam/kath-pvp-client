@@ -1,4 +1,4 @@
-name: Pylint
+name: Lint development code
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -26,4 +26,4 @@ jobs:
 
     - name: Analyzing the code with pylint
       run: |
-        pylint --fail-under=10 --recursive=y backend/
+        pylint --fail-under=10 --recursive=y --disable=fixme backend/

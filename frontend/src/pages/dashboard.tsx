@@ -1,5 +1,5 @@
-import { JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { JSX } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -7,7 +7,7 @@ import {
   Container,
   Stack,
   Paper
-} from "@mui/material";
+} from '@mui/material';
 
 export default function Dashboard(): JSX.Element {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ export default function Dashboard(): JSX.Element {
         py: 4
       }}
     >
-      <Paper elevation={3} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
+      <Paper elevation={0} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           Dashboard Page
         </Typography>
@@ -42,7 +42,7 @@ export default function Dashboard(): JSX.Element {
             spacing={2}
             justifyContent="center"
             flexWrap="wrap"
-            >
+          >
             <Button
               variant="outlined"
               onClick={() => navigate('/features/gvatool')}

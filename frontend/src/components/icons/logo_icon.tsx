@@ -1,5 +1,5 @@
-import { JSX } from "react";
-import { SvgIcon, SvgIconProps } from "@mui/material";
+import { JSX } from 'react';
+import { SvgIcon, SvgIconProps } from '@mui/material';
 
 export default function LogoIcon(props: SvgIconProps): JSX.Element {
   return (
@@ -20,5 +20,5 @@ export default function LogoIcon(props: SvgIconProps): JSX.Element {
         </defs>
       </svg>
     </SvgIcon>
-  )
+  );
 }

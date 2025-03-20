@@ -1,12 +1,12 @@
-import { JSX } from "react";
-import { useNavigate } from "react-router-dom";
+import { JSX } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
   Button,
   Container,
   Paper
-} from "@mui/material";
+} from '@mui/material';
 
 export default function GVATool(): JSX.Element {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export default function GVATool(): JSX.Element {
         py: 4
       }}
     >
-      <Paper elevation={3} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
+      <Paper elevation={0} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           GVATool
         </Typography>

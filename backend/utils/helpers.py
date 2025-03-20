@@ -23,7 +23,7 @@ def get_entrypoint() -> str:
             return value
 
     logger.error(f"No index.html found. Checked paths: {possible_paths}")
-    raise FileNotFoundError(f"No index.html found.")
+    raise FileNotFoundError("No index.html found.")
 
 
 def initial_route(window: Window) -> None:

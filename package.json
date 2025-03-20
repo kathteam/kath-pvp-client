@@ -15,7 +15,10 @@
     "clean:windows": "if exist dist rd /S /Q dist & if exist build rd /S /Q build & if exist gui rd /S /Q gui",
     "clean:default": "rm -rf dist 2>/dev/null; rm -rf gui 2>/dev/null; rm -rf build 2>/dev/null;",
     "build:windows": ".venv\\Scripts\\pyinstaller build-windows.spec",
-    "build:default": ".venv/bin/pyinstaller build-linux.spec"
+    "build:default": ".venv/bin/pyinstaller build-default.spec",
+    "lint": "run-script-os",
+    "lint:windows": ".venv\\Scripts\\pylint --fail-under=10 --recursive=y backend/",
+    "lint:default": ".venv/bin/pylint --fail-under=10 --recursive=y backend/"
   },
   "repository": {
     "type": "git",

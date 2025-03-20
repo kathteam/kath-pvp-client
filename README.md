@@ -15,6 +15,7 @@ npm run init
 python -m venv .venv 
 .venv\Scripts\activate
 pip install -r requirements.txt
+pip install -r requirements_dev.txt
 ```
 
 ### Linux
@@ -24,6 +25,7 @@ npm run init
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements_dev.txt
 ```
 
 ### Mac OS
@@ -46,6 +48,14 @@ npm run start
 ```
 
 This builds the frontend and runs the backend in development mode.
+
+### Linting
+
+```shell
+npm run lint
+```
+
+This will check your Python code in the backend directory using pylint.
 
 ## Build
 

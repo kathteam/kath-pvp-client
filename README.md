@@ -2,6 +2,8 @@
 
 The desktop application frontend is developed using Vite, TypeScript and React for user interface. On the backend, Python is used in combination with the PyWebView library, which enables embedding a web-based UI inside a native desktop window. PyWebView acts as a bridge between the frontend and backend, facilitating seamless communication for executing logic, handling user actions and processing data.
 
+**Note:** _All commands must be run from the project root directory._
+
 ## Prerequisites
 - [Python 3](https://www.python.org/downloads/) (recommended version 3.12)
 - [Node.js](https://nodejs.org/en/download/) (recommended version 22.x)
@@ -55,7 +57,7 @@ This builds the frontend and runs the backend in development mode.
 npm run lint
 ```
 
-This will check your Python code in the backend directory using pylint.
+For frontend directory this will check and automatically fix the Typescript code using ESLint. In the backend directory it will check the Python code using pylint.
 
 ## Build
 

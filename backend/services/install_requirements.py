@@ -62,6 +62,7 @@ def install_python_requirements():
     
     success = True
     for service_name, service_info in SERVICES.items():
+        print(f"\n=== {service_name} ===")
         service_path = BASE_DIR / service_info["path"]
         print(service_path)
         req_file = service_path / "requirements.txt"

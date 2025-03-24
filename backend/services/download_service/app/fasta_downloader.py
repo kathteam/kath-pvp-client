@@ -11,7 +11,6 @@ import shutil
 import logging
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
-from constant_variables import PROGRAM_STORAGE_FOLDER
 
 # Third-party imports
 import requests
@@ -28,6 +27,7 @@ logger = logging.getLogger(__name__)
 # Default timeout for HTTP requests (in seconds)
 DEFAULT_TIMEOUT = 60
 
+PROGRAM_STORAGE_FOLDER =  os.path.join(os.path.expanduser("~"), ".KATH")
 
 def initialize_directories():
     """Initialize directory structure for the application."""

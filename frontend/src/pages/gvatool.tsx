@@ -35,6 +35,24 @@ export default function GVATool(): JSX.Element {
           >
             Back to Dashboard
           </Button>
+          <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button
+              variant="contained"
+              color="info"
+              onClick={() => window.pywebview.api.download_reference_genome_grch38()}
+              sx={{ mt: 2 }}
+            >
+              Test Download reference Genome
+            </Button>
+            <Button
+              variant="contained"
+              color="info"
+              onClick={() => NaN}
+              sx={{ mt: 2 }}
+            >
+              Test perform aligning
+            </Button>
+          </Box>
         </Box>
       </Paper>
     </Container>

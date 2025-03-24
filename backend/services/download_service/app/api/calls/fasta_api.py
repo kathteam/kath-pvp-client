@@ -13,7 +13,7 @@ from constant_variables import PROGRAM_STORAGE_FOLDER
 logger = logging.getLogger("download-service.fasta")
 
 data_dir = os.path.join(PROGRAM_STORAGE_FOLDER, "shared", "data")
-data_dir.mkdir(exist_ok=True)
+os.makedirs(data_dir, exist_ok=True)
 
 class FastaAPI:
     def list_downloads(self):

@@ -31,7 +31,7 @@ export default function Dashboard(): JSX.Element {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => window.pywebview.api.fullscreen()}
+          onClick={() => window.pywebview.api.ui_controller.fullscreen()}
           sx={{ mt: 2 }}
         >
           Test fullscreen

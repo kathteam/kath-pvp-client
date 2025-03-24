@@ -26,15 +26,17 @@ if __name__ == "__main__":
             maximized=True,
             draggable=True,
         )
-        
-        is_wsl = "microsoft-standard" in platform.uname().release.lower() or os.path.exists("/proc/sys/fs/binfmt_misc/WSLInterop")
-        
+
+        is_wsl = "microsoft-standard" in platform.uname().release.lower() or os.path.exists(
+            "/proc/sys/fs/binfmt_misc/WSLInterop"
+        )
+
         # If in WSL, don't pass icon to prevent creating a file
         if is_wsl:
             start(func=initial_route, args=window, debug=True)
         else:
             start(func=initial_route, args=window, icon="assets/logo.png", debug=True)
-            
+
         logger.info("Application closed successfully")
     except FileNotFoundError as e:
         logger.exception("Failed to find required files to start the application", exc_info=e)

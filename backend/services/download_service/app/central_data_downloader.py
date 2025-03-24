@@ -24,7 +24,7 @@ batch_size = 50  # Recommended batch size for stability
 
 with open("shared/central_data.csv", "w") as output_file:
     for i in range(0, len(gene_ids), batch_size):
-        batch_ids = gene_ids[i:i + batch_size]  # Split into manageable chunks
+        batch_ids = gene_ids[i : i + batch_size]  # Split into manageable chunks
         print(f"Downloading batch {i // batch_size + 1}...")
 
         try:
@@ -33,6 +33,6 @@ with open("shared/central_data.csv", "w") as output_file:
             handle.close()
 
             output_file.write(gene_record)
-            #time.sleep(1)  # Delay to avoid overwhelming NCBI servers
+            # time.sleep(1)  # Delay to avoid overwhelming NCBI servers
         except Exception as e:
             print(f"Error with batch {i // batch_size + 1}: {e}")

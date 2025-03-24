@@ -39,7 +39,7 @@ export default function GVATool(): JSX.Element {
             <Button
               variant="contained"
               color="info"
-              onClick={() => window.pywebview.api.download_reference_genome_grch38()}
+              onClick={() => window.pywebview.api.fasta_service.download_reference_genome_grch38()}
               sx={{ mt: 2 }}
             >
               Test Download reference Genome

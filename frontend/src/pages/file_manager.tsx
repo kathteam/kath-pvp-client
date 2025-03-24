@@ -1,15 +1,36 @@
-import { JSX } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
   Button,
   Container,
-  Paper
+  Paper,
+  Grid
 } from '@mui/material';
 
-export default function FileManager(): JSX.Element {
+export default function FileManager(){
   const navigate = useNavigate();
+
+  const [fileList, setFileList] = useState<{ name: string; size: number }[]>([]);
+
+  useEffect(() => {
+    const fetchFiles = async () => {
+      try {
+        // Fetch the files from pywebview API
+        const files = await window.pywebview.api.list_files();
+        const formattedFiles = files.map((file: string) => ({
+          name: file,
+          size: 0, // Replace with actual size if available
+        }));
+        setFileList(formattedFiles); // Store files in state to display them
+      } catch (error) {
+        console.error('Error fetching files:', error);
+      }
+    };
+
+    fetchFiles(); // Call the function when the component mounts
+  }, []);
 
   return (
     <Container
@@ -25,8 +46,35 @@ export default function FileManager(): JSX.Element {
           File Manager
         </Typography>
         <Typography variant="body1">
-          This is the file manager page of our application.
+          Here is a list of the files retrieved from the server:
         </Typography>
+
+        <Grid container spacing={2} sx={{ mt: 3 }}>
+          {fileList.length > 0 ? (
+            fileList.map((file, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Box
+                  sx={{
+                    p: 2,
+                    border: '1px solid #ddd',
+                    borderRadius: 2,
+                    boxShadow: 2,
+                    textAlign: 'center',
+                  }}
+                >
+                  <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                    {file.name}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {file.size} KB
+                  </Typography>
+                </Box>
+              </Grid>
+            ))
+          ) : (
+            <Typography variant="body1">No files available.</Typography>
+          )}
+        </Grid>
         <Box sx={{ mt: 3 }}>
           <Button
             variant="contained"

@@ -28,5 +28,5 @@ class Api:
     # Remote operations
     #
 
-    def list_files(self) -> list[str]:
+    def list_files(self) -> list[str, float]:
         return  self.file_manager.list_files()

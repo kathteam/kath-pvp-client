@@ -16,9 +16,9 @@ export default function FileManager() {
     const fetchFiles = async () => {
       try {
         const files = await window.pywebview.api.list_files();
-        const formattedFiles = files.map((file: string) => ({
+        const formattedFiles = files.map(([file, fileSize]: [string, number]) => ({
           name: file,
-          size: 0,
+          size: fileSize,
         }));
         setFileList(formattedFiles);
       } catch (error) {
@@ -42,7 +42,7 @@ export default function FileManager() {
         <Typography variant="h4" component="h1" gutterBottom>
           File Manager
         </Typography>
-        
+
         <Box sx={{ mt: 3 }}>
           {fileList.length > 0 ? (
             fileList.map((file, index) => (

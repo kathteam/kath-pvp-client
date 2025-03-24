@@ -10,6 +10,7 @@ class FileManager:
 
     def list_files(self, path=".") -> list[str]:
         files = os.listdir(os.path.join(WORKDIR, path))
+        files_string = ", ".join(files)
         self.logger.info(f"Listing files in {path}")
-        self.logger.info(f"Files: {", ".join(files)}")
+        self.logger.info(f"Files: {files_string}")
         return files

@@ -1,473 +1,383 @@
-from Bio import Entrez
-import json
-from typing import Dict, Any
+import pandas as pd
 import os
-import pandas
-from dotenv import load_dotenv
-
-# Initialize logging
+import sys
+import requests
+import json
+import time
+from typing import Dict, Any, List, Optional, Union
+from Bio import Entrez
 import logging
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger("analysis-service")
-
-
-def initialize_directories():
-    """Initialize directory structure for the application."""
-    # Set up file paths
-    base_dir = os.path.join(os.path.expanduser("~"), ".KATH")
-    service_dir = os.path.join(base_dir, "environment")
-    fasta_dir = os.path.join(base_dir, "shared", "data", "fasta_files")
-    blast_dir = os.path.join(base_dir, "shared", "data", "blast_results")
-    uploads_dir = os.path.join(fasta_dir, "uploads")
-    ref_dir = os.path.join(fasta_dir, "reference")
-    samples_dir = os.path.join(fasta_dir, "samples")
-
-    # Create directories if they don"t exist
-    for dir_path in [
-        service_dir,
-        service_dir,
-        fasta_dir,
-        blast_dir,
-        uploads_dir,
-        ref_dir,
-        samples_dir,
-    ]:
-        os.makedirs(dir_path, exist_ok=True)
-
-    # Load environment variables
-    env_file = os.path.join(service_dir, ".env")
-    if os.path.exists(env_file):
-        load_dotenv(env_file)
-    else:
-        logger.warning("No .env file found. Generating a sample .env file")
-        # Create a sample .env file
-        with open(env_file, "w") as f:
-            f.write("NCBI_API_KEY=\n")
-            f.write("NCBI_API_EMAIL=\n")
-
-    return {
-        "base_dir": base_dir,
-        "service_dir": service_dir,
-        "fasta_dir": fasta_dir,
-        "blast_dir": blast_dir,
-        "uploads_dir": uploads_dir,
-        "ref_dir": ref_dir,
-        "samples_dir": samples_dir,
-    }
-
-
-dirs = initialize_directories()
-
-import pickle
+import re
 from pathlib import Path
 
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+    
+from utils.logger import get_logger
+from shared.constants import PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES
 
-# Add a cache to avoid repeated conversions and API calls
-def get_cache_dir():
-    """Get the cache directory"""
-    cache_dir = Path(dirs["service_dir"]) / "cache"
-    cache_dir.mkdir(exist_ok=True)
-    return cache_dir
+os.makedirs(PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES, exist_ok=True)
 
-
-def get_cache_file(cache_type):
-    """Get a cache file path"""
-    return get_cache_dir() / f"{cache_type}_cache.pkl"
+logger = get_logger(__name__)
 
 
-def load_cache(cache_type):
-    """Load a cache"""
-    cache_file = get_cache_file(cache_type)
-    if cache_file.exists():
-        try:
-            with open(cache_file, "rb") as f:
-                return pickle.load(f)
-        except Exception as e:
-            logger.error(f"Error loading {cache_type} cache: {e}")
-            return {}
-    return {}
+def validate_variant(chromosome: Union[int, str], position: int, reference: str, alternate: str) -> bool:
+    if not re.match(r"^[0-9XYM]+$", str(chromosome)):
+        logger.error(f"Invalid chromosome: {chromosome}")
+        return False
+    
+    if not re.match(r"^[ACGT]+$", reference):
+        logger.error(f"Invalid reference: {reference}")
+        return False
+    
+    if not re.match(r"^[ACGT]+$", alternate):
+        logger.error(f"Invalid alternate: {alternate}")
+        return False
+    
+    if not isinstance(position, int):
+        logger.error(f"Invalid position: {position}")
+        return False
+    
+    return True
 
 
-def save_cache(cache_type, cache_data):
-    """Save a cache"""
-    cache_file = get_cache_file(cache_type)
-    with open(cache_file, "wb") as f:
-        pickle.dump(cache_data, f)
-
-
-def convert_coordinates(chromosome, position, from_build="GRCh38", to_build="GRCh37"):
-    """
-    Convert genomic coordinates between genome builds using UCSC"s liftOver API via PyLiftover.
-    If PyLiftover is not installed, falls back to a manual conversion table for common variants.
-
-    Args:
-        chromosome: Chromosome (e.g., "1", "X")
-        position: Position in the source build
-        from_build: Source genome build (default: "GRCh38")
-        to_build: Target genome build (default: "GRCh37")
-
-    Returns:
-        Tuple of (converted_chromosome, converted_position) or (None, None) if conversion fails
-    """
-    # Check cache first
-    cache_key = f"{chromosome}:{position}:{from_build}:{to_build}"
-    conversion_cache = load_cache("liftover")
-
-    if cache_key in conversion_cache:
-        return conversion_cache[cache_key]
-
+def query_into_myvariant(variant: str) -> Optional[Dict[str, Any]]:
+    url = f"https://myvariant.info/v1/variant/{variant}"
+    
     try:
-        # Try to use PyLiftover if available
-        from pyliftover import LiftOver
-
-        # Map build names to PyLiftover format
-        build_map = {"GRCh38": "hg38", "GRCh37": "hg19", "hg38": "hg38", "hg19": "hg19"}
-
-        from_build_lo = build_map.get(from_build, from_build)
-        to_build_lo = build_map.get(to_build, to_build)
-
-        lo = LiftOver(from_build_lo, to_build_lo)
-
-        # Ensure chromosome format (with or without "chr" prefix)
-        chrom = chromosome.replace("chr", "")
-
-        # Convert position to int
-        pos = int(position)
-
-        # Perform liftover
-        converted = lo.convert_coordinate(f"chr{chrom}", pos)
-
-        if converted and len(converted) > 0:
-            # Get the first (most likely) conversion
-            result = (converted[0][0].replace("chr", ""), str(converted[0][1]))
-
-            # Save to cache
-            conversion_cache[cache_key] = result
-            save_cache("liftover", conversion_cache)
-
-            return result
-        else:
-            # No conversion found
-            conversion_cache[cache_key] = (None, None)
-            save_cache("liftover", conversion_cache)
-            return (None, None)
-
-    except ImportError:
-        # PyLiftover not installed, use fallback method
-        logger.warning("PyLiftover not installed. Using fallback manual conversion.")
-
-        # Known conversions for test variants
-        manual_conversions = {
-            # Example: GRCh38 to GRCh37 for BRCA1 variant
-            "17:43045629": "17:43057051",  # BRCA1 (hg38) -> (hg19)
-            # Add more known conversions here
-        }
-
-        key = f"{chromosome}:{position}"
-        if key in manual_conversions:
-            # Split the stored value into chromosome and position
-            conv = manual_conversions[key].split(":")
-            result = (conv[0], conv[1])
-
-            # Save to cache
-            conversion_cache[cache_key] = result
-            save_cache("liftover", conversion_cache)
-
-            return result
-
-        # No conversion found
-        logger.warning(
-            f"No manual conversion available for {key}. Install PyLiftover for better results."
-        )
-        conversion_cache[cache_key] = (None, None)
-        save_cache("liftover", conversion_cache)
-        return (None, None)
-
-
-def find_disease_from_variant(
-    chromosome,
-    position,
-    ref_allele,
-    alt_allele,
-    email="your.email@example.com",
-    source_build="GRCh38",
-):
-    """
-    Query ClinVar for disease information, converting coordinates if needed.
-
-    Args:
-        chromosome: Chromosome (e.g., "1", "X")
-        position: Position in source build
-        ref_allele: Reference allele
-        alt_allele: Alternate allele
-        email: Your email for NCBI
-        source_build: Source genome build (default: "GRCh38")
-
-    Returns:
-        Dictionary with disease information or None
-    """
-    # Set NCBI email
-    Entrez.email = email
-
-    # Use API key if available
-    api_key = os.environ.get("NCBI_API_KEY")
-    if api_key:
-        Entrez.api_key = api_key
-
-    # First try with original coordinates
-    result = query_clinvar(chromosome, position, ref_allele, alt_allele)
-
-    # If no result and using GRCh38, try converting to GRCh37
-    if not result and source_build == "GRCh38":
-        logger.info(f"No results with GRCh38 coordinates. Trying conversion to GRCh37...")
-
-        # Convert coordinates from GRCh38 to GRCh37
-        conv_chrom, conv_pos = convert_coordinates(chromosome, position, "GRCh38", "GRCh37")
-
-        if conv_chrom and conv_pos:
-            logger.info(
-                f"Converted coordinates: chr{chromosome}:{position} (GRCh38) -> chr{conv_chrom}:{conv_pos} (GRCh37)"
-            )
-            result = query_clinvar(conv_chrom, conv_pos, ref_allele, alt_allele)
-        else:
-            logger.warning(f"Could not convert coordinates: chr{chromosome}:{position}")
-
-    return result
-
-
-def query_clinvar(chromosome, position, ref_allele, alt_allele):
-    """
-    Query ClinVar API for variant information
-    """
-    # Check cache first
-    cache_key = f"{chromosome}:{position}:{ref_allele}>{alt_allele}"
-    clinvar_cache = load_cache("clinvar")
-
-    if cache_key in clinvar_cache:
-        logger.info(f"Using cached result for {cache_key}")
-        return clinvar_cache[cache_key]
-
-    # Try multiple query formats
-    queries = [
-        # Format 1: Using genomic notation with "g."
-        f"chr{chromosome}:g.{position}{ref_allele}>{alt_allele}",
-        # Format 2: Basic coordinates
-        f"chr{chromosome}:{position}{ref_allele}>{alt_allele}",
-        # Format 3: Using standard search fields
-        f"{chromosome}[Chromosome] AND {position}[Base Position]",
-        # Format 4: Very specific format
-        f"{chromosome}[Chromosome] AND {position}[Base Position] AND {ref_allele}[Reference Allele] AND {alt_allele}[Alternate Allele]",
-        # Format 5: Simple text search
-        f"chr{chromosome}:{position}",
-    ]
-
-    id_list = []
-    successful_query = None
-
-    for i, query in enumerate(queries):
-        try:
-            logger.info(f"Trying query format {i+1}: {query}")
-            search_handle = Entrez.esearch(db="clinvar", term=query, retmax=5)
-            search_results = Entrez.read(search_handle)
-            search_handle.close()
-
-            if search_results.get("Count", "0") != "0":
-                id_list = search_results.get("IdList", [])
-                if id_list:
-                    successful_query = query
-                    logger.info(f"Success! Found {len(id_list)} results with query: {query}")
-                    break
-        except Exception as e:
-            logger.error(f"Query format {i+1} failed: {e}")
-
-    if not id_list:
-        # No results found
-        clinvar_cache[cache_key] = None
-        save_cache("clinvar", clinvar_cache)
-        return None
-
-    try:
-        # Get summary
-        summary_handle = Entrez.esummary(db="clinvar", id=id_list[0])
-        summary_results = Entrez.read(summary_handle)
-        summary_handle.close()
-
-        if not summary_results or not summary_results.get("DocumentSummarySet", {}).get(
-            "DocumentSummary", []
-        ):
-            logger.info("No summary information available")
-            clinvar_cache[cache_key] = None
-            save_cache("clinvar", clinvar_cache)
-            return None
-
-        # Extract information from the summary
-        variant_summary = summary_results["DocumentSummarySet"]["DocumentSummary"][0]
-
-        # For more detailed information, get the full record
-        fetch_handle = Entrez.efetch(db="clinvar", id=id_list[0], rettype="json")
-        fetch_data = json.loads(fetch_handle.read())
-        fetch_handle.close()
-
-        # Extract clinical significance and disease names
-        clinical_significance = "Unknown"
-        disease_names = []
-
-        if fetch_data and "result" in fetch_data:
-            variant_data = fetch_data["result"]
-            variant_id = list(variant_data.keys())[0]
-            variant_info = variant_data[variant_id]
-
-            # Get clinical significance
-            if "clinical_significance" in variant_info:
-                clinical_significance = variant_info["clinical_significance"].get(
-                    "description", "Unknown"
-                )
-
-            # Get disease names
-            if "trait_set" in variant_info:
-                for trait in variant_info["trait_set"]:
-                    if "trait_name" in trait:
-                        disease_names.append(trait["trait_name"])
-
-        # Construct result dictionary
-        result = {
-            "clinvar_id": id_list[0],
-            "title": variant_summary.get("title", "Unknown"),
-            "clinical_significance": clinical_significance,
-            "variant_id": variant_summary.get("variation_id", "Unknown"),
-            "last_updated": variant_summary.get("update_date", "Unknown"),
-            "diseases": (
-                disease_names if disease_names else ["No specific disease information available"]
-            ),
-            "chromosome": chromosome,
-            "position": position,
-            "ref_allele": ref_allele,
-            "alt_allele": alt_allele,
-            "query_used": successful_query,
-        }
-
-        # Save to cache
-        clinvar_cache[cache_key] = result
-        save_cache("clinvar", clinvar_cache)
-
+        response = requests.get(url)
+        response.raise_for_status()
+        result = response.json()
+        logger.info(f"Successfully queried MyVariant.info for {variant}")
         return result
-
-    except Exception as e:
-        logger.error(f"Error processing ClinVar results: {e}")
-        clinvar_cache[cache_key] = None
-        save_cache("clinvar", clinvar_cache)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            logger.warning(f"Variant {variant} not found in MyVariant.info")
+        else:
+            logger.error(f"HTTP error querying MyVariant.info: {e}")
+        return None
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error querying MyVariant.info: {e}")
+        return None
+    except json.JSONDecodeError as e:
+        logger.error(f"Invalid JSON response from MyVariant.info: {e}")
         return None
 
 
-def format_disease_output(result: Dict[str, Any]) -> None:
-    """Prints the disease information in a readable format"""
-    if not result:
-        print("No information available")
-        return
-
-    print("\n=== ClinVar Variant Information ===")
-    print(
-        f"Variant: chr{result["chromosome"]}:{result["position"]} {result["ref_allele"]}>{result["alt_allele"]}"
-    )
-    print(f"ClinVar ID: {result["clinvar_id"]}")
-    print(f"Title: {result["title"]}")
-    print(f"Clinical Significance: {result["clinical_significance"]}")
-    print("\nAssociated Diseases/Conditions:")
-    for disease in result["diseases"]:
-        print(f"  - {disease}")
-    print(f"\nLast Updated: {result["last_updated"]}")
-    print("===================================\n")
+def format_variant_hgvs(chromosome: str, position: int, reference: str, alternate: str) -> str:
+    return f"chr{chromosome}:g.{position}{reference}>{alternate}"
 
 
-def find_mutations_file() -> None:
-    """
-    Find a specific mutations file in the shared data directory.
-
-    Args:
-        filename: Name of the mutations file to find
-    """
-
-    must_contain = "all_mutations"
-
-    # Check if the filename contains the required string
-    mutation_directory = dirs["blast_dir"]
-    consolidated_dir = os.path.join(mutation_directory, "consolidated")
-
-    # for now, its just one
-    for filename in os.listdir(consolidated_dir):
-        if must_contain in filename:
-            data = pandas.read_csv(os.path.join(consolidated_dir, filename))
-            for index, row in data.iterrows():
-                chromosome = row["chromosome"]
-                position = row["position"]
-                ref_allele = row["reference"]
-                alt_allele = row["query"]
-
-                result = find_disease_from_variant(chromosome, position, ref_allele, alt_allele)
-                if result:
-                    format_disease_output(result)
-                else:
-                    print("No information found or an error occurred.")
-
-
-# At the bottom of the file, modify your main block:
-
-if __name__ == "__main__":
-    # Install required packages, if not already installed
+def extract_gene_id(variant: Dict[str, Any]) -> Optional[str]:
     try:
-        import pyliftover
-    except ImportError:
-        print("Installing pyliftover for coordinate conversion...")
-        import subprocess
+        # Try dbSNP source
+        if "dbsnp" in variant and "gene" in variant["dbsnp"]:
+            if isinstance(variant["dbsnp"]["gene"], dict) and "geneid" in variant["dbsnp"]["gene"]:
+                gene_id = variant["dbsnp"]["gene"]["geneid"]
+                logger.info(f"Found gene ID {gene_id} from dbSNP")
+                return gene_id
+        
+        # Try CADD annotation
+        if "cadd" in variant and "gene" in variant["cadd"]:
+            gene_data = variant["cadd"]["gene"]
+            if isinstance(gene_data, dict):
+                if "gene_id" in gene_data:
+                    gene_id = gene_data["gene_id"]
+                    if gene_id.startswith("ENSG"):
+                        entrez_id = _convert_ensembl_to_entrez(gene_id)
+                        if entrez_id:
+                            logger.info(f"Converted Ensembl ID {gene_id} to Entrez ID {entrez_id}")
+                            return entrez_id
+                    else:
+                        logger.info(f"Found gene ID {gene_id} from CADD")
+                        return gene_id
+                
+                # Try gene name from CADD
+                if "genename" in gene_data:
+                    gene_name = gene_data["genename"]
+                    entrez_id = _lookup_gene_id_by_symbol(gene_name)
+                    if entrez_id:
+                        logger.info(f"Found Entrez ID {entrez_id} for gene name {gene_name} from CADD")
+                        return entrez_id
+        
+        # Try snpEff annotation
+        if "snpeff" in variant and "ann" in variant["snpeff"]:
+            annotations = variant["snpeff"]["ann"]
+            if isinstance(annotations, list) and annotations:
+                for ann in annotations:
+                    if not isinstance(ann, dict):
+                        continue
+                    
+                    # Try gene_id
+                    gene_symbol = ann.get("gene_id")
+                    if gene_symbol:
+                        entrez_id = _lookup_gene_id_by_symbol(gene_symbol)
+                        if entrez_id:
+                            logger.info(f"Found Entrez ID {entrez_id} for gene symbol {gene_symbol} from snpEff")
+                            return entrez_id
+                    
+                    # Try genename
+                    gene_name = ann.get("genename")
+                    if gene_name:
+                        entrez_id = _lookup_gene_id_by_symbol(gene_name)
+                        if entrez_id:
+                            logger.info(f"Found Entrez ID {entrez_id} for gene name {gene_name} from snpEff")
+                            return entrez_id
+        
+        # Try gene field if present
+        if "gene" in variant:
+            gene_info = variant["gene"]
+            if isinstance(gene_info, dict):
+                gene_id = gene_info.get("geneid")
+                if gene_id:
+                    logger.info(f"Found gene ID {gene_id} from gene field")
+                    return gene_id
+                
+                symbol = gene_info.get("symbol")
+                if symbol:
+                    entrez_id = _lookup_gene_id_by_symbol(symbol)
+                    if entrez_id:
+                        logger.info(f"Found Entrez ID {entrez_id} for symbol {symbol} from gene field")
+                        return entrez_id
+            elif isinstance(gene_info, list) and gene_info:
+                for gene in gene_info:
+                    if isinstance(gene, dict):
+                        gene_id = gene.get("geneid")
+                        if gene_id:
+                            logger.info(f"Found gene ID {gene_id} from gene list")
+                            return gene_id
+                        
+                        symbol = gene.get("symbol")
+                        if symbol:
+                            entrez_id = _lookup_gene_id_by_symbol(symbol)
+                            if entrez_id:
+                                logger.info(f"Found Entrez ID {entrez_id} for symbol {symbol} from gene list")
+                                return entrez_id
+        
+        logger.warning(f"Gene ID not found in variant data")
+        return None
+    except Exception as e:
+        logger.error(f"Error extracting gene ID: {e}")
+        return None
 
-        subprocess.check_call(["pip", "install", "pyliftover"])
-        print("pyliftover installed successfully!")
 
-    # Examples in GRCh38 coordinates
-    examples = [
-        # BRCA1 pathogenic variant (Breast/Ovarian Cancer)
-        {
-            "chrom": "17",
-            "pos": "43045629",
-            "ref": "A",
-            "alt": "G",
-            "disease": "Hereditary breast and ovarian cancer syndrome",
-        },
-        # CFTR variant (Cystic Fibrosis)
-        {"chrom": "7", "pos": "117559593", "ref": "G", "alt": "T", "disease": "Cystic fibrosis"},
-        # HBB variant (Sickle Cell)
-        {"chrom": "11", "pos": "5225673", "ref": "A", "alt": "T", "disease": "Sickle cell anemia"},
-    ]
+def _convert_ensembl_to_entrez(ensembl_id: str) -> Optional[str]:
+    try:
+        handle = Entrez.esearch(db="gene", term=f"{ensembl_id}[Ensembl ID] AND human[Organism]", retmode="xml")
+        record = Entrez.read(handle)
+        handle.close()
+        
+        id_list = record.get("IdList", [])
+        return id_list[0] if id_list else None
+    except Exception as e:
+        logger.error(f"Error converting Ensembl ID to Entrez ID: {e}")
+        return None
 
-    # Test with the first example
-    example = examples[0]
-    chromosome = example["chrom"]
-    position = example["pos"]
-    ref_allele = example["ref"]
-    alt_allele = example["alt"]
 
-    print(
-        f"Querying ClinVar for variant chr{chromosome}:{position} {ref_allele}>{alt_allele} (GRCh38)"
-    )
-    print(f"Expected disease: {example["disease"]}")
+def _lookup_gene_id_by_symbol(gene_symbol: str) -> Optional[str]:
+    try:
+        handle = Entrez.esearch(db="gene", term=f"{gene_symbol}[Gene Symbol] AND human[Organism]", retmode="xml")
+        record = Entrez.read(handle)
+        handle.close()
+        
+        id_list = record.get("IdList", [])
+        return id_list[0] if id_list else None
+    except Exception as e:
+        logger.error(f"Error looking up gene ID by symbol: {e}")
+        return None
 
-    # Replace with your email
-    email = os.environ.get("NCBI_API_EMAIL", "your.email@example.com")
 
-    # Query with automatic coordinate conversion
-    result = find_disease_from_variant(
-        chromosome, position, ref_allele, alt_allele, email, source_build="GRCh38"
-    )
+def fetch_clinvar_ids_by_gene(gene_id: str) -> List[str]:
+    try:
+        id_handler = Entrez.esearch(
+            db="clinvar", 
+            term=f"{gene_id}[geneID] AND (pathogenic[Clinical Significance] OR likely_pathogenic[Clinical Significance])",
+            retmode="xml", 
+            retmax=100
+        )
+        
+        content = Entrez.read(id_handler)
+        id_handler.close()
+        
+        id_list = content.get("IdList", [])
+        logger.info(f"Found {len(id_list)} ClinVar entries for gene ID {gene_id}")
+        return id_list
+    except Exception as e:
+        logger.error(f"Error fetching ClinVar IDs for gene {gene_id}: {e}")
+        return []
 
-    if result:
-        format_disease_output(result)
-    else:
-        print("No information found in ClinVar")
-        print("\nThis might be because:")
-        print("1. The variant doesn't exist in ClinVar")
-        print("2. The coordinate conversion failed")
-        print("3. The alleles might be different in the reference genome")
+
+def fetch_disease_data(clinvar_ids: List[str]) -> List[Dict[str, Any]]:
+    results = []
+    
+    for id in clinvar_ids:
+        try:
+            logger.info(f"Fetching ClinVar record {id}")
+            record = Entrez.esummary(db="clinvar", id=id, retmode="xml")
+            content = Entrez.read(record)
+            record.close()
+            
+            document_summaries = content["DocumentSummarySet"]["DocumentSummary"]
+            
+            for doc_summary in document_summaries:
+                if "germline_classification" in doc_summary:
+                    germline = doc_summary["germline_classification"]
+                    significance = germline.get("description", "")
+                    
+                    if significance.lower() not in ["pathogenic", "likely pathogenic"]:
+                        continue
+                    
+                    if "trait_set" in germline:
+                        trait_sets = germline["trait_set"]
+                        
+                        for trait_set in trait_sets:
+                            if "trait_name" in trait_set:
+                                disease_name = trait_set["trait_name"]
+                                if disease_name.lower() in ["not specified", "not provided"]:
+                                    continue
+                                
+                                # Fix for potential list issue with genes
+                                genes_str = ""
+                                if "genes" in doc_summary and isinstance(doc_summary["genes"], list):
+                                    gene_symbols = []
+                                    for gene in doc_summary["genes"]:
+                                        if isinstance(gene, dict) and "symbol" in gene:
+                                            gene_symbols.append(gene["symbol"])
+                                    genes_str = ", ".join(gene_symbols)
+                                
+                                disease_info = {
+                                    "disease_name": disease_name,
+                                    "significance": significance,
+                                    "variant_id": id,
+                                    "last_evaluated": germline.get("last_evaluated", ""),
+                                    "review_status": germline.get("review_status", ""),
+                                    "genes": genes_str
+                                }
+                                
+                                results.append(disease_info)
+                                logger.info(f"Found disease: {disease_name} ({significance})")
+        
+        except Exception as e:
+            logger.error(f"Error processing ClinVar record {id}: {e}")
+            continue
+    
+    return results
+
+
+def save_to_csv(data: List[Dict[str, Any]], output_path: str):
+    try:
+        df = pd.DataFrame(data)
+        df.to_csv(output_path, index=False)
+        logger.info(f"Saved results to {output_path}")
+    except Exception as e:
+        logger.error(f"Error saving results to CSV: {e}")
+
+
+def load_variants_from_csv(csv_path: str) -> pd.DataFrame:
+    try:
+        data = pd.read_csv(csv_path)
+        data = data.dropna(subset=["chromosome", "position", "reference", "query"])
+        data = data.drop_duplicates(subset=["chromosome", "position", "reference", "query"])
+        
+        # Ensure position is int
+        data["position"] = data["position"].astype(int)
+        
+        # Rename query to alternate for consistency
+        if "query" in data.columns and "alternate" not in data.columns:
+            data = data.rename(columns={"query": "alternate"})
+        
+        required_columns = ["chromosome", "position", "reference", "alternate"]
+        if not all(col in data.columns for col in required_columns):
+            logger.error(f"CSV is missing required columns. Required: {required_columns}")
+            return pd.DataFrame()
+        
+        logger.info(f"Loaded {len(data)} variants from {csv_path}")
+        return data[required_columns]
+    except Exception as e:
+        logger.error(f"Error loading variants from CSV: {e}")
+        return pd.DataFrame()
+
+
+def process_variants():
+    variants_file = "backend/shared/all_mutations_20250325-215708.csv"
+    variants = load_variants_from_csv(variants_file)
+    
+    if variants.empty:
+        logger.error("No valid variants to process")
+        return
+    
+    results_count = 0
+    
+    for index, variant in variants.iterrows():
+        try:
+            # Get variant information
+            chromosome = variant["chromosome"]
+            position = variant["position"]
+            reference = variant["reference"]
+            alternate = variant["alternate"]
+            
+            logger.info(f"Processing variant {index+1}/{len(variants)}: chr{chromosome}:{position}{reference}>{alternate}")
+            
+            # Validate variant data
+            if not validate_variant(chromosome, position, reference, alternate):
+                logger.warning(f"Invalid variant data, skipping")
+                continue
+            
+            # Format HGVS identifier
+            hgvs_id = format_variant_hgvs(chromosome, position, reference, alternate)
+            
+            # Query MyVariant.info
+            variant_data = query_into_myvariant(hgvs_id)
+            if not variant_data:
+                logger.warning(f"No data found for {hgvs_id}, skipping")
+                continue
+            
+            # Extract gene ID with improved error handling
+            gene_id = extract_gene_id(variant_data)
+            if not gene_id:
+                logger.warning(f"No gene ID found for {hgvs_id}, skipping")
+                continue
+            
+            # Fetch ClinVar IDs for this gene
+            clinvar_ids = fetch_clinvar_ids_by_gene(gene_id)
+            if not clinvar_ids:
+                logger.warning(f"No ClinVar entries found for gene ID {gene_id}, skipping")
+                continue
+            
+            # Get disease information
+            diseases = fetch_disease_data(clinvar_ids)
+            if not diseases:
+                logger.warning(f"No disease information found for gene ID {gene_id}, skipping")
+                continue
+            
+            # Create safe filename
+            safe_hgvs = hgvs_id.replace(":", "_").replace(">", "_to_")
+            output_file = os.path.join(PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES, f"diseases_{safe_hgvs}.csv")
+            
+            # Save results
+            save_to_csv(diseases, output_file)
+            results_count += 1
+        
+        except Exception as e:
+            logger.error(f"Error processing variant at index {index}: {e}")
+            continue
+            
+        # Add small delay to avoid rate limits
+        if index < len(variants) - 1:
+            time.sleep(1)
+    
+    logger.info(f"Processing complete. Found disease associations for {results_count} variants.")
+
+
+def main():
+    # Configure NCBI Entrez
+    Entrez.email = "kajeliukasc@gmail.com"
+    Entrez.api_key = "7ca5ef526507701d64f16a090124cbc4aa08"
+    
+    # Start processing
+    process_variants()
+
+
+if __name__ == '__main__':
+    main()

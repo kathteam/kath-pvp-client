@@ -6,11 +6,16 @@ databases including NCBI, Ensembl, and ClinVar.
 """
 
 import os
+import sys
 import time
 import gzip
 import shutil
 from pathlib import Path
 from typing import Optional, List, Dict, Tuple
+
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
 
 # Third-party imports
 import requests
@@ -19,6 +24,8 @@ from dotenv import load_dotenv
 
 from utils.logger import get_logger
 from shared.constants import REF_GENOME, PROGRAM_STORAGE_DIR
+
+
 
 # Set up loggin
 logger = get_logger(__name__)
@@ -274,7 +281,7 @@ def search_nucleotide_by_symbol(gene_symbol: str, max_results: int = 3) -> List[
 
 def download_disease_related_genes_clinvar(
     disease_term: str,
-    max_results: int = 20,
+    max_results: int = 1,
     output_dir: Optional[Path] = None,
     samples_dir: Path = dirs["samples_dir"],
     fasta_dir: Path = dirs["fasta_dir"],
@@ -292,6 +299,7 @@ def download_disease_related_genes_clinvar(
     Returns:
         List of paths to downloaded files
     """
+    print(f"Downloading disease-related genes for {disease_term}...")
     if output_dir is None:
         output_dir = os.path.join(samples_dir, "diseases", disease_term.replace(" ", "_").lower())
         os.makedirs(output_dir, exist_ok=True)
@@ -381,7 +389,7 @@ def main():
         setup_entrez(email="your@email.com")
 
     # Download reference genome
-    ref_file = download_reference_genome_direct(version="GRCh38", output_dir=dirs["ref_dir"])
+    # ref_file = download_reference_genome_direct(version="GRCh38", output_dir=dirs["ref_dir"])
 
     # Download disease-related genes
     disease_genes = download_disease_related_genes_clinvar(

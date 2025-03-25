@@ -167,18 +167,6 @@ def parse_blast_results(
                         }
                         alignment_summary.append(alignment_info)
 
-                        logger.info(f"Alignment #{i+1}: {subject_id}")
-                        logger.info(f"  Chromosome: {chromosome}")
-                        logger.info(f"  Length: {alignment.length}")
-                        logger.info(f"  E-value: {hsp.expect}")
-                        logger.info(f"  Score: {hsp.score}")
-                        logger.info(
-                            f"  Identities: {hsp.identities}/{hsp.align_length} ({identity_pct:.1f}%)"
-                        )
-                        logger.info(
-                            f"  Coverage: {hsp.align_length}/{query_length} ({coverage_pct:.1f}%)"
-                        )
-
                         # Extract mutations
                         mutations = extract_mutations_from_hsp(
                             hsp, chromosome, query_id, subject_id

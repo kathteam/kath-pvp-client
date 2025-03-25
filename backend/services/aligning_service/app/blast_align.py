@@ -223,10 +223,6 @@ def parse_blast_results(result_file: str):
                     chromosome = extract_chromosome(subject_id)
 
                     logger.info(f"Sequence: {alignment.title}")
-                    logger.info(f"  Chromosome: {chromosome}")
-                    logger.info(f"  Length: {alignment.length}")
-                    logger.info(f"  E-value: {hsp.expect}")
-                    logger.info(f"  Score: {hsp.score}")
                     logger.info(
                         f"  Identities: {hsp.identities}/{hsp.align_length} "
                         f"({hsp.identities/hsp.align_length*100:.1f}%)"

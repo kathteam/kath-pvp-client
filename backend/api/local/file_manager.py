@@ -18,7 +18,8 @@ class FileManager:
                 file_info.append((file, size_kb))
             else:
                 file_info.append((file, None))  # None for directories or non-files
-        files_string = ", ".join([f"{name} ({size:.2f} KB)" if size is not None else f"{name} (dir)" for name, size in file_info])
+        files_string = ", ".join([f"{name} ({size:.2f} KB)" if size is not None
+                                  else f"{name} (dir)" for name, size in file_info])
         self.logger.info(f"Listing files in {path}")
         self.logger.info(f"Files: {files_string}")
         return file_info

@@ -13,28 +13,33 @@ class FileManager:
         file_info = []
         for file in files:
             file_path = os.path.join(WORKDIR, path, file)
-            if os.path.isfile(file_path):
-                size_kb = os.path.getsize(file_path) / 1024
-                file_type = self._determine_file_type(file)
+            try:
+                if os.path.isfile(file_path):
+                    size_kb = os.path.getsize(file_path) / 1024
+                    file_type = self._determine_file_type(file)
+                    file_info.append({
+                        "filename": file,
+                        "type": file_type,
+                        "size_kb": size_kb,
+                        "item_count": None  # Not applicable for files
+                    })
+                elif os.path.isdir(file_path):
+                    item_count = len(os.listdir(file_path))
+                    file_info.append({
+                        "filename": file,
+                        "type": "folder",
+                        "size_kb": None,  # Not applicable for folders
+                        "item_count": item_count
+                    })
+            except PermissionError:
+                self.logger.warning(f"Permission denied for file or folder: {file_path}")
                 file_info.append({
                     "filename": file,
-                    "type": file_type,
-                    "size_kb": size_kb,
-                    "item_count": None  # Not applicable for files
+                    "type": "unknown",
+                    "size_kb": None,
+                    "item_count": None
                 })
-            elif os.path.isdir(file_path):
-                item_count = len(os.listdir(file_path))
-                file_info.append({
-                    "filename": file,
-                    "type": "folder",
-                    "size_kb": None,  # Not applicable for folders
-                    "item_count": item_count
-                })
-        files_string = ", ".join([
-            f"{info['filename']} ({info['type']}, {info['size_kb']:.2f} KB)" if info['size_kb'] is not None
-            else f"{info['filename']} ({info['type']}, {info['item_count']} items)"
-            for info in file_info
-        ])
+        files_string = ", ".join([info["filename"] for info in file_info])
         self.logger.info(f"Listing files in {path}")
         self.logger.info(f"Files: {files_string}")
         return file_info
@@ -44,13 +49,12 @@ class FileManager:
         ext = ext.lower()
         if ext in [".txt"]:
             return "text file"
-        elif ext in [".csv"]:
+        if ext in [".csv"]:
             return "CSV"
-        elif ext in [".fasta", ".fa"]:
+        if ext in [".fasta", ".fa"]:
             return "fasta"
-        elif ext in [".vcf"]:
+        if ext in [".vcf"]:
             return "VCF"
-        elif ext in [".db", ".sqlite"]:
+        if ext in [".db", ".sqlite"]:
             return "database"
-        else:
-            return "file"
+        return "file"

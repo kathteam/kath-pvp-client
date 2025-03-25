@@ -10,17 +10,18 @@ import {
 
 export default function FileManager() {
   const navigate = useNavigate();
-  const [fileList, setFileList] = useState<{ name: string; size: number }[]>([]);
+  const [fileList, setFileList] = useState<{
+    filename: string;
+    type: string;
+    size_kb: number | null;
+    item_count: number | null;
+  }[]>([]);
 
   useEffect(() => {
     const fetchFiles = async () => {
       try {
         const files = await window.pywebview.api.list_files();
-        const formattedFiles = files.map(([file, fileSize]: [string, number]) => ({
-          name: file,
-          size: fileSize,
-        }));
-        setFileList(formattedFiles);
+        setFileList(files);
       } catch (error) {
         console.error('Error fetching files:', error);
       }
@@ -56,10 +57,15 @@ export default function FileManager() {
                 }}
               >
                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                  {file.name}
+                  {file.filename}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  {file.size} KB
+                  {file.type === 'folder'
+                    ? `${file.item_count} items`
+                    : `${file.size_kb?.toFixed(2)} KB`}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  {file.type}
                 </Typography>
               </Box>
             ))

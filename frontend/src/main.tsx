@@ -10,7 +10,12 @@ declare global {
       api: {
         // Known methods
         fullscreen: () => Promise<void>;
-        list_files: () => Promise<[string, number][]>;
+        list_files: () => Promise<{ 
+          filename: string; 
+          type: string; 
+          size_kb: number | null; 
+          item_count: number | null; 
+        }[]>;
         // Generic type definition
         [key: string]: (...args: unknown[]) => Promise<unknown>;
       };

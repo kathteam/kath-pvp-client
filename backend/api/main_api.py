@@ -22,11 +22,10 @@ class Api:
     # UI operations
     def fullscreen(self) -> None:
         self.ui_controller.fullscreen()
-        print('--->HERE<---')
 
     #
     # Remote operations
     #
 
-    def list_files(self) -> list[str, float]:
+    def list_files(self) -> list[dict]:
         return  self.file_manager.list_files()

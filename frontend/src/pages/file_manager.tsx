@@ -82,10 +82,10 @@ export default function FileManager() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    onDragEnter: () => {},
-    onDragOver: () => {},
-    onDragLeave: () => {},
-    multiple: true,
+    onDragEnter: () => console.warn('Drag entered'),
+    onDragOver: () => console.warn('Dragging over'),
+    onDragLeave: () => console.warn('Drag left'),
+    multiple: false
   });
 
   return (

@@ -37,5 +37,6 @@ class Api:
         try:
             self.file_manager.upload_file(path, file_name, file_content)
         except Exception as e:
-            # Log the error and re-raise or handle appropriately
-            raise Exception(f"Failed to upload file: {str(e)}")
+            import logging
+            logging.error(f"Failed to upload file '{file_name}' to path '{path}': {str(e)}")
+            raise ValueError(f"Failed to upload file: {str(e)}") from e

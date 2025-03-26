@@ -1,7 +1,7 @@
 import logging
 from .local import UiController
 from .local import FileManager
-from .remote import HttpClient
+from .remote import HttpClient, FastaService
 
 class Api:
     def __init__(self) -> None:
@@ -18,10 +18,12 @@ class Api:
     #
     # Local operations
     #
+        #
+        # Local operations
+        #
 
-    # UI operations
-    def fullscreen(self) -> None:
-        self.ui_controller.fullscreen()
+        # Initialize ui controller
+        self.ui_controller: UiController = UiController()
 
     #
     # Remote operations
@@ -39,3 +41,12 @@ class Api:
         except Exception as e:
             logging.error(f"Failed to upload file '{file_name}' to path '{path}': {str(e)}")
             raise ValueError(f"Failed to upload file: {str(e)}") from e
+        #
+        # Remote operations
+        #
+
+        # Initialize HTTP client that will be shared across all services
+        self.http_client: HttpClient = HttpClient()
+
+        # Initialize fasta service
+        self.fasta_service = FastaService()

@@ -3,3 +3,7 @@ pywebview[qt]==5.4; sys_platform == 'linux'
 setuptools==70.3.0
 pyinstaller==6.12.0
 requests==2.32.3
+biopython==1.82
+python-dotenv==1.0.1
+# Blast+ EXE installer
+# https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.16.0+-win64.exe

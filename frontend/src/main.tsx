@@ -8,17 +8,26 @@ declare global {
   interface Window {
     pywebview: {
       api: {
-        // Known methods
-        fullscreen: () => Promise<void>;
+        // Known services
+        ui_controller: {
+          fullscreen: () => Promise<void>;
         list_files: (...args: unknown[]) => Promise<{ //path string as arg
           filename: string; 
           type: string; 
           size_kb: number | null; 
           item_count: number | null; 
         }[]>;
-        upload_file: (...args: unknown[]) => Promise<unknown>; //path: str, file_name: str, file_content: bytes
-        // Generic type definition
-        [key: string]: (...args: unknown[]) => Promise<unknown>;
+        upload_file: (...args: unknown[]) => Promise<unknown>; //path: str, file_name: str, file_content: bytes          [method: string]: (...args: unknown[]) => Promise<unknown>;
+        },
+        fasta_service: {
+          create_disease_download: () => Promise<JSON>
+          download_reference_genome_grch38: () => Promise<JSON>;
+          [method: string]: (...args: unknown[]) => Promise<unknown>;
+        },
+        // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
+        [service: string]: {
+          [method: string]: (...args: unknown[]) => Promise<unknown>;
+        },
       };
       [key: string]: unknown;
     };

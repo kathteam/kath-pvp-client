@@ -1,0 +1,8 @@
+import os
+
+REF_GENOME = "GRCh38"
+
+PROGRAM_STORAGE_DIR = os.path.join(os.path.expanduser("~"), ".kath")
+PROGRAM_STORAGE_DIR_SHARED = os.path.join(PROGRAM_STORAGE_DIR, "shared")
+PROGRAM_STORAGE_DIR_SHARED_DATA = os.path.join(PROGRAM_STORAGE_DIR_SHARED, "data")
+PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES = os.path.join(PROGRAM_STORAGE_DIR_SHARED_DATA, "diseases")

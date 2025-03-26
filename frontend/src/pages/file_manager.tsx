@@ -18,6 +18,7 @@ export default function FileManager() {
     item_count: number | null;
   }[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('/'); // Track the current path
+  const [inputPath, setInputPath] = useState<string>(currentPath); // Track the user input for the path
 
   useEffect(() => {
     const fetchFiles = async (path: string) => {
@@ -35,10 +36,24 @@ export default function FileManager() {
   const handleNavigateUp = () => {
     const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
     setCurrentPath(parentPath);
+    setInputPath(parentPath); // Update the input field as well
   };
 
   const handleFolderClick = (folderName: string) => {
-    setCurrentPath(`${currentPath}/${folderName}`.replace('//', '/'));
+    const newPath = `${currentPath}/${folderName}`.replace('//', '/');
+    setCurrentPath(newPath);
+    setInputPath(newPath); // Update the input field as well
+  };
+
+  const handlePathChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputPath(event.target.value); // Update the input field value
+  };
+
+  // Update the current path when <Enter> is pressed
+  const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      setCurrentPath(inputPath); 
+    }
   };
 
   return (
@@ -59,10 +74,9 @@ export default function FileManager() {
         <Box sx={{ mt: 2, mb: 3 }}>
           <TextField
             fullWidth
-            value={currentPath}
-            InputProps={{
-              readOnly: true,
-            }}
+            value={inputPath}
+            onChange={handlePathChange}
+            onKeyDown={handlePathSubmit}
             variant="outlined"
             size="small"
           />

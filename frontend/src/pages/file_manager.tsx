@@ -28,7 +28,7 @@ export default function FileManager() {
   useEffect(() => {
     const fetchFiles = async (path: string) => {
       try {
-        const files = await window.pywebview.api.list_files(path);
+        const files = await window.pywebview.api.file_manager.list_files(path);
         setFileList(files);
       } catch (error) {
         console.error('Error fetching files:', error);
@@ -98,7 +98,7 @@ export default function FileManager() {
         const fileContent = await file.arrayBuffer();
         const fileName = file.name;
 
-        await window.pywebview.api.upload_file(
+        await window.pywebview.api.file_manager.upload_file(
           currentPath,
           fileName,
           Array.from(new Uint8Array(fileContent))
@@ -106,7 +106,7 @@ export default function FileManager() {
       }
 
       // Refresh the file list after upload
-      const updatedFiles = await window.pywebview.api.list_files(currentPath);
+      const updatedFiles = await window.pywebview.api.file_manager.list_files(currentPath);
       setFileList(updatedFiles);
     } catch (error) {
       console.error('Error uploading files:', error);

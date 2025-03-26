@@ -8,6 +8,7 @@ import {
   Paper,
   TextField
 } from '@mui/material';
+import { KeyboardReturn } from '@mui/icons-material'; // Import the icon
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -71,7 +72,7 @@ export default function FileManager() {
         </Typography>
 
         {/* Path Bar */}
-        <Box sx={{ mt: 2, mb: 3 }}>
+        <Box sx={{ mt: 2, mb: 3, display: 'flex', alignItems: 'center' }}>
           <TextField
             fullWidth
             value={inputPath}
@@ -79,6 +80,15 @@ export default function FileManager() {
             onKeyDown={handlePathSubmit}
             variant="outlined"
             size="small"
+            sx={{ flexGrow: 1 }}
+          />
+          <KeyboardReturn
+            sx={{
+              ml: 1,
+              cursor: 'pointer',
+              color: 'primary.main',
+            }}
+            onClick={() => setCurrentPath(inputPath)}
           />
         </Box>
 

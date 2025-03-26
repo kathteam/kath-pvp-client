@@ -8,7 +8,7 @@ import {
   Paper,
   TextField
 } from '@mui/material';
-import { KeyboardReturn, Folder, InsertDriveFile, Description, TableChart, Storage, Hub, BlurOn, PictureAsPdf, Code, Terminal, Coronavirus } from '@mui/icons-material'; // Import additional icons
+import { KeyboardReturn, Folder, InsertDriveFile, Description, TableChart, Storage, BlurOn, PictureAsPdf, Terminal, Coronavirus, Image, Movie, Audiotrack, Archive } from '@mui/icons-material'; // Import additional icons
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -75,6 +75,14 @@ export default function FileManager() {
         return <Terminal sx={{ mr: 1, color: 'success.main' }} />; // Icon for executables (.exe, .sh, etc.)
       case "folder":
         return <Folder sx={{ mr: 1, color: 'primary.main' }} />; // Icon for folders
+      case "image":
+        return <Image sx={{ mr: 1, color: 'info.main' }} />; // Icon for image files
+      case "video":
+        return <Movie sx={{ mr: 1, color: 'info.main' }} />; // Icon for video files
+      case "audio":
+        return <Audiotrack sx={{ mr: 1, color: 'info.main' }} />; // Icon for audio files
+      case "archive":
+        return <Archive sx={{ mr: 1, color: 'warning.main' }} />; // Icon for archive files
       default:
         return <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} />; // Default file icon
     }

@@ -27,5 +27,5 @@ class Api:
     # Remote operations
     #
 
-    def list_files(self) -> list[dict]:
-        return  self.file_manager.list_files()
+    def list_files(self, path=".") -> list[dict]:
+        return  self.file_manager.list_files(path)

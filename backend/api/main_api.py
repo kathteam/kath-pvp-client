@@ -26,9 +26,16 @@ class Api:
     #
     # Remote operations
     #
-
     def list_files(self, path=".") -> list[dict]:
-        return self.file_manager.list_files(path)
+        try:
+            return self.file_manager.list_files(path)
+        except Exception as e:
+            # Log the error
+            return [{"error": str(e)}]
 
     def upload_file(self, path: str, file_name: str, file_content: bytes) -> None:
-        self.file_manager.upload_file(path, file_name, file_content)
+        try:
+            self.file_manager.upload_file(path, file_name, file_content)
+        except Exception as e:
+            # Log the error and re-raise or handle appropriately
+            raise Exception(f"Failed to upload file: {str(e)}")

@@ -8,7 +8,11 @@ import {
   Paper,
   TextField
 } from '@mui/material';
-import { KeyboardReturn, Folder, InsertDriveFile, Description, TableChart, Storage, BlurOn, PictureAsPdf, Terminal, Coronavirus, Image, Movie, Audiotrack, Archive } from '@mui/icons-material'; // Import additional icons
+import { KeyboardReturn,
+  Folder,InsertDriveFile, Description, TableChart, Storage,
+  BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
+  Movie, Audiotrack, Archive } from '@mui/icons-material';
+import { useDropzone } from 'react-dropzone';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -18,7 +22,7 @@ export default function FileManager() {
     size_kb: number | null;
     item_count: number | null;
   }[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>('/'); // Track the current path
+  const [currentPath, setCurrentPath] = useState<string>('/');
   const [inputPath, setInputPath] = useState<string>(currentPath); // Track the user input for the path
 
   useEffect(() => {
@@ -88,6 +92,35 @@ export default function FileManager() {
     }
   };
 
+  const onDrop = async (acceptedFiles: File[]) => {
+    try {
+      for (const file of acceptedFiles) {
+        const fileContent = await file.arrayBuffer();
+        const fileName = file.name;
+
+        await window.pywebview.api.upload_file(
+          currentPath,
+          fileName,
+          Array.from(new Uint8Array(fileContent))
+        );
+      }
+
+      // Refresh the file list after upload
+      const updatedFiles = await window.pywebview.api.list_files(currentPath);
+      setFileList(updatedFiles);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+    }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    onDragEnter: () => console.warn('Drag entered'),
+    onDragOver: () => console.warn('Dragging over'),
+    onDragLeave: () => console.warn('Drag left'),
+    multiple: false
+  });
+
   return (
     <Container
       maxWidth="md"
@@ -121,6 +154,30 @@ export default function FileManager() {
             }}
             onClick={() => setCurrentPath(inputPath)}
           />
+        </Box>
+
+        {/* Drag-and-Drop Area */}
+        <Box
+          {...getRootProps()}
+          sx={{
+            border: '2px dashed #ddd',
+            borderRadius: 2,
+            p: 3,
+            textAlign: 'center',
+            backgroundColor: isDragActive ? '#f0f0f0' : 'transparent',
+            cursor: 'pointer',
+          }}
+        >
+          <input {...getInputProps()} type="file" />
+          {isDragActive ? (
+            <Typography variant="body1" color="primary">
+              Drop the files here...
+            </Typography>
+          ) : (
+            <Typography variant="body1" color="textSecondary">
+              Drag and drop files here, or click to select files
+            </Typography>
+          )}
         </Box>
 
         <Box sx={{ mt: 3 }}>

@@ -27,9 +27,7 @@
   },
   "author": "kathteam",
   "devDependencies": {
-    "run-script-os": "1.1.6"
-  },
-  "dependencies": {
+    "run-script-os": "1.1.6",
     "tsc": "^2.0.4",
     "typescript": "^5.8.2"
   }

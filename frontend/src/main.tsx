@@ -11,7 +11,13 @@ declare global {
         // Known services
         ui_controller: {
           fullscreen: () => Promise<void>;
-          [method: string]: (...args: unknown[]) => Promise<unknown>;
+        list_files: (...args: unknown[]) => Promise<{ //path string as arg
+          filename: string; 
+          type: string; 
+          size_kb: number | null; 
+          item_count: number | null; 
+        }[]>;
+        upload_file: (...args: unknown[]) => Promise<unknown>; //path: str, file_name: str, file_content: bytes          [method: string]: (...args: unknown[]) => Promise<unknown>;
         },
         fasta_service: {
           create_disease_download: () => Promise<JSON>

@@ -8,7 +8,10 @@ import {
   Paper,
   TextField
 } from '@mui/material';
-import { KeyboardReturn } from '@mui/icons-material';
+import { KeyboardReturn,
+  Folder,InsertDriveFile, Description, TableChart, Storage,
+  BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
+  Movie, Audiotrack, Archive } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 
 export default function FileManager() {
@@ -19,7 +22,7 @@ export default function FileManager() {
     size_kb: number | null;
     item_count: number | null;
   }[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>('.');
+  const [currentPath, setCurrentPath] = useState<string>('/');
   const [inputPath, setInputPath] = useState<string>(currentPath); // Track the user input for the path
 
   useEffect(() => {
@@ -58,17 +61,47 @@ export default function FileManager() {
     }
   };
 
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case 'text file':
+        return <Description sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .txt
+      case 'CSV':
+        return <TableChart sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .csv
+      case 'fasta':
+        return <Coronavirus sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .fasta or .fa
+      case 'VCF':
+        return <BlurOn sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .vcf
+      case 'database':
+        return <Storage sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .db or .sqlite
+      case 'PDF':
+        return <PictureAsPdf sx={{ mr: 1, color: 'error.main' }} />; // Icon for .pdf
+      case 'executable':
+        return <Terminal sx={{ mr: 1, color: 'success.main' }} />; // Icon for executables (.exe, .sh, etc.)
+      case 'folder':
+        return <Folder sx={{ mr: 1, color: 'primary.main' }} />; // Icon for folders
+      case 'image':
+        return <Image sx={{ mr: 1, color: 'info.main' }} />; // Icon for image files
+      case 'video':
+        return <Movie sx={{ mr: 1, color: 'info.main' }} />; // Icon for video files
+      case 'audio':
+        return <Audiotrack sx={{ mr: 1, color: 'info.main' }} />; // Icon for audio files
+      case 'archive':
+        return <Archive sx={{ mr: 1, color: 'warning.main' }} />; // Icon for archive files
+      default:
+        return <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} />; // Default file icon
+    }
+  };
+
   const onDrop = async (acceptedFiles: File[]) => {
     try {
       for (const file of acceptedFiles) {
-        const fileContent = await file.arrayBuffer(); // Read file content as ArrayBuffer
+        const fileContent = await file.arrayBuffer();
         const fileName = file.name;
 
-        // Upload file to the backend
         await window.pywebview.api.upload_file(
           currentPath,
           fileName,
-          Array.from(new Uint8Array(fileContent)) // Convert ArrayBuffer to byte array
+          Array.from(new Uint8Array(fileContent))
         );
       }
 
@@ -155,6 +188,7 @@ export default function FileManager() {
                 <Box
                   sx={{
                     display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
                     p: 2,
                     borderBottom: '1px solid #ddd',
@@ -162,9 +196,12 @@ export default function FileManager() {
                   }}
                   onClick={handleNavigateUp}
                 >
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    ..
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Folder sx={{ mr: 1, color: 'primary.main' }} /> {/* Icon for parent directory */}
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      ..
+                    </Typography>
+                  </Box>
                   <Typography variant="body2" color="textSecondary">
                     Parent Directory
                   </Typography>
@@ -175,6 +212,7 @@ export default function FileManager() {
                   key={index}
                   sx={{
                     display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
                     p: 2,
                     borderBottom: '1px solid #ddd',
@@ -182,9 +220,12 @@ export default function FileManager() {
                   }}
                   onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
                 >
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {file.filename}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {getFileIcon(file.type)} {/* Dynamically render the icon based on file type */}
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      {file.filename}
+                    </Typography>
+                  </Box>
                   <Typography variant="body2" color="textSecondary">
                     {file.type === 'folder'
                       ? `${file.item_count} items`

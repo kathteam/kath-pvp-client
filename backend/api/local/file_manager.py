@@ -53,14 +53,20 @@ class FileManager:
     def _determine_file_type(self, filename: str) -> str:
         _, ext = os.path.splitext(filename)
         ext = ext.lower()
-        if ext in [".txt"]:
-            return "text file"
-        if ext in [".csv"]:
-            return "CSV"
-        if ext in [".fasta", ".fa"]:
-            return "fasta"
-        if ext in [".vcf"]:
-            return "VCF"
-        if ext in [".db", ".sqlite"]:
-            return "database"
+        file_types = {
+            "text file": [".txt"],
+            "CSV": [".csv", ".tsv", ".xls", ".xlsx", ".ods"],
+            "fasta": [".fasta", ".fa"],
+            "VCF": [".vcf"],
+            "database": [".db", ".sqlite"],
+            "PDF": [".pdf", ".doc", ".docx", ".odt", ".rtf"],
+            "executable": [".exe", ".sh", ".bat", ".py", ".pl", ".rb", ".jar"],
+            "image": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"],
+            "video": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"],
+            "audio": [".mp3", ".wav", ".flac", ".ogg", ".m4a"],
+            "archive": [".zip", ".tar", ".gz", ".rar", ".7z", ".iso"]
+        }
+        for file_type, extensions in file_types.items():
+            if ext in extensions:
+                return file_type
         return "file"

@@ -8,7 +8,7 @@ import {
   Paper,
   TextField
 } from '@mui/material';
-import { KeyboardReturn } from '@mui/icons-material'; // Import the icon
+import { KeyboardReturn, Folder, InsertDriveFile, HelpOutline } from '@mui/icons-material'; // Import icons
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -100,6 +100,7 @@ export default function FileManager() {
                 <Box
                   sx={{
                     display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
                     p: 2,
                     borderBottom: '1px solid #ddd',
@@ -107,9 +108,12 @@ export default function FileManager() {
                   }}
                   onClick={handleNavigateUp}
                 >
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    ..
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Folder sx={{ mr: 1, color: 'primary.main' }} /> {/* Icon for parent directory */}
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      ..
+                    </Typography>
+                  </Box>
                   <Typography variant="body2" color="textSecondary">
                     Parent Directory
                   </Typography>
@@ -120,6 +124,7 @@ export default function FileManager() {
                   key={index}
                   sx={{
                     display: 'flex',
+                    alignItems: 'center',
                     justifyContent: 'space-between',
                     p: 2,
                     borderBottom: '1px solid #ddd',
@@ -127,9 +132,18 @@ export default function FileManager() {
                   }}
                   onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
                 >
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {file.filename}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {file.type === 'folder' ? (
+                      <Folder sx={{ mr: 1, color: 'primary.main' }} /> // Folder icon
+                    ) : file.type === 'unknown' ? (
+                      <HelpOutline sx={{ mr: 1, color: 'text.secondary' }} /> // Unknown type icon
+                    ) : (
+                      <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} /> // File icon
+                    )}
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      {file.filename}
+                    </Typography>
+                  </Box>
                   <Typography variant="body2" color="textSecondary">
                     {file.type === 'folder'
                       ? `${file.item_count} items`

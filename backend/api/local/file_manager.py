@@ -1,4 +1,5 @@
 import os
+import shutil
 from logging import Logger
 from utils.logger import get_logger
 
@@ -43,6 +44,12 @@ class FileManager:
         self.logger.info(f"Listing files in {path}")
         self.logger.info(f"Files: {files_string}")
         return file_info
+
+    def upload_file(self, path: str, file_name: str, file_content: bytes) -> None:
+        target_path = os.path.join(WORKDIR, path, file_name)
+        with open(target_path, "wb") as f:
+            f.write(bytes(file_content))  # Convert list to bytes
+        self.logger.info(f"Uploaded file: {file_name} to {path}")
 
     def _determine_file_type(self, filename: str) -> str:
         _, ext = os.path.splitext(filename)

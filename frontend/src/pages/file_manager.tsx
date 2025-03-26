@@ -19,7 +19,7 @@ export default function FileManager() {
     size_kb: number | null;
     item_count: number | null;
   }[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>('/');
+  const [currentPath, setCurrentPath] = useState<string>('.');
   const [inputPath, setInputPath] = useState<string>(currentPath); // Track the user input for the path
 
   useEffect(() => {
@@ -61,9 +61,17 @@ export default function FileManager() {
   const onDrop = async (acceptedFiles: File[]) => {
     try {
       for (const file of acceptedFiles) {
-        // Example: Upload file to the backend
-        await window.pywebview.api.upload_file(currentPath, file);
+        const fileContent = await file.arrayBuffer(); // Read file content as ArrayBuffer
+        const fileName = file.name;
+
+        // Upload file to the backend
+        await window.pywebview.api.upload_file(
+          currentPath,
+          fileName,
+          Array.from(new Uint8Array(fileContent)) // Convert ArrayBuffer to byte array
+        );
       }
+
       // Refresh the file list after upload
       const updatedFiles = await window.pywebview.api.list_files(currentPath);
       setFileList(updatedFiles);

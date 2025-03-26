@@ -16,6 +16,7 @@ declare global {
           size_kb: number | null; 
           item_count: number | null; 
         }[]>;
+        upload_file: (...args: unknown[]) => Promise<unknown>; //path: str, file_name: str, file_content: bytes
         // Generic type definition
         [key: string]: (...args: unknown[]) => Promise<unknown>;
       };

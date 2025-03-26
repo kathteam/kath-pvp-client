@@ -28,4 +28,7 @@ class Api:
     #
 
     def list_files(self, path=".") -> list[dict]:
-        return  self.file_manager.list_files(path)
+        return self.file_manager.list_files(path)
+
+    def upload_file(self, path: str, file_name: str, file_content: bytes) -> None:
+        self.file_manager.upload_file(path, file_name, file_content)

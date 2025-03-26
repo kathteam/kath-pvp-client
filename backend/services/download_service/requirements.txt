@@ -1,3 +1,0 @@
-requests==2.31.0
-biopython==1.82
-python-dotenv==1.0.1

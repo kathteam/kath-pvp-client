@@ -47,26 +47,20 @@ class FileManager:
     def _determine_file_type(self, filename: str) -> str:
         _, ext = os.path.splitext(filename)
         ext = ext.lower()
-        if ext in [".txt"]:
-            return "text file"
-        if ext in [".csv", ".tsv", ".xls", ".xlsx", ".ods"]:
-            return "CSV"
-        if ext in [".fasta", ".fa"]:
-            return "fasta"
-        if ext in [".vcf"]:
-            return "VCF"
-        if ext in [".db", ".sqlite"]:
-            return "database"
-        if ext in [".pdf", ".doc", ".docx", ".odt", ".rtf"]:
-            return "PDF"
-        if ext in [".exe", ".sh", ".bat", ".py", ".pl", ".rb", ".jar"]:
-            return "executable"
-        if ext in [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"]:
-            return "image"
-        if ext in [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"]:
-            return "video"
-        if ext in [".mp3", ".wav", ".flac", ".ogg", ".m4a"]:
-            return "audio"
-        if ext in [".zip", ".tar", ".gz", ".rar", ".7z", ".iso"]:
-            return "archive"
+        file_types = {
+            "text file": [".txt"],
+            "CSV": [".csv", ".tsv", ".xls", ".xlsx", ".ods"],
+            "fasta": [".fasta", ".fa"],
+            "VCF": [".vcf"],
+            "database": [".db", ".sqlite"],
+            "PDF": [".pdf", ".doc", ".docx", ".odt", ".rtf"],
+            "executable": [".exe", ".sh", ".bat", ".py", ".pl", ".rb", ".jar"],
+            "image": [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg"],
+            "video": [".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv"],
+            "audio": [".mp3", ".wav", ".flac", ".ogg", ".m4a"],
+            "archive": [".zip", ".tar", ".gz", ".rar", ".7z", ".iso"]
+        }
+        for file_type, extensions in file_types.items():
+            if ext in extensions:
+                return file_type
         return "file"

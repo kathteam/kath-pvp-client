@@ -59,29 +59,29 @@ export default function FileManager() {
 
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
-      case "text file":
+      case 'text file':
         return <Description sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .txt
-      case "CSV":
+      case 'CSV':
         return <TableChart sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .csv
-      case "fasta":
+      case 'fasta':
         return <Coronavirus sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .fasta or .fa
-      case "VCF":
+      case 'VCF':
         return <BlurOn sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .vcf
-      case "database":
+      case 'database':
         return <Storage sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .db or .sqlite
-      case "PDF":
+      case 'PDF':
         return <PictureAsPdf sx={{ mr: 1, color: 'error.main' }} />; // Icon for .pdf
-      case "executable":
+      case 'executable':
         return <Terminal sx={{ mr: 1, color: 'success.main' }} />; // Icon for executables (.exe, .sh, etc.)
-      case "folder":
+      case 'folder':
         return <Folder sx={{ mr: 1, color: 'primary.main' }} />; // Icon for folders
-      case "image":
+      case 'image':
         return <Image sx={{ mr: 1, color: 'info.main' }} />; // Icon for image files
-      case "video":
+      case 'video':
         return <Movie sx={{ mr: 1, color: 'info.main' }} />; // Icon for video files
-      case "audio":
+      case 'audio':
         return <Audiotrack sx={{ mr: 1, color: 'info.main' }} />; // Icon for audio files
-      case "archive":
+      case 'archive':
         return <Archive sx={{ mr: 1, color: 'warning.main' }} />; // Icon for archive files
       default:
         return <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} />; // Default file icon

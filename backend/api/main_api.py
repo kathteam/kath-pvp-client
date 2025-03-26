@@ -1,9 +1,7 @@
+import logging
 from .local import UiController
 from .local import FileManager
 from .remote import HttpClient
-import logging
-
-
 
 class Api:
     def __init__(self) -> None:

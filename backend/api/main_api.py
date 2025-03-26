@@ -1,4 +1,5 @@
 from .local import UiController
+from .local import FileManager
 from .remote import HttpClient
 
 
@@ -9,6 +10,8 @@ class Api:
 
         # Initialize HTTP client that will be shared across all services
         self.http_client: HttpClient = HttpClient()
+
+        self.file_manager: FileManager = FileManager()
 
         # Remove functionality
 
@@ -23,3 +26,6 @@ class Api:
     #
     # Remote operations
     #
+
+    def list_files(self, path=".") -> list[dict]:
+        return  self.file_manager.list_files(path)

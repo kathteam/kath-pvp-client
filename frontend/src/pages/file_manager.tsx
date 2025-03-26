@@ -1,15 +1,92 @@
-import { JSX } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
   Button,
   Container,
-  Paper
+  Paper,
+  TextField
 } from '@mui/material';
+import { KeyboardReturn, Folder, InsertDriveFile, Description, TableChart, Storage, BlurOn, PictureAsPdf, Terminal, Coronavirus, Image, Movie, Audiotrack, Archive } from '@mui/icons-material'; // Import additional icons
 
-export default function FileManager(): JSX.Element {
+export default function FileManager() {
   const navigate = useNavigate();
+  const [fileList, setFileList] = useState<{
+    filename: string;
+    type: string;
+    size_kb: number | null;
+    item_count: number | null;
+  }[]>([]);
+  const [currentPath, setCurrentPath] = useState<string>('/'); // Track the current path
+  const [inputPath, setInputPath] = useState<string>(currentPath); // Track the user input for the path
+
+  useEffect(() => {
+    const fetchFiles = async (path: string) => {
+      try {
+        const files = await window.pywebview.api.list_files(path);
+        setFileList(files);
+      } catch (error) {
+        console.error('Error fetching files:', error);
+      }
+    };
+
+    fetchFiles(currentPath);
+  }, [currentPath]);
+
+  const handleNavigateUp = () => {
+    const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+    setCurrentPath(parentPath);
+    setInputPath(parentPath); // Update the input field as well
+  };
+
+  const handleFolderClick = (folderName: string) => {
+    const newPath = `${currentPath}/${folderName}`.replace('//', '/');
+    setCurrentPath(newPath);
+    setInputPath(newPath); // Update the input field as well
+  };
+
+  const handlePathChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputPath(event.target.value); // Update the input field value
+  };
+
+  // Update the current path when <Enter> is pressed
+  const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      setCurrentPath(inputPath); 
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case 'text file':
+        return <Description sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .txt
+      case 'CSV':
+        return <TableChart sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .csv
+      case 'fasta':
+        return <Coronavirus sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .fasta or .fa
+      case 'VCF':
+        return <BlurOn sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .vcf
+      case 'database':
+        return <Storage sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .db or .sqlite
+      case 'PDF':
+        return <PictureAsPdf sx={{ mr: 1, color: 'error.main' }} />; // Icon for .pdf
+      case 'executable':
+        return <Terminal sx={{ mr: 1, color: 'success.main' }} />; // Icon for executables (.exe, .sh, etc.)
+      case 'folder':
+        return <Folder sx={{ mr: 1, color: 'primary.main' }} />; // Icon for folders
+      case 'image':
+        return <Image sx={{ mr: 1, color: 'info.main' }} />; // Icon for image files
+      case 'video':
+        return <Movie sx={{ mr: 1, color: 'info.main' }} />; // Icon for video files
+      case 'audio':
+        return <Audiotrack sx={{ mr: 1, color: 'info.main' }} />; // Icon for audio files
+      case 'archive':
+        return <Archive sx={{ mr: 1, color: 'warning.main' }} />; // Icon for archive files
+      default:
+        return <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} />; // Default file icon
+    }
+  };
 
   return (
     <Container
@@ -20,13 +97,94 @@ export default function FileManager(): JSX.Element {
         py: 4
       }}
     >
-      <Paper elevation={0} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
+      <Paper elevation={0} sx={{ p: 3, width: '100%' }}>
         <Typography variant="h4" component="h1" gutterBottom>
           File Manager
         </Typography>
-        <Typography variant="body1">
-          This is the file manager page of our application.
-        </Typography>
+
+        {/* Path Bar */}
+        <Box sx={{ mt: 2, mb: 3, display: 'flex', alignItems: 'center' }}>
+          <TextField
+            fullWidth
+            value={inputPath}
+            onChange={handlePathChange}
+            onKeyDown={handlePathSubmit}
+            variant="outlined"
+            size="small"
+            sx={{ flexGrow: 1 }}
+          />
+          <KeyboardReturn
+            sx={{
+              ml: 1,
+              cursor: 'pointer',
+              color: 'primary.main',
+            }}
+            onClick={() => setCurrentPath(inputPath)}
+          />
+        </Box>
+
+        <Box sx={{ mt: 3 }}>
+          {fileList.length > 0 ? (
+            <>
+              {/* .. folder for navigation */}
+              {currentPath !== '/' && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: 2,
+                    borderBottom: '1px solid #ddd',
+                    cursor: 'pointer',
+                  }}
+                  onClick={handleNavigateUp}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Folder sx={{ mr: 1, color: 'primary.main' }} /> {/* Icon for parent directory */}
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      ..
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    Parent Directory
+                  </Typography>
+                </Box>
+              )}
+              {fileList.map((file, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: 2,
+                    borderBottom: '1px solid #ddd',
+                    cursor: file.type === 'folder' ? 'pointer' : 'default',
+                  }}
+                  onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {getFileIcon(file.type)} {/* Dynamically render the icon based on file type */}
+                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                      {file.filename}
+                    </Typography>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    {file.type === 'folder'
+                      ? `${file.item_count} items`
+                      : `${file.size_kb?.toFixed(2)} KB`}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    {file.type}
+                  </Typography>
+                </Box>
+              ))}
+            </>
+          ) : (
+            <Typography variant="body1">No files available.</Typography>
+          )}
+        </Box>
+
         <Box sx={{ mt: 3 }}>
           <Button
             variant="contained"

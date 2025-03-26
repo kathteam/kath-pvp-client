@@ -8,7 +8,7 @@ import {
   Paper,
   TextField
 } from '@mui/material';
-import { KeyboardReturn, Folder, InsertDriveFile, HelpOutline } from '@mui/icons-material'; // Import icons
+import { KeyboardReturn, Folder, InsertDriveFile, Description, TableChart, Storage, Hub, BlurOn, PictureAsPdf, Code, Terminal, Coronavirus } from '@mui/icons-material'; // Import additional icons
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -54,6 +54,29 @@ export default function FileManager() {
   const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       setCurrentPath(inputPath); 
+    }
+  };
+
+  const getFileIcon = (fileType: string) => {
+    switch (fileType) {
+      case "text file":
+        return <Description sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .txt
+      case "CSV":
+        return <TableChart sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .csv
+      case "fasta":
+        return <Coronavirus sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .fasta or .fa
+      case "VCF":
+        return <BlurOn sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .vcf
+      case "database":
+        return <Storage sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .db or .sqlite
+      case "PDF":
+        return <PictureAsPdf sx={{ mr: 1, color: 'error.main' }} />; // Icon for .pdf
+      case "executable":
+        return <Terminal sx={{ mr: 1, color: 'success.main' }} />; // Icon for executables (.exe, .sh, etc.)
+      case "folder":
+        return <Folder sx={{ mr: 1, color: 'primary.main' }} />; // Icon for folders
+      default:
+        return <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} />; // Default file icon
     }
   };
 
@@ -133,13 +156,7 @@ export default function FileManager() {
                   onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {file.type === 'folder' ? (
-                      <Folder sx={{ mr: 1, color: 'primary.main' }} /> // Folder icon
-                    ) : file.type === 'unknown' ? (
-                      <HelpOutline sx={{ mr: 1, color: 'text.secondary' }} /> // Unknown type icon
-                    ) : (
-                      <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} /> // File icon
-                    )}
+                    {getFileIcon(file.type)} {/* Dynamically render the icon based on file type */}
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                       {file.filename}
                     </Typography>

@@ -9,6 +9,8 @@ class FileManager:
         self.logger: Logger = get_logger(__name__)
 
     def list_files(self, path=".") -> list[dict]:
+        if not os.path.exists(os.path.join(WORKDIR, path)):
+            raise ValueError(f"Invalid path: {path}")
         files = os.listdir(os.path.join(WORKDIR, path))
         file_info = []
         for file in files:
@@ -49,6 +51,17 @@ class FileManager:
         with open(target_path, "wb") as f:
             f.write(bytes(file_content))  # Convert list to bytes
         self.logger.info(f"Uploaded file: {file_name} to {path}")
+
+    def delete_file(self, path: str, file_name: str) -> None:
+        target_path = os.path.join(WORKDIR, path, file_name)
+        os.remove(target_path)
+        self.logger.info(f"Deleted file: {file_name} from {path}")
+
+    def rename_file(self, path: str, old_name: str, new_name: str) -> None:
+        old_path = os.path.join(WORKDIR, path, old_name)
+        new_path = os.path.join(WORKDIR, path, new_name)
+        os.rename(old_path, new_path)
+        self.logger.info(f"Renamed file: {old_name} to {new_name} in {path}")
 
     def _determine_file_type(self, filename: str) -> str:
         _, ext = os.path.splitext(filename)

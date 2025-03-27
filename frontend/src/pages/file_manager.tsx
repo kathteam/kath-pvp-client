@@ -11,8 +11,9 @@ import {
 import { KeyboardReturn,
   Folder,InsertDriveFile, Description, TableChart, Storage,
   BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
-  Movie, Audiotrack, Archive } from '@mui/icons-material';
+  Movie, Audiotrack, Archive, MoreVert } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
+import { Menu, MenuItem, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText } from '@mui/material';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -120,6 +121,63 @@ export default function FileManager() {
     onDragLeave: () => console.warn('Drag left'),
     multiple: false
   });
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setSelectedFileForMenu(null); // Reset the selected file
+  };
+
+  const [selectedFileForMenu, setSelectedFileForMenu] = useState<string | null>(null);
+
+  const handleOptionsClick = (event: React.MouseEvent<SVGSVGElement>, filename: string) => {
+    setAnchorEl(event.currentTarget as unknown as HTMLElement);
+    setSelectedFileForMenu(filename); // Set the file associated with the menu
+  };
+
+  const [openRenameDialog, setOpenRenameDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);  
+
+  const handleRenameFile = (oldName: string) => async (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation(); // Prevent the menu from closing before the action is complete
+    console.log('Rename file:', oldName);
+    setSelectedFile(oldName);
+    setOpenRenameDialog(true);
+  };
+
+  const handleRenameConfirm = async () => {
+    if (selectedFile) {
+      const newName = (document.getElementById('new-name') as HTMLInputElement).value;
+      console.log(newName);
+      await window.pywebview.api.file_manager.rename_file(currentPath, selectedFile, newName);
+      const updatedFiles = await window.pywebview.api.file_manager.list_files(currentPath);
+      setFileList(updatedFiles);
+    }
+    setOpenRenameDialog(false);
+  };
+
+  const handleDeleteFile = (filename: string) => async (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setSelectedFile(filename);
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (selectedFile) {
+      try {
+        await window.pywebview.api.file_manager.delete_file(currentPath, selectedFile);
+        const updatedFiles = await window.pywebview.api.file_manager.list_files(currentPath);
+        setFileList(updatedFiles);
+      } catch (error) {
+        console.error("Error deleting file:", error);
+      }
+    }
+    setOpenDeleteDialog(false);
+  };
+  
 
   return (
     <Container
@@ -234,6 +292,10 @@ export default function FileManager() {
                   <Typography variant="body2" color="textSecondary">
                     {file.type}
                   </Typography>
+                  <MoreVert
+                    onClick={(e) => handleOptionsClick(e, file.filename)} // Pass filename here
+                    sx={{ cursor: 'pointer' }}
+                  />
                 </Box>
               ))}
             </>
@@ -241,6 +303,23 @@ export default function FileManager() {
             <Typography variant="body1">No files available.</Typography>
           )}
         </Box>
+
+        <Menu
+          id="options-menu"
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          MenuListProps={{
+            'aria-labelledby': 'options-button',
+          }}
+        >
+          {selectedFileForMenu && (
+            <>
+              <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
+              <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
+            </>
+          )}
+        </Menu>
 
         <Box sx={{ mt: 3 }}>
           <Button
@@ -251,6 +330,39 @@ export default function FileManager() {
             Back to Dashboard
           </Button>
         </Box>
+        <Dialog open={openRenameDialog} onClose={() => setOpenRenameDialog(false)}>
+          <DialogTitle>Rename File</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Enter a new name for the file:
+            </DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="new-name"
+              label="New Name"
+              type="text"
+              fullWidth
+              variant="standard"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenRenameDialog(false)}>Cancel</Button>
+            <Button onClick={handleRenameConfirm}>Rename</Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+          <DialogTitle>Delete File</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete the file?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
+            <Button onClick={handleDeleteConfirm}>Delete</Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
     </Container>
   );

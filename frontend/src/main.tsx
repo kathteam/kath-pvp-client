@@ -21,6 +21,8 @@ declare global {
             item_count: number | null; 
           }[]>;
           upload_file: (...args: unknown[]) => Promise<unknown>; //path: str, file_name: str, file_content: bytes          [method: string]: (...args: unknown[]) => Promise<unknown>;
+          rename_file: (...args: unknown[]) => Promise<unknown>;
+          delete_file: (...args: unknown[]) => Promise<unknown>;
         },
         
         fasta_service: {

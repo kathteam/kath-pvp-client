@@ -24,9 +24,29 @@ declare global {
         },
         
         fasta_service: {
-          create_disease_download: () => Promise<JSON>
-          download_reference_genome_grch38: () => Promise<JSON>;
-          [method: string]: (...args: unknown[]) => Promise<unknown>;
+          create_disease_download: (disease: string, ref_max: number) => Promise<{
+            "status": string;
+            "disease_term": string;
+            "max_results": number;
+            "downloaded_files": string[];
+            "count": number;
+          }>;
+          download_reference_genome_grch38: () => Promise<{
+            status: string;
+            reference_genome_path: string;
+          }>;
+          [method: string]: (...args: any[]) => Promise<any>;
+        },
+        blast_service: {
+          align_mutations: () => Promise<{
+            "status": string;
+            "result_file": string;
+        }>;
+        perform_blast_analysis: () => Promise<{
+          "status": string;
+          "result_file": string;
+      }>;
+        [method: string]: (...args: any[]) => Promise<any>;
         },
         // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
         [service: string]: {

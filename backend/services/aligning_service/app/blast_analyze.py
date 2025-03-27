@@ -336,7 +336,7 @@ def save_mutations_to_csv(mutations: List[Dict], csv_file: Union[str, Path]) -> 
         logger.error(f"Failed to save mutations to CSV: {e}")
 
 
-def main():
+def analyze_blast_xml():
     """
     Main function that processes all BLAST results and outputs CSV-formatted mutation data
     into a single consolidated file.
@@ -529,4 +529,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    analyze_blast_xml()

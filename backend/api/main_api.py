@@ -1,7 +1,7 @@
 import logging
 from .local import UiController
 from .local import FileManager
-from .remote import HttpClient, FastaService
+from .remote import HttpClient, FastaService, BlastService
 
 class Api:
     def __init__(self) -> None:
@@ -15,6 +15,8 @@ class Api:
         self.http_client: HttpClient = HttpClient()
         # Initialize fasta service
         self.fasta_service = FastaService()
+        # Initialize blast service
+        self.blast_service = BlastService()
 
     #
     # Local operations

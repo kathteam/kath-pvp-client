@@ -253,8 +253,14 @@ def parse_blast_results(result_file: str):
                             logger.info(f"    ... and {len(mutations) - 5} more mutations")
 
 
-# Example usage
-if __name__ == "__main__":
+def perform_blast_aligning() -> str:
+    """
+    Perform BLAST analysis using the provided query and reference genome.
+
+    Args:
+    Returns:
+        Path to BLAST results file
+    """
     load_dotenv()  # Make sure environment variables are loaded
     PRIVATE_API = os.environ.get("NCBI_API_KEY")
     PRIVATE_EMAIL = os.environ.get("NCBI_API_EMAIL")
@@ -275,6 +281,7 @@ if __name__ == "__main__":
         if not ref_files:
             logger.error(f"No reference genome FASTA files found in {reference_path}")
             sys.exit(1)
+            return None
 
         # Use the first reference file found
         reference_fasta = os.path.join(reference_path, ref_files[0])
@@ -295,6 +302,7 @@ if __name__ == "__main__":
                     str(sample_path), str(reference_fasta), str(dir["blast_dir"])
                 )
                 logger.info(f"BLAST analysis complete. Results saved to {result_file}")
+                return result_file
         else:
             logger.error(f"Sample directory does not exist: {user_uploads_folder}")
 
@@ -302,3 +310,7 @@ if __name__ == "__main__":
         logger.error("BLAST+ tools not found. Please install BLAST+ (sudo apt install ncbi-blast+)")
     except Exception as e:
         logger.exception(f"Error running BLAST: {e}")
+
+# Example usage
+if __name__ == "__main__":
+    perform_blast_aligning()

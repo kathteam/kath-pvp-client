@@ -6,6 +6,7 @@ from shared.constants import REF_GENOME, PROGRAM_STORAGE_DIR_SHARED_DATA
 from services.download_service.app.fasta_downloader import (
     download_disease_related_genes_clinvar,
     download_reference_genome_direct,
+    reference_genome_exists
 )
 
 
@@ -41,6 +42,10 @@ class FastaService:
         """
         Downloads the reference genome for GRCh38/GRCh37.
         """
+        
+        if reference_genome_exists(ref_genome):
+            return {"status": "success", "reference_genome": ref_genome}
+        
         ref_file = download_reference_genome_direct(version=ref_genome)
 
         if ref_file is None:

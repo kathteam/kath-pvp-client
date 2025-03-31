@@ -99,6 +99,11 @@ def list_downloaded_files(ref_dir: Path, samples_dir: Path) -> Dict[str, List[st
     return result
 
 
+def reference_genome_exists(ref_dir: Path, version: str = REF_GENOME) -> bool:
+    """Check if the reference genome file exists."""
+    return any(Path(ref_dir).glob(f"{version}_direct.fasta"))
+
+
 def download_reference_genome_direct(
     version: str = REF_GENOME, output_dir: Optional[Path] = None
 ) -> str:

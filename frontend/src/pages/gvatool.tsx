@@ -1,17 +1,55 @@
-import { JSX } from 'react';
+import { JSX, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
   Button,
   Container,
-  Paper
+  Paper,
+  Snackbar,
+  Stack,
+  Alert
 } from '@mui/material';
+import DiseaseCard from './disease_card';
+import BlastCard from './blast_card';
 
 export default function GVATool(): JSX.Element {
+  const [referenceGenomePath, setReferenceGenomePath] = useState<{
+    status: string;
+    reference_genome_path: string;
+  }>();
+
   const navigate = useNavigate();
 
+  const downloadReferenceGenome = async () => {
+
+    setReferenceGenomePath({ status: 'processing', reference_genome_path: '' });
+
+    try {
+      const response = await window.pywebview.api.fasta_service.download_reference_genome_grch38();
+      setReferenceGenomePath(response);
+    }
+    catch (error) {
+      console.error(error);
+      setReferenceGenomePath({ status: 'error', reference_genome_path: '' });
+    }
+  };
+
+  const getButtonColor = () => {
+    if (!referenceGenomePath) {
+      return 'info';
+    }
+    if (referenceGenomePath?.status === 'processing') {
+      return 'warning';
+    }
+    if (referenceGenomePath?.status === 'success') {
+      return 'success';
+    }
+    return 'error';
+  };
+
   return (
+    <>
     <Container
       maxWidth="md"
       sx={{
@@ -38,11 +76,16 @@ export default function GVATool(): JSX.Element {
           <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
             <Button
               variant="contained"
-              color="info"
-              onClick={() => window.pywebview.api.fasta_service.download_reference_genome_grch38()}
+              color={getButtonColor()}
+              onClick={() => downloadReferenceGenome()}
               sx={{ mt: 2 }}
+              disabled={referenceGenomePath?.status === 'processing'}
             >
-              Test Download reference Genome
+              {referenceGenomePath?.status === 'processing'
+                ? 'Downloading...'
+                : referenceGenomePath?.status === 'success'
+                  ? 'Downloaded'
+                  : 'Download reference Genome'}
             </Button>
             <Button
               variant="contained"
@@ -55,6 +98,32 @@ export default function GVATool(): JSX.Element {
           </Box>
         </Box>
       </Paper>
+      <Stack>
+        <Snackbar
+          open={Boolean(referenceGenomePath)}
+          autoHideDuration={6000}
+          onClose={() => setReferenceGenomePath(undefined)}
+          message={referenceGenomePath?.status}
+          >
+            <Alert 
+            severity={
+              referenceGenomePath?.status === 'success' ? 'success' : 
+              referenceGenomePath?.status === 'processing' ? 'warning' : 'error'
+            }
+            onClose={() => setReferenceGenomePath(undefined)}
+            >
+            {!referenceGenomePath ? 'Processing...' :
+              referenceGenomePath.status === 'success' 
+              ? `Reference genome downloaded to: ${referenceGenomePath.reference_genome_path}` 
+              : referenceGenomePath.status === 'processing'
+              ? 'Downloading reference genome...'
+              : 'Failed to download reference genome'}
+            </Alert>
+        </Snackbar>
+      </Stack>
     </Container>
+    <DiseaseCard/>
+    <BlastCard/>
+    </>
   );
 }

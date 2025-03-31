@@ -23,6 +23,17 @@ logger = get_logger(__name__)
 
 
 def validate_variant(chromosome: Union[int, str], position: int, reference: str, alternate: str) -> bool:
+    """ Checks if the variant data is valid.
+
+    Args:
+        chromosome (Union[int, str]): Chromosome number or letter.
+        position (int): Genomic position.
+        reference (str): Reference allele.
+        alternate (str): Alternate allele.
+
+    Returns:
+        bool: True if the variant data is valid, False otherwise.
+    """
     if not re.match(r"^[0-9XYM]+$", str(chromosome)):
         logger.error(f"Invalid chromosome: {chromosome}")
         return False
@@ -43,6 +54,14 @@ def validate_variant(chromosome: Union[int, str], position: int, reference: str,
 
 
 def query_into_myvariant(variant: str) -> Optional[Dict[str, Any]]:
+    """Queries MyVariant.info for variant information.
+
+    Args:
+        variant (str): Human Genome Variation Society (HGVS) identifier (mutation)
+
+    Returns:
+        Optional[Dict[str, Any]]: Variant information if found in JSON, None otherwise.
+    """
     url = f"https://myvariant.info/v1/variant/{variant}"
     
     try:
@@ -66,10 +85,30 @@ def query_into_myvariant(variant: str) -> Optional[Dict[str, Any]]:
 
 
 def format_variant_hgvs(chromosome: str, position: int, reference: str, alternate: str) -> str:
+    """Returns a formatted HGVS identifier for the variant.
+
+    Args:
+        chromosome (str): chromosome number or letter
+        position (int): genomic position
+        reference (str): reference allele
+        alternate (str): alternate allele
+
+    Returns:
+        str: formatted HGVS identifier
+    """
     return f"chr{chromosome}:g.{position}{reference}>{alternate}"
 
 
 def extract_gene_id(variant: Dict[str, Any]) -> Optional[str]:
+    """Finds the gene ID from the variant data from JSON.
+
+    Args:
+        variant (Dict[str, Any]): Gene variant data from JSON.
+
+    Returns:
+        Optional[str]: Gene ID if found, None otherwise.
+    """
+
     try:
         # Try dbSNP source
         if "dbsnp" in variant and "gene" in variant["dbsnp"]:
@@ -163,6 +202,14 @@ def extract_gene_id(variant: Dict[str, Any]) -> Optional[str]:
 
 
 def _convert_ensembl_to_entrez(ensembl_id: str) -> Optional[str]:
+    """backup function to convert Ensembl ID to Entrez ID
+
+    Args:
+        ensembl_id (str): Ensembl gene ID
+
+    Returns:
+        Optional[str]: Entrez gene ID if found, None otherwise.
+    """
     try:
         handle = Entrez.esearch(db="gene", term=f"{ensembl_id}[Ensembl ID] AND human[Organism]", retmode="xml")
         record = Entrez.read(handle)
@@ -176,6 +223,14 @@ def _convert_ensembl_to_entrez(ensembl_id: str) -> Optional[str]:
 
 
 def _lookup_gene_id_by_symbol(gene_symbol: str) -> Optional[str]:
+    """ITS EXACTLY THE SAME AS THE FUNCTION ABOVE, It shouldn't be here, but I'm too lazy to change it
+
+    Args:
+        gene_symbol (str): Gene symbol
+
+    Returns:
+        Optional[str]: Gene ID if found, None otherwise.
+    """
     try:
         handle = Entrez.esearch(db="gene", term=f"{gene_symbol}[Gene Symbol] AND human[Organism]", retmode="xml")
         record = Entrez.read(handle)
@@ -189,6 +244,16 @@ def _lookup_gene_id_by_symbol(gene_symbol: str) -> Optional[str]:
 
 
 def fetch_clinvar_ids_by_gene(gene_id: str) -> List[str]:
+    """search ClinVar for pathogenic and likely pathogenic variants for a gene.
+    
+    # TODO: add multiple genes for quicker search
+
+    Args:
+        gene_id (str): Gene ID
+
+    Returns:
+        List[str]: List of ClinVar IDs for the gene.
+    """
     try:
         id_handler = Entrez.esearch(
             db="clinvar", 
@@ -209,6 +274,14 @@ def fetch_clinvar_ids_by_gene(gene_id: str) -> List[str]:
 
 
 def fetch_disease_data(clinvar_ids: List[str]) -> List[Dict[str, Any]]:
+    """Fetches disease information from ClinVar for a list of ClinVar IDs.
+
+    Args:
+        clinvar_ids (List[str]): List of ClinVar IDs.
+
+    Returns:
+        List[Dict[str, Any]]: List of disease information dictionaries.
+    """
     results = []
     
     for id in clinvar_ids:
@@ -266,6 +339,12 @@ def fetch_disease_data(clinvar_ids: List[str]) -> List[Dict[str, Any]]:
 
 
 def save_to_csv(data: List[Dict[str, Any]], output_path: str):
+    """Saves results to a CSV file.
+
+    Args:
+        data (List[Dict[str, Any]]): List of dictionaries with data. JSON.
+        output_path (str): Output file path.
+    """
     try:
         df = pd.DataFrame(data)
         df.to_csv(output_path, index=False)
@@ -275,6 +354,14 @@ def save_to_csv(data: List[Dict[str, Any]], output_path: str):
 
 
 def load_variants_from_csv(csv_path: str) -> pd.DataFrame:
+    """Loads variants from a CSV file.
+
+    Args:
+        csv_path (str): Path to the CSV file.
+
+    Returns:
+        pd.DataFrame: DataFrame with variant data.
+    """
     try:
         data = pd.read_csv(csv_path)
         data = data.dropna(subset=["chromosome", "position", "reference", "query"])
@@ -300,6 +387,8 @@ def load_variants_from_csv(csv_path: str) -> pd.DataFrame:
 
 
 def process_variants():
+    """Main function.
+    """
     variants_file = "backend/shared/all_mutations_20250325-215708.csv"
     variants = load_variants_from_csv(variants_file)
     

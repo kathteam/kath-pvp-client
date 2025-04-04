@@ -20,19 +20,21 @@ pip install -r requirements.txt
 pip install -r requirements_dev.txt
 ```
 
+**Important:** _You will also need [BLAST+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.16.0+-win64.exe) tools to be installed in your system._
+
 ### Linux
 
-```shell
-npm run init
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-pip install -r requirements_dev.txt
-```
+Currently not supported.
 
 ### Mac OS
 
-Currently not supported (good luck).
+Currently not supported.
+
+### Visual Studio Code Extensions (optional)
+- [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
+- [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+- [Pylint](https://marketplace.visualstudio.com/items?itemName=ms-python.pylint)
+- [GitHub Actions](https://marketplace.visualstudio.com/items?itemName=github.vscode-github-actions)
 
 ## Development
 

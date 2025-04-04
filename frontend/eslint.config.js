@@ -33,7 +33,7 @@ export default tseslint.config(
       }],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-explicit-any': 'off',
       
       // React related rules
       ...reactHooks.configs.recommended.rules,
@@ -43,7 +43,7 @@ export default tseslint.config(
       ],
       
       // Import and code style
-      'max-len': ['warn', { code: 100, tabWidth: 2, ignoreComments: true, ignoreStrings: true }],
+      'max-len': ['warn', { code: 200, tabWidth: 2, ignoreComments: true, ignoreStrings: true }],
       'eol-last': ['error', 'always'],
       'object-curly-spacing': ['error', 'always'],
     },

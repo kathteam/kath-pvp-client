@@ -244,13 +244,13 @@ def parse_blast_results(result_file: str):
 
                     if mutations:
                         logger.info(f"  Found {len(mutations)} mutations")
-                        for mut in mutations[:5]:  # Show first 5 mutations
-                            logger.info(
-                                f"Chr {mut["chromosome"]}, Position {mut["position"]}: {mut["reference"]} -> {mut["query"]}"
-                            )
+                        # for mut in mutations[:5]:  # Show first 5 mutations
+                        #     logger.info(
+                        #         f"Chr {mut["chromosome"]}, Position {mut["position"]}: {mut["reference"]} -> {mut["query"]}"
+                        #     )
 
-                        if len(mutations) > 5:
-                            logger.info(f"    ... and {len(mutations) - 5} more mutations")
+                        # if len(mutations) > 5:
+                        #     logger.info(f"    ... and {len(mutations) - 5} more mutations")
 
 
 def perform_blast_aligning() -> str:

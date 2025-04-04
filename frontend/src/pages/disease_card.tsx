@@ -1,4 +1,4 @@
-import { JSX, useState } from "react";
+import { JSX, useState } from 'react';
 import { 
   Container, 
   TextField, 
@@ -12,13 +12,13 @@ import {
   Paper,
   Chip,
   Box
-} from "@mui/material";
+} from '@mui/material';
 
 export default function DiseaseCard(): JSX.Element {
   const [queryParams, setQueryParams] = useState<{
     disease: string;
     ref_max: number;
-  }>({ disease: "", ref_max: 10 });
+  }>({ disease: '', ref_max: 10 });
   
   const [diseaseData, setDiseaseData] = useState<{
     status: string;
@@ -28,31 +28,31 @@ export default function DiseaseCard(): JSX.Element {
     count: number;
   }>();
   
-//   const [disease, setDisease] = useState<string[]>([]);
+  //   const [disease, setDisease] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setQueryParams({
       ...queryParams,
-      [name]: name === "ref_max" ? Number(value) : value,
+      [name]: name === 'ref_max' ? Number(value) : value,
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError('');
     
     try {
       // Replace with your actual API endpoint
-    const response = await window.pywebview.api.fasta_service.create_disease_download(queryParams.disease, queryParams.ref_max);
+      const response = await window.pywebview.api.fasta_service.create_disease_download(queryParams.disease, queryParams.ref_max);
       setDiseaseData(response);
     //   setDisease(response.downloaded_files || []);
     } catch (err) {
-      setError("Failed to fetch disease data. Please try again.");
-      console.error("Error fetching disease data:", err);
+      setError('Failed to fetch disease data. Please try again.');
+      console.error('Error fetching disease data:', err);
     } finally {
       setLoading(false);
     }
@@ -108,7 +108,7 @@ export default function DiseaseCard(): JSX.Element {
                   disabled={loading || !queryParams.disease}
                   fullWidth
                 >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : "Search"}
+                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Search'}
                 </Button>
               </Grid>
             </Grid>
@@ -117,7 +117,7 @@ export default function DiseaseCard(): JSX.Element {
       </Card>
 
       {error && (
-        <Paper sx={{ p: 2, mb: 3, bgcolor: "#fdeded" }}>
+        <Paper sx={{ p: 2, mb: 3, bgcolor: '#fdeded' }}>
           <Typography color="error">{error}</Typography>
         </Paper>
       )}
@@ -135,7 +135,7 @@ export default function DiseaseCard(): JSX.Element {
                   <Typography variant="body2" color="text.secondary">Status</Typography>
                   <Chip 
                     label={diseaseData.status} 
-                    color={diseaseData.status === "completed" ? "success" : "primary"} 
+                    color={diseaseData.status === 'completed' ? 'success' : 'primary'} 
                     size="small"
                   />
                 </Grid>

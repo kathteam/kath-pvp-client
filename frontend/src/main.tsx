@@ -8,28 +8,33 @@ declare global {
   interface Window {
     pywebview: {
       api: {
+
+        // --------------
         // Known services
+        // --------------
+
         ui_controller: {
           fullscreen: () => Promise<void>;
         },
 
         file_manager: {
-          list_files: (...args: unknown[]) => Promise<{ //path string as arg
+          list_files: (path: string) => Promise<{
             filename: string; 
             type: string; 
             size_kb: number | null; 
             item_count: number | null; 
           }[]>;
-          upload_file: (...args: unknown[]) => Promise<unknown>; //path: str, file_name: str, file_content: bytes          [method: string]: (...args: unknown[]) => Promise<unknown>;
+          upload_file: (path: string, file_name: string, file_content: number[]) => Promise<void>;
+          [method: string]: (...args: any[]) => Promise<any>;
         },
         
         fasta_service: {
           create_disease_download: (disease: string, ref_max: number) => Promise<{
-            "status": string;
-            "disease_term": string;
-            "max_results": number;
-            "downloaded_files": string[];
-            "count": number;
+            status: string;
+            disease_term: string;
+            max_results: number;
+            downloaded_files: string[];
+            count: number;
           }>;
           download_reference_genome_grch38: () => Promise<{
             status: string;
@@ -37,23 +42,29 @@ declare global {
           }>;
           [method: string]: (...args: any[]) => Promise<any>;
         },
+
         blast_service: {
           align_mutations: () => Promise<{
-            "status": string;
-            "result_file": string;
-        }>;
-        perform_blast_analysis: () => Promise<{
-          "status": string;
-          "result_file": string;
-      }>;
-        [method: string]: (...args: any[]) => Promise<any>;
+            status: string;
+            result_file: string;
+          }>;
+          perform_blast_analysis: () => Promise<{
+            status: string;
+            result_file: string;
+          }>;
+          [method: string]: (...args: any[]) => Promise<any>;
         },
+
+        // --------------
+        // Unknown services
+        // --------------
+
         // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
         [service: string]: {
-          [method: string]: (...args: unknown[]) => Promise<unknown>;
+          [method: string]: (...args: any[]) => Promise<any>;
         },
       };
-      [key: string]: unknown;
+      [key: string]: any;
     };
   }
 }

@@ -1,5 +1,5 @@
 import { JSX, useState } from 'react';
-import { useTheme } from "@mui/material/styles";
+import { useTheme } from '@mui/material/styles';
 import {
   Container,
   Typography,
@@ -35,20 +35,20 @@ export default function BlastCard(): JSX.Element {
   const [blastLoading, setBlastLoading] = useState<boolean>(false);
 
   // Error states
-  const [alignError, setAlignError] = useState<string>("");
-  const [blastError, setBlastError] = useState<string>("");
+  const [alignError, setAlignError] = useState<string>('');
+  const [blastError, setBlastError] = useState<string>('');
 
   // Function to handle align mutations
   const handleAlignMutations = async () => {
     setAlignLoading(true);
-    setAlignError("");
+    setAlignError('');
     
     try {
       const response = await window.pywebview.api.blast_service.align_mutations();
       setAlignResult(response);
     } catch (err) {
-      setAlignError("Failed to align mutations. Please try again.");
-      console.error("Error aligning mutations:", err);
+      setAlignError('Failed to align mutations. Please try again.');
+      console.error('Error aligning mutations:', err);
     } finally {
       setAlignLoading(false);
     }
@@ -57,14 +57,14 @@ export default function BlastCard(): JSX.Element {
   // Function to handle blast analysis
   const handleBlastAnalysis = async () => {
     setBlastLoading(true);
-    setBlastError("");
+    setBlastError('');
     
     try {
       const response = await window.pywebview.api.blast_service.perform_blast_analysis();
       setBlastResult(response);
     } catch (err) {
-      setBlastError("Failed to perform BLAST analysis. Please try again.");
-      console.error("Error performing BLAST analysis:", err);
+      setBlastError('Failed to perform BLAST analysis. Please try again.');
+      console.error('Error performing BLAST analysis:', err);
     } finally {
       setBlastLoading(false);
     }
@@ -108,7 +108,7 @@ export default function BlastCard(): JSX.Element {
       </Typography>
       <Typography variant="body1" component="h2" gutterBottom sx={{ mb: 3 }}>
         Caution: files are taken only from 'uploads' folder.
-        </Typography>
+      </Typography>
       
       <Grid container spacing={3}>
         {/* Align Mutations Card */}
@@ -133,7 +133,7 @@ export default function BlastCard(): JSX.Element {
                 {alignLoading ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
-                  getButtonText(alignResult, alignLoading, "Align Mutations")
+                  getButtonText(alignResult, alignLoading, 'Align Mutations')
                 )}
               </Button>
               
@@ -194,7 +194,7 @@ export default function BlastCard(): JSX.Element {
                 {blastLoading ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
-                  getButtonText(blastResult, blastLoading, "Perform BLAST Analysis")
+                  getButtonText(blastResult, blastLoading, 'Perform BLAST Analysis')
                 )}
               </Button>
               

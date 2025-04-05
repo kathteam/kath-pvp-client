@@ -52,8 +52,13 @@ declare global {
             status: string;
             result_file: string;
           }>;
+          disease_extraction: (fasta_file: string) => Promise<{
+            status: string;
+            result_file: string;
+          }>;
           [method: string]: (...args: any[]) => Promise<any>;
         },
+
 
         // --------------
         // Unknown services

@@ -49,6 +49,7 @@ class BlastService:
     def disease_extraction(self, fasta_file: str):
         
         try:
+            print(f"Processing file: {fasta_file}")
             # Perform blast aligning
             aligned_file = perform_blast_aligning(fasta_file)
             

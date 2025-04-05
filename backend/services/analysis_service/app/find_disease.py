@@ -32,6 +32,18 @@ MYVARIANT_REQUEST_TIMEOUT = 120
 API_DELAY_SECONDS = 1.0
 
 
+def track_api_queries(response) -> None:
+    """Tracks API queries and their responses."""
+    folder = os.path.join(
+        PROGRAM_STORAGE_DIR_SHARED_BLAST, "api_queries"
+    )
+    os.makedirs(folder, exist_ok=True)
+    file_number = len(os.listdir(folder)) + 1
+    file_path = os.path.join(folder, f"api_query_{file_number}.json")
+    with open(file_path, "w") as f:
+        json.dump(response, f, indent=4)
+        
+
 def validate_disease_name(disease_name: str) -> bool:
     """Validates the disease name.
 
@@ -170,6 +182,8 @@ def format_variant_hgvs(
 def extract_clinvar_diseases(api_result: Dict) -> List[Dict[str, Any]]:
 
     results = []
+    
+    track_api_queries(api_result)
 
     for entry_batch in api_result:
 
@@ -371,10 +385,10 @@ def main():
 
     variants_file = os.path.join(
         PROGRAM_STORAGE_DIR_SHARED_BLAST,
-        "consolidated",
-        "all_mutations_20250325-215708.csv",
+        "consolidated_results_unknown_transcript2_2246031136_vs_GRCh38_direct_blast_dir",
+        "all_mutations_20250405-185834.csv",
     )
-    process_variants()
+    process_variants(variants_file)
 
 
 if __name__ == "__main__":

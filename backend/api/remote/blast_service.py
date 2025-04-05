@@ -6,23 +6,22 @@ from shared.constants import PROGRAM_STORAGE_DIR_SHARED_BLAST, PROGRAM_STORAGE_D
 
 from services.aligning_service.app.blast_align import perform_blast_aligning
 from services.aligning_service.app.blast_analyze import analyze_blast_xml
+from services.analysis_service.app.find_disease import process_variants
 
 class BlastService:
     def __init__(self):
         self.logger: Logger = get_logger(__name__)
         self.data_dir: str = PROGRAM_STORAGE_DIR_SHARED_BLAST
         self.uploads_dir: str = PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_UPLOADS
-        os.makedirs(self.data_dir, exist_ok=True)
-        os.makedirs(self.uploads_dir, exist_ok=True)
         
-    def align_mutations(self):
+    def align_mutations(self, fasta_file: str):
         
         try:
-            result_file = perform_blast_aligning()
+            aligned_file = perform_blast_aligning(fasta_file)
             
             return {
                 "status": "success",
-                "result_file": result_file
+                "result_file": aligned_file
             }
         except Exception as e:
             self.logger.error(f"Error performing blast analysis: {str(e)}")
@@ -31,10 +30,10 @@ class BlastService:
                 "result_file": "Failed to perform blast analysis"
             }
     
-    def perform_blast_analysis(self):
+    def perform_blast_analysis(self, xml_file: str):
         
         try:
-            result_file = analyze_blast_xml()
+            result_file = analyze_blast_xml(xml_file)
             
             return {
                 "status": "success",
@@ -46,3 +45,36 @@ class BlastService:
                 "status": "error",
                 "result_file": "Failed to analyze blast XML"
             }
+    
+    def disease_extraction(self, fasta_file: str):
+        
+        try:
+            # Perform blast aligning
+            aligned_file = perform_blast_aligning(fasta_file)
+            
+            if not aligned_file:
+                raise Exception("Failed to perform blast aligning")
+            
+            # Perform blast analysis
+            result_file = analyze_blast_xml(aligned_file)
+            
+            if not result_file:
+                raise Exception("Failed to perform blast analysis")
+            
+            disease_file = process_variants(result_file)
+            
+            if not disease_file:
+                raise Exception("Failed to process variants")
+            
+            return {
+                "status": "success",
+                "result_file": disease_file
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Error performing thorough analysis: {str(e)}")
+            return {
+                "status": "error",
+                "result_file": "Failed to perform thorough analysis"
+            }
+            

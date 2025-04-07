@@ -115,11 +115,11 @@ export default function FileManager() {
     }
     if (sortConfig.column === 'Size') {
       const sizeA = a.type === 'folder'
-      ? `${a.item_count} items`
-      : `${a.size_kb?.toFixed(2)} KB`;
+        ? `${a.item_count} items`
+        : `${a.size_kb?.toFixed(2)} KB`;
       const sizeB = b.type === 'folder'
-      ? `${b.item_count} items`
-      : `${b.size_kb?.toFixed(2)} KB`;
+        ? `${b.item_count} items`
+        : `${b.size_kb?.toFixed(2)} KB`;
       return isAsc ? sizeA.localeCompare(sizeB) : sizeB.localeCompare(sizeA);
     }
     return 0;
@@ -266,7 +266,7 @@ export default function FileManager() {
                   onClick={() => handleSort('Name')}
                 >
                   Name
-                  {sortConfig.column === 'Name' && (
+                  {sortConfig.column === 'Name' && sortConfig.direction && (
                     sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
                   )}
                 </Typography>
@@ -276,7 +276,7 @@ export default function FileManager() {
                   onClick={() => handleSort('Type')}
                 >
                   Type
-                  {sortConfig.column === 'Type' && (
+                  {sortConfig.column === 'Type' && sortConfig.direction && (
                     sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
                   )}
                 </Typography>
@@ -286,7 +286,7 @@ export default function FileManager() {
                   onClick={() => handleSort('Size')}
                 >
                   Size
-                  {sortConfig.column === 'Size' && (
+                  {sortConfig.column === 'Size' && sortConfig.direction && (
                     sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
                   )}
                 </Typography>

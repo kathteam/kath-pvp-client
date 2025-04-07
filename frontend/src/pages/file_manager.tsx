@@ -78,9 +78,14 @@ export default function FileManager() {
   const filteredFiles = fileList.filter((file) => {
     const matchesName = file.filename.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter ? file.type.toLowerCase().includes(typeFilter.toLowerCase()) : true;
+    
+    const sizeColumn = file.type === 'folder'
+      ? `${file.item_count} items`
+      : `${file.size_kb?.toFixed(2)} KB`;
     const matchesSize = sizeFilter
-      ? file.size_kb !== null && file.size_kb.toString().includes(sizeFilter)
+      ? sizeColumn.toLowerCase().includes(sizeFilter.toLowerCase())
       : true;
+
     return matchesName && matchesType && matchesSize;
   });
 
@@ -216,6 +221,7 @@ export default function FileManager() {
                   justifyContent: 'space-between',
                   p: 2,
                   fontWeight: 'bold',
+                  borderTop: '1px solid #ddd',
                 }}
               >
                 <Typography variant="body1" sx={{ flex: 2 }}>

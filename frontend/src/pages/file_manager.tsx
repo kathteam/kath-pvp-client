@@ -11,7 +11,7 @@ import {
 import { KeyboardReturn,
   Folder,InsertDriveFile, Description, TableChart, Storage,
   BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
-  Movie, Audiotrack, Archive } from '@mui/icons-material';
+  Movie, Audiotrack, Archive, ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 
 export default function FileManager() {
@@ -27,6 +27,10 @@ export default function FileManager() {
   const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
   const [typeFilter, setTypeFilter] = useState<string>(''); // Filter for file type
   const [sizeFilter, setSizeFilter] = useState<string>(''); // Filter for file size
+  const [sortConfig, setSortConfig] = useState<{ column: string; direction: 'asc' | 'desc' | null }>({
+    column: '',
+    direction: null,
+  });
 
   useEffect(() => {
     const fetchFiles = async (path: string) => {
@@ -75,6 +79,17 @@ export default function FileManager() {
     setSizeFilter(event.target.value);
   };
 
+  const handleSort = (column: string) => {
+    setSortConfig((prev) => {
+      if (prev.column === column) {
+        // Toggle sort direction
+        const newDirection = prev.direction === 'asc' ? 'desc' : prev.direction === 'desc' ? null : 'asc';
+        return { column, direction: newDirection };
+      }
+      return { column, direction: 'asc' }; // Default to ascending
+    });
+  };
+
   const filteredFiles = fileList.filter((file) => {
     const matchesName = file.filename.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesType = typeFilter ? file.type.toLowerCase().includes(typeFilter.toLowerCase()) : true;
@@ -87,6 +102,23 @@ export default function FileManager() {
       : true;
 
     return matchesName && matchesType && matchesSize;
+  });
+
+  const sortedFiles = [...filteredFiles].sort((a, b) => {
+    if (!sortConfig.direction) return 0; // No sorting
+    const isAsc = sortConfig.direction === 'asc';
+    if (sortConfig.column === 'Name') {
+      return isAsc ? a.filename.localeCompare(b.filename) : b.filename.localeCompare(a.filename);
+    }
+    if (sortConfig.column === 'Type') {
+      return isAsc ? a.type.localeCompare(b.type) : b.type.localeCompare(a.type);
+    }
+    if (sortConfig.column === 'Size') {
+      const sizeA = a.size_kb || 0;
+      const sizeB = b.size_kb || 0;
+      return isAsc ? sizeA - sizeB : sizeB - sizeA;
+    }
+    return 0;
   });
 
   const getFileIcon = (fileType: string) => {
@@ -224,14 +256,35 @@ export default function FileManager() {
                   borderTop: '1px solid #ddd',
                 }}
               >
-                <Typography variant="body1" sx={{ flex: 2 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ flex: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => handleSort('Name')}
+                >
                   Name
+                  {sortConfig.column === 'Name' && (
+                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
+                  )}
                 </Typography>
-                <Typography variant="body1" sx={{ flex: 1 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => handleSort('Type')}
+                >
                   Type
+                  {sortConfig.column === 'Type' && (
+                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
+                  )}
                 </Typography>
-                <Typography variant="body1" sx={{ flex: 1 }}>
+                <Typography
+                  variant="body1"
+                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => handleSort('Size')}
+                >
                   Size
+                  {sortConfig.column === 'Size' && (
+                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
+                  )}
                 </Typography>
               </Box>
 
@@ -302,8 +355,8 @@ export default function FileManager() {
                 </Box>
               )}
 
-              {/* Filtered Files */}
-              {filteredFiles.map((file, index) => (
+              {/* Sorted Files */}
+              {sortedFiles.map((file, index) => (
                 <Box
                   key={index}
                   sx={{

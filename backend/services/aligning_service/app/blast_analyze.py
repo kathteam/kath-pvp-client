@@ -304,8 +304,8 @@ def log_mutation_summary(mutations: List[Dict]) -> None:
     # Display sample mutations
     for mut in mutations[:5]:
         logger.info(
-            f"    {mut["type"]} at Chr {mut["chromosome"]} position {mut["position"]}: "
-            f"{mut["reference"]} -> {mut["query"]} (context: {mut["context"]})"
+            f"    {mut['type']} at Chr {mut['chromosome']} position {mut['position']}: "
+            f"{mut['reference']} -> {mut['query']} (context: {mut['context']})"
         )
 
     if len(mutations) > 5:

@@ -114,9 +114,13 @@ export default function FileManager() {
       return isAsc ? a.type.localeCompare(b.type) : b.type.localeCompare(a.type);
     }
     if (sortConfig.column === 'Size') {
-      const sizeA = a.size_kb || 0;
-      const sizeB = b.size_kb || 0;
-      return isAsc ? sizeA - sizeB : sizeB - sizeA;
+      const sizeA = a.type === 'folder'
+      ? `${a.item_count} items`
+      : `${a.size_kb?.toFixed(2)} KB`;
+      const sizeB = b.type === 'folder'
+      ? `${b.item_count} items`
+      : `${b.size_kb?.toFixed(2)} KB`;
+      return isAsc ? sizeA.localeCompare(sizeB) : sizeB.localeCompare(sizeA);
     }
     return 0;
   });

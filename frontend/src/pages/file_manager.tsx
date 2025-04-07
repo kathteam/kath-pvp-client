@@ -23,7 +23,8 @@ export default function FileManager() {
     item_count: number | null;
   }[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('/');
-  const [inputPath, setInputPath] = useState<string>(currentPath); // Track the user input for the path
+  const [inputPath, setInputPath] = useState<string>(currentPath);
+  const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
 
   useEffect(() => {
     const fetchFiles = async (path: string) => {
@@ -54,12 +55,20 @@ export default function FileManager() {
     setInputPath(event.target.value); // Update the input field value
   };
 
-  // Update the current path when <Enter> is pressed
+// Update the current path when <Enter> is pressed
   const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      setCurrentPath(inputPath); 
+      setCurrentPath(inputPath);
     }
   };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value); // Update search query
+  };
+
+  const filteredFiles = fileList.filter((file) =>
+    file.filename.toLowerCase().includes(searchQuery.toLowerCase())
+  ); // Filter files by search query
 
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
@@ -156,8 +165,8 @@ export default function FileManager() {
           />
         </Box>
 
-        {/* Drag-and-Drop Area */}
-        <Box
+{/* Drag-and-Drop Area */}
+<Box
           {...getRootProps()}
           sx={{
             border: '2px dashed #ddd',
@@ -179,11 +188,43 @@ export default function FileManager() {
             </Typography>
           )}
         </Box>
+        {/* Search Bar */}
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search by filename..."
+            variant="outlined"
+            size="small"
+          />
+        </Box>
 
-        <Box sx={{ mt: 3 }}>
+                <Box sx={{ mt: 3 }}>
           {fileList.length > 0 ? (
             <>
-              {/* .. folder for navigation */}
+              {/* Column Headers */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  fontWeight: 'bold',
+                }}
+              >
+                <Typography variant="body1" sx={{ flex: 2 }}>
+                  Name
+                </Typography>
+                <Typography variant="body1" sx={{ flex: 1 }}>
+                  Type
+                </Typography>
+                <Typography variant="body1" sx={{ flex: 1 }}>
+                  Size
+                </Typography>
+              </Box>
+
+              {/* Parent Directory */}
               {currentPath !== '/' && (
                 <Box
                   sx={{
@@ -196,18 +237,23 @@ export default function FileManager() {
                   }}
                   onClick={handleNavigateUp}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Folder sx={{ mr: 1, color: 'primary.main' }} /> {/* Icon for parent directory */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
+                    <Folder sx={{ mr: 1, color: 'primary.main' }} />
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                       ..
                     </Typography>
                   </Box>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
                     Parent Directory
+                  </Typography>
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
+                    Folder
                   </Typography>
                 </Box>
               )}
-              {fileList.map((file, index) => (
+
+              {/* Filtered Files */}
+              {filteredFiles.map((file, index) => (
                 <Box
                   key={index}
                   sx={{
@@ -220,19 +266,19 @@ export default function FileManager() {
                   }}
                   onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getFileIcon(file.type)} {/* Dynamically render the icon based on file type */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
+                    {getFileIcon(file.type)}
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                       {file.filename}
                     </Typography>
                   </Box>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
+                    {file.type}
+                  </Typography>
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
                     {file.type === 'folder'
                       ? `${file.item_count} items`
                       : `${file.size_kb?.toFixed(2)} KB`}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {file.type}
                   </Typography>
                 </Box>
               ))}

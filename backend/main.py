@@ -1,6 +1,6 @@
-from logging import Logger
 import os
 import platform
+from logging import Logger
 from webview import Window, create_window, start
 
 from api import Api

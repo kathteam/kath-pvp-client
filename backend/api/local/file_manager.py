@@ -1,5 +1,6 @@
 import os
 from logging import Logger
+
 from utils.logger import get_logger
 
 WORKDIR = os.path.join(os.path.expanduser("~"), "Documents")

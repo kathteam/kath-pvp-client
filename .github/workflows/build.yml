@@ -3,8 +3,6 @@ name: Build for all platforms
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 jobs:
   build:
@@ -53,8 +51,9 @@ jobs:
       - name: Build for ${{ matrix.os }}
         run: npm run build
 
-      - name: Upload ${{ matrix.os }} build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.os }}-build
-          path: ./dist
+      # DISABLED FOR GITHUB ACTIONS LIMITATIONS ON USAGE
+      # - name: Upload ${{ matrix.os }} build artifacts
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: ${{ matrix.os }}-build
+      #     path: ./dist

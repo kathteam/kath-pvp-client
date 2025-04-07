@@ -25,6 +25,8 @@ export default function FileManager() {
   const [currentPath, setCurrentPath] = useState<string>('/');
   const [inputPath, setInputPath] = useState<string>(currentPath);
   const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
+  const [typeFilter, setTypeFilter] = useState<string>(''); // Filter for file type
+  const [sizeFilter, setSizeFilter] = useState<string>(''); // Filter for file size
 
   useEffect(() => {
     const fetchFiles = async (path: string) => {
@@ -42,20 +44,19 @@ export default function FileManager() {
   const handleNavigateUp = () => {
     const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
     setCurrentPath(parentPath);
-    setInputPath(parentPath); // Update the input field as well
+    setInputPath(parentPath);
   };
 
   const handleFolderClick = (folderName: string) => {
     const newPath = `${currentPath}/${folderName}`.replace('//', '/');
     setCurrentPath(newPath);
-    setInputPath(newPath); // Update the input field as well
+    setInputPath(newPath);
   };
 
   const handlePathChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputPath(event.target.value); // Update the input field value
+    setInputPath(event.target.value);
   };
 
-// Update the current path when <Enter> is pressed
   const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
       setCurrentPath(inputPath);
@@ -63,12 +64,25 @@ export default function FileManager() {
   };
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value); // Update search query
+    setSearchQuery(event.target.value);
   };
 
-  const filteredFiles = fileList.filter((file) =>
-    file.filename.toLowerCase().includes(searchQuery.toLowerCase())
-  ); // Filter files by search query
+  const handleTypeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTypeFilter(event.target.value);
+  };
+
+  const handleSizeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSizeFilter(event.target.value);
+  };
+
+  const filteredFiles = fileList.filter((file) => {
+    const matchesName = file.filename.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter ? file.type.toLowerCase().includes(typeFilter.toLowerCase()) : true;
+    const matchesSize = sizeFilter
+      ? file.size_kb !== null && file.size_kb.toString().includes(sizeFilter)
+      : true;
+    return matchesName && matchesType && matchesSize;
+  });
 
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
@@ -165,8 +179,8 @@ export default function FileManager() {
           />
         </Box>
 
-{/* Drag-and-Drop Area */}
-<Box
+        {/* Drag-and-Drop Area */}
+        <Box
           {...getRootProps()}
           sx={{
             border: '2px dashed #ddd',
@@ -188,19 +202,10 @@ export default function FileManager() {
             </Typography>
           )}
         </Box>
-        {/* Search Bar */}
-        <Box sx={{ mb: 3 }}>
-          <TextField
-            fullWidth
-            value={searchQuery}
-            onChange={handleSearchChange}
-            placeholder="Search by filename..."
-            variant="outlined"
-            size="small"
-          />
-        </Box>
 
-                <Box sx={{ mt: 3 }}>
+
+        {/* File List with Column Headers and Filters */}
+        <Box sx={{ mt: 3 }}>
           {fileList.length > 0 ? (
             <>
               {/* Column Headers */}
@@ -222,6 +227,45 @@ export default function FileManager() {
                 <Typography variant="body1" sx={{ flex: 1 }}>
                   Size
                 </Typography>
+              </Box>
+
+              {/* Filter Boxes */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  borderBottom: '1px solid #ddd',
+                }}
+              >
+                <TextField
+                  placeholder="Filter by name"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  sx={{ flex: 2, mr: 1 }}
+                />
+                <TextField
+                  placeholder="Filter by type"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={typeFilter}
+                  onChange={handleTypeFilterChange}
+                  sx={{ flex: 1, mr: 1 }}
+                />
+                <TextField
+                  placeholder="Filter by size"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={sizeFilter}
+                  onChange={handleSizeFilterChange}
+                  sx={{ flex: 1 }}
+                />
               </Box>
 
               {/* Parent Directory */}

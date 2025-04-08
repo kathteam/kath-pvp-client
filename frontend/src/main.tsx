@@ -59,6 +59,15 @@ declare global {
           [method: string]: (...args: any[]) => Promise<any>;
         },
 
+        disease_service: {
+          get_disease_data: () => Promise<{
+            disease_data: {
+              clinical_significance: string;
+              disease_name: string;
+            }[];
+          }>;
+          [method: string]: (...args: any[]) => Promise<any>;
+        },
 
         // --------------
         // Unknown services

@@ -45,7 +45,6 @@ def blast_cmdline(
     Returns:
         Path to BLAST results file
     """
-    # Extract filename from query path
     query_filename = Path(query_fasta_path).stem
     reference_filename = Path(reference_genome_path).stem
     output_file = os.path.join(
@@ -56,7 +55,6 @@ def blast_cmdline(
         f"Running BLAST+ alignment for {query_filename} against {reference_filename}..."
     )
 
-    # Check if database exists, if not create it
     db_path = os.path.join(Path(reference_genome_path).parent, reference_filename)
     db_files = list(Path(reference_genome_path).parent.glob(f"{reference_filename}.n*"))
 
@@ -72,16 +70,6 @@ def blast_cmdline(
             str(db_path),
         ]
 
-        # Redirect output to devnull to suppress console output
-        with open(os.devnull, "w") as devnull:
-            process = subprocess.run(
-                makeblastdb_cmd,
-                stdout=devnull,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=False,
-            )
-
         process = subprocess.run(
             makeblastdb_cmd, capture_output=True, text=True, check=False
         )
@@ -92,7 +80,7 @@ def blast_cmdline(
                 f"makeblastdb failed with exit code {process.returncode}"
             )
 
-    # Run BLAST alignment
+    # Run BLAST alignment with stricter parameters
     blastn_cmd = [
         "blastn",
         "-query",
@@ -104,15 +92,17 @@ def blast_cmdline(
         "-outfmt",
         "5",  # XML output format
         "-evalue",
-        "1e-5",  # Less stringent e-value for faster results
+        "1e-10",  # More stringent e-value for higher quality matches
         "-word_size",
         "28",  # Larger word size speeds up search significantly
         "-max_target_seqs",
-        "5",
+        "3",  # Limit to best matches only
+        "-perc_identity",
+        "95",  # Higher identity requirement (95%)
         "-num_threads",
         str(os.cpu_count() or 1),
         "-task",
-        "megablast",  # Use fast mode
+        "blastn",  # Use fast mode
     ]
 
     process = subprocess.run(blastn_cmd, capture_output=True, text=True, check=False)
@@ -123,8 +113,14 @@ def blast_cmdline(
 
     logger.info("BLAST alignment completed successfully")
 
-    # Parse results using BioPython"s NCBIXML parser
-    parse_blast_results(output_file)
+    mutations = parse_blast_results(output_file, min_score=100, min_identity=95, max_mutations=10)
+
+    mutations_file = output_file.replace(".xml", "_significant_mutations.json")
+    if mutations:
+        import json
+        with open(mutations_file, 'w') as f:
+            json.dump(mutations, f, indent=2)
+        logger.info(f"Saved {len(mutations)} significant mutations to {mutations_file}")
 
     return str(output_file)
 
@@ -146,7 +142,6 @@ def extract_chromosome(subject_id: str) -> str:
 
     import re
 
-    # Try to find chromosome in format "chr1" or "chrX"
     chr_match = re.search(r"chr([0-9XYMxym]+)", subject_id)
     if chr_match:
         return chr_match.group(1).upper()
@@ -162,7 +157,6 @@ def extract_chromosome(subject_id: str) -> str:
         elif num == 24:
             return "Y"
 
-    # Try to extract just a number if it"s at the beginning or isolated
     num_match = re.search(r"\b([0-9]+|[XYxy])\b", subject_id)
     if num_match:
         return num_match.group(1).upper()
@@ -170,40 +164,74 @@ def extract_chromosome(subject_id: str) -> str:
     return "Unknown"
 
 
-def parse_blast_results(result_file: str):
-    """Parse and log BLAST results from XML file."""
-
+def parse_blast_results(result_file: str, min_score=100, min_identity=95, max_mutations=10):
+    """
+    Parse and log BLAST results from XML file with filtering.
+    
+    Args:
+        result_file: Path to BLAST XML output file
+        min_score: Minimum bit score to consider an alignment significant
+        min_identity: Minimum percent identity to consider an alignment (0-100)
+        max_mutations: Maximum number of mutations to report per alignment
+    """
+    significant_mutations = []
+    
     with open(result_file) as result_handle:
         blast_records = NCBIXML.parse(result_handle)
         for blast_record in blast_records:
             for alignment in blast_record.alignments:
                 for hsp in alignment.hsps:
-                    # Extract subject/reference ID
+                    percent_identity = (hsp.identities / hsp.align_length) * 100
+                    if hsp.bits < min_score or percent_identity < min_identity:
+                        continue
+                    
                     subject_id = (
                         alignment.title.split()[1]
                         if len(alignment.title.split()) > 1
                         else alignment.title
                     )
 
-                    # Extract chromosome information
                     chromosome = extract_chromosome(subject_id)
 
-                    # Report mutations (mismatches)
                     mutations = []
                     for i, (q, s) in enumerate(zip(hsp.query, hsp.sbjct)):
                         if q != s and q != "-" and s != "-":
                             position = hsp.sbjct_start + i
+                            
+                            rel_position = i / hsp.align_length
+                            
+                            if rel_position < 0.05 or rel_position > 0.90:
+                                continue
+                                
                             mutations.append(
                                 {
                                     "chromosome": chromosome,
                                     "position": position,
                                     "reference": s,
                                     "query": q,
+                                    "quality": hsp.bits,
+                                    "percent_identity": percent_identity
                                 }
                             )
-
-                    if mutations:
-                        logger.info(f"  Found {len(mutations)} mutations")
+                    
+                    if 0 < len(mutations) <= max_mutations:
+                        significant_mutations.extend(mutations)
+                        logger.info(
+                            f"Found {len(mutations)} significant mutations in alignment "
+                            f"with {percent_identity:.1f}% identity and bit score {hsp.bits:.1f}"
+                        )
+                    elif len(mutations) > max_mutations:
+                        logger.info(
+                            f"Skipped {len(mutations)} mutations in low-quality alignment "
+                            f"(exceeds threshold of {max_mutations})"
+                        )
+    
+    if significant_mutations:
+        logger.info(f"Total significant mutations found: {len(significant_mutations)}")
+    else:
+        logger.info("No significant mutations found after filtering")
+    
+    return significant_mutations
 
 
 def perform_blast_aligning(query_fasta_path: str = None) -> str:
@@ -283,6 +311,7 @@ def perform_blast_aligning(query_fasta_path: str = None) -> str:
             str(sample_path), str(reference_fasta), str(blast_dir)
         )
         logger.info(f"BLAST analysis complete. Results saved to {result_file}")
+        print(f"BLAST analysis complete. Results saved to {result_file}")
         return result_file
 
     except subprocess.CalledProcessError:

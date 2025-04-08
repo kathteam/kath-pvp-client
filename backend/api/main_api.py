@@ -1,9 +1,10 @@
 from .local import UiController, FileManager
-from .remote import HttpClient, FastaService, BlastService
+from .remote import HttpClient, FastaService, BlastService, DiseaseInformationService
+
 
 class Api:
     def __init__(self) -> None:
-        
+
         # -------------------
         # Local functionality
         # -------------------
@@ -21,3 +22,5 @@ class Api:
         self.fasta_service = FastaService()
         # Initialize blast service
         self.blast_service = BlastService()
+
+        self.data_service = DiseaseInformationService()

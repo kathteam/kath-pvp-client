@@ -60,7 +60,7 @@ declare global {
         },
 
         disease_service: {
-          get_disease_data: () => Promise<{
+          get_disease_data: (file_path: string) => Promise<{
             disease_data: {
               clinical_significance: string;
               disease_name: string;

@@ -26,6 +26,8 @@ declare global {
           }[]>;
           upload_file: (path: string, file_name: string, file_content: number[]) => Promise<void>;
           [method: string]: (...args: any[]) => Promise<any>;
+          rename_file: (path: string, old_name: string, new_name: string) => Promise<void>;
+          delete_file: (path: string, file_name: string) => Promise<void>;
         },
         
         fasta_service: {

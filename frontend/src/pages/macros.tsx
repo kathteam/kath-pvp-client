@@ -7,7 +7,7 @@ import {
   Container,
   Paper
 } from '@mui/material';
-
+//
 export default function Macros(): JSX.Element {
   const navigate = useNavigate();
 

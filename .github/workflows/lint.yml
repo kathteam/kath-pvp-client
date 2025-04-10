@@ -42,4 +42,4 @@ jobs:
         if [ -f requirements_dev.txt ]; then pip install -r requirements_dev.txt; fi
 
     - name: Analyzing the code with pylint
-      run: pylint --fail-under=10 --recursive=y --disable=fixme backend/
+      run: pylint --rcfile=./backend/.pylintrc --fail-under=10 --recursive=y --disable=fixme ./backend/src/

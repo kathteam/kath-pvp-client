@@ -146,7 +146,7 @@ def blast_cmdline(
         "megablast",  # Use fast mode
     ]
 
-    logger.info(f"Executing BLAST command: {" ".join(blastn_cmd)}")
+    logger.info(f"Executing BLAST command: {' '.join(blastn_cmd)}")
 
     process = subprocess.run(blastn_cmd, capture_output=True, text=True, check=False)
 

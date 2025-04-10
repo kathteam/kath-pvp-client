@@ -151,9 +151,7 @@ def parse_blast_results(
         return None
 
 
-def extract_mutations_from_hsp(
-    hsp, chromosome: str, query_id: str, subject_id: str
-) -> List[Dict]:
+def extract_mutations_from_hsp(hsp, chromosome: str, query_id: str, subject_id: str) -> List[Dict]:
     """
     Extract mutations from a high-scoring segment pair.
 
@@ -304,9 +302,7 @@ def analyze_blast_xml(xml_file_path: str = None):
     # Create output directory for consolidated results
     if xml_file_path:
         xml_basename = os.path.basename(xml_file_path).split(".")[0]
-        consolidated_dir = os.path.join(
-            BLAST_DIR, f"consolidated_results_{xml_basename}_dir"
-        )
+        consolidated_dir = os.path.join(BLAST_DIR, f"consolidated_results_{xml_basename}_dir")
     else:
         consolidated_dir = os.path.join(BLAST_DIR, f"consolidated_results_{timestamp}")
     os.makedirs(consolidated_dir, exist_ok=True)
@@ -369,9 +365,7 @@ def analyze_blast_xml(xml_file_path: str = None):
 
         try:
             logger.info(f"Processing {file_path}...")
-            mutations, alignments = parse_blast_results(
-                file_path, return_mutations=True
-            )
+            mutations, alignments = parse_blast_results(file_path, return_mutations=True)
 
             # Add file identifier to each mutation
             for mut in mutations:
@@ -438,9 +432,7 @@ def analyze_blast_xml(xml_file_path: str = None):
 
         # Also save consolidated alignments if there are any
         if all_alignments:
-            alignment_csv = os.path.join(
-                consolidated_dir, f"all_alignments_{timestamp}.csv"
-            )
+            alignment_csv = os.path.join(consolidated_dir, f"all_alignments_{timestamp}.csv")
             with open(alignment_csv, "w", newline="") as f:
                 if not all_alignments:
                     writer = csv.writer(f)
@@ -529,9 +521,10 @@ if __name__ == "__main__":
     # analyze_blast_xml("path/to/specific/blast_results.xml")
 
     # Example of analyzing all XML files in the BLAST directory
-    
+
     blast_xml = os.path.join(
-        PROGRAM_STORAGE_DIR_SHARED_BLAST, "unknown_transcript1_1519314819_vs_GRCh38_direct_blast.xml"
+        PROGRAM_STORAGE_DIR_SHARED_BLAST,
+        "unknown_transcript1_1519314819_vs_GRCh38_direct_blast.xml",
     )
-    
+
     analyze_blast_xml(blast_xml)

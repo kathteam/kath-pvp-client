@@ -10,8 +10,8 @@ import {
   Stack,
   Alert
 } from '@mui/material';
-import BlastCard from '@/components/cards/blast_card';
-import DiseaseCard from '@/components/cards/disease_card';
+import DiseaseDownloadCard from '@/components/cards/DiseaseDownloadCard';
+import DiseaseOptionCard from '@/components/cards/DiseaseOptionCard';
 
 export default function GVATool(): JSX.Element {
   const [referenceGenomePath, setReferenceGenomePath] = useState<{
@@ -122,8 +122,8 @@ export default function GVATool(): JSX.Element {
           </Snackbar>
         </Stack>
       </Container>
-      <BlastCard/>
-      <DiseaseCard/>
+      <DiseaseDownloadCard/>
+      <DiseaseOptionCard/>
     </>
   );
 }

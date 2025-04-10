@@ -1,66 +1,34 @@
-import re
+"""
+FASTA Downloader Module for bioinformatics data retrieval.
+
+This module provides functions to download FASTA files from various bioinformatics
+databases including NCBI, Ensembl, and ClinVar.
+"""
+
 import os
-import sys
 import subprocess
+import sys
 from pathlib import Path
-from logging import Logger
 from typing import Optional
-from dotenv import load_dotenv
+
 from Bio.Blast import NCBIXML
 
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+from shared.constants import (
+    PROGRAM_STORAGE_DIR_SHARED_BLAST,
+    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
+)
 from utils.logger import get_logger
 
-# Set up logging
-logger: Logger = get_logger(__name__)
+
+logger = get_logger(__name__)
 
 
-def initialize_directories():
-    """Initialize directory structure for the application."""
-    # Set up file paths
-    base_dir = os.path.join(os.path.expanduser("~"), ".KATH")
-    service_dir = os.path.join(base_dir, "environment")
-    fasta_dir = os.path.join(base_dir, "shared", "data", "fasta_files")
-    blast_dir = os.path.join(base_dir, "shared", "data", "blast_results")
-    uploads_dir = os.path.join(fasta_dir, "uploads")
-    ref_dir = os.path.join(fasta_dir, "reference")
-    samples_dir = os.path.join(fasta_dir, "samples")
-
-    # Create directories if they don"t exist
-    for dir_path in [
-        service_dir,
-        service_dir,
-        fasta_dir,
-        blast_dir,
-        uploads_dir,
-        ref_dir,
-        samples_dir,
-    ]:
-        os.makedirs(dir_path, exist_ok=True)
-
-    # Load environment variables
-    env_file = os.path.join(service_dir, ".env")
-    if os.path.exists(env_file):
-        load_dotenv(env_file)
-    else:
-        logger.warning("No .env file found. Generating a sample .env file")
-        # Create a sample .env file
-        with open(env_file, "w", encoding="utf-8") as f:
-            f.write("NCBI_API_KEY=\n")
-            f.write("NCBI_API_EMAIL=\n")
-
-    return {
-        "base_dir": base_dir,
-        "service_dir": service_dir,
-        "fasta_dir": fasta_dir,
-        "blast_dir": blast_dir,
-        "uploads_dir": uploads_dir,
-        "ref_dir": ref_dir,
-        "samples_dir": samples_dir,
-    }
-
-
-# # Default timeout for HTTP requests (in seconds)
-# DEFAULT_TIMEOUT = 60
+# Default timeout for HTTP requests (in seconds)
+DEFAULT_TIMEOUT = 60
 
 
 def blast_cmdline(
@@ -77,19 +45,16 @@ def blast_cmdline(
     Returns:
         Path to BLAST results file
     """
-    # Extract filename from query path
     query_filename = Path(query_fasta_path).stem
     reference_filename = Path(reference_genome_path).stem
     output_file = os.path.join(output_dir, f"{query_filename}_vs_{reference_filename}_blast.xml")
 
     logger.info(f"Running BLAST+ alignment for {query_filename} against {reference_filename}...")
 
-    # Check if database exists, if not create it
     db_path = os.path.join(Path(reference_genome_path).parent, reference_filename)
     db_files = list(Path(reference_genome_path).parent.glob(f"{reference_filename}.n*"))
 
     if not db_files:
-        logger.info(f"Creating BLAST database from {reference_genome_path}...")
         makeblastdb_cmd = [
             "makeblastdb",
             "-in",
@@ -101,21 +66,13 @@ def blast_cmdline(
             str(db_path),
         ]
 
-        # Redirect output to devnull to suppress console output
-        with open(os.devnull, "w", encoding="utf-8") as devnull:
-            process = subprocess.run(
-                makeblastdb_cmd, stdout=devnull, stderr=subprocess.PIPE, text=True, check=False
-            )
-
         process = subprocess.run(makeblastdb_cmd, capture_output=True, text=True, check=False)
 
         if process.returncode != 0:
             logger.error(f"Failed to create BLAST database: {process.stderr}")
             raise RuntimeError(f"makeblastdb failed with exit code {process.returncode}")
 
-        logger.info("BLAST database created successfully")
-
-    # Run BLAST alignment
+    # Run BLAST alignment with stricter parameters
     blastn_cmd = [
         "blastn",
         "-query",
@@ -127,18 +84,18 @@ def blast_cmdline(
         "-outfmt",
         "5",  # XML output format
         "-evalue",
-        "1e-5",  # Less stringent e-value for faster results
+        "1e-10",  # More stringent e-value for higher quality matches
         "-word_size",
         "28",  # Larger word size speeds up search significantly
         "-max_target_seqs",
-        "5",
+        "3",  # Limit to best matches only
+        "-perc_identity",
+        "95",  # Higher identity requirement (95%)
         "-num_threads",
         str(os.cpu_count() or 1),
         "-task",
-        "megablast",  # Use fast mode
+        "blastn",  # Use fast mode
     ]
-
-    logger.info(f"Executing BLAST command: {" ".join(blastn_cmd)}")
 
     process = subprocess.run(blastn_cmd, capture_output=True, text=True, check=False)
 
@@ -148,8 +105,15 @@ def blast_cmdline(
 
     logger.info("BLAST alignment completed successfully")
 
-    # Parse results using BioPython"s NCBIXML parser
-    parse_blast_results(output_file)
+    mutations = parse_blast_results(output_file, min_score=100, min_identity=95, max_mutations=10)
+
+    mutations_file = output_file.replace(".xml", "_significant_mutations.json")
+    if mutations:
+        import json
+
+        with open(mutations_file, "w") as f:
+            json.dump(mutations, f, indent=2)
+        logger.info(f"Saved {len(mutations)} significant mutations to {mutations_file}")
 
     return str(output_file)
 
@@ -169,7 +133,8 @@ def extract_chromosome(subject_id: str) -> str:
     # - chr1, chrX, chrY, etc.
     # - 1, 2, 3, etc. (just number)
 
-    # Try to find chromosome in format "chr1" or "chrX"
+    import re
+
     chr_match = re.search(r"chr([0-9XYMxym]+)", subject_id)
     if chr_match:
         return chr_match.group(1).upper()
@@ -180,12 +145,11 @@ def extract_chromosome(subject_id: str) -> str:
         num = int(nc_match.group(1))
         if 1 <= num <= 22:
             return str(num)
-        if num == 23:
+        elif num == 23:
             return "X"
-        if num == 24:
+        elif num == 24:
             return "Y"
 
-    # Try to extract just a number if it"s at the beginning or isolated
     num_match = re.search(r"\b([0-9]+|[XYxy])\b", subject_id)
     if num_match:
         return num_match.group(1).upper()
@@ -193,73 +157,97 @@ def extract_chromosome(subject_id: str) -> str:
     return "Unknown"
 
 
-def parse_blast_results(result_file: str):
-    """Parse and log BLAST results from XML file."""
-    logger.info(f"Parsing BLAST results from {result_file}")
+def parse_blast_results(result_file: str, min_score=100, min_identity=95, max_mutations=10):
+    """
+    Parse and log BLAST results from XML file with filtering.
 
-    with open(result_file, encoding="utf-8") as result_handle:
+    Args:
+        result_file: Path to BLAST XML output file
+        min_score: Minimum bit score to consider an alignment significant
+        min_identity: Minimum percent identity to consider an alignment (0-100)
+        max_mutations: Maximum number of mutations to report per alignment
+    """
+    significant_mutations = []
+
+    with open(result_file) as result_handle:
         blast_records = NCBIXML.parse(result_handle)
         for blast_record in blast_records:
             for alignment in blast_record.alignments:
                 for hsp in alignment.hsps:
-                    # Extract subject/reference ID
+                    percent_identity = (hsp.identities / hsp.align_length) * 100
+                    if hsp.bits < min_score or percent_identity < min_identity:
+                        continue
+
                     subject_id = (
                         alignment.title.split()[1]
                         if len(alignment.title.split()) > 1
                         else alignment.title
                     )
 
-                    # Extract chromosome information
                     chromosome = extract_chromosome(subject_id)
 
-                    logger.info(f"Sequence: {alignment.title}")
-                    logger.info(
-                        f"  Identities: {hsp.identities}/{hsp.align_length} "
-                        f"({hsp.identities/hsp.align_length*100:.1f}%)"
-                    )
-
-                    # Report mutations (mismatches)
                     mutations = []
                     for i, (q, s) in enumerate(zip(hsp.query, hsp.sbjct)):
                         if q != s and q != "-" and s != "-":
                             position = hsp.sbjct_start + i
+
+                            rel_position = i / hsp.align_length
+
+                            if rel_position < 0.05 or rel_position > 0.90:
+                                continue
+
                             mutations.append(
                                 {
                                     "chromosome": chromosome,
                                     "position": position,
                                     "reference": s,
                                     "query": q,
+                                    "quality": hsp.bits,
+                                    "percent_identity": percent_identity,
                                 }
                             )
 
-                    if mutations:
-                        logger.info(f"  Found {len(mutations)} mutations")
+                    if 0 < len(mutations) <= max_mutations:
+                        significant_mutations.extend(mutations)
+                        logger.info(
+                            f"Found {len(mutations)} significant mutations in alignment "
+                            f"with {percent_identity:.1f}% identity and bit score {hsp.bits:.1f}"
+                        )
+                    elif len(mutations) > max_mutations:
+                        logger.info(
+                            f"Skipped {len(mutations)} mutations in low-quality alignment "
+                            f"(exceeds threshold of {max_mutations})"
+                        )
+
+    if significant_mutations:
+        logger.info(f"Total significant mutations found: {len(significant_mutations)}")
+    else:
+        logger.info("No significant mutations found after filtering")
+
+    return significant_mutations
 
 
-def perform_blast_aligning() -> str:
+def perform_blast_aligning(query_fasta_path: str = None) -> str:
     """
     Perform BLAST analysis using the provided query and reference genome.
 
     Args:
+        query_fasta_path (str, optional): Path to the specific FASTA file to use as query.
+            If None, will attempt to use files from the uploads directory.
+
     Returns:
         Path to BLAST results file
     """
-    load_dotenv()  # Make sure environment variables are loaded
-    # pylint: disable=unused-variable
-    private_api = os.environ.get("NCBI_API_KEY")
-    private_email = os.environ.get("NCBI_API_EMAIL")
-    # pylint: enable=unused-variable
 
-    dirs = initialize_directories()
-    reference_path = dirs["ref_dir"]
+    reference_path = os.path.join(PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA, "reference")
+    blast_dir = PROGRAM_STORAGE_DIR_SHARED_BLAST
 
-    # Use command line BLAST+
     try:
         # Check if BLAST+ is installed
         subprocess.run(["blastn", "-version"], capture_output=True, check=True)
         logger.info("BLAST+ tools are available on this system")
 
-        # First check if there"s a reference genome FASTA file
+        # First check if there's a reference genome FASTA file
         ref_files = [
             f for f in os.listdir(reference_path) if f.endswith(".fasta") or f.endswith(".fa")
         ]
@@ -270,28 +258,63 @@ def perform_blast_aligning() -> str:
 
         # Use the first reference file found
         reference_fasta = os.path.join(reference_path, ref_files[0])
-        logger.info(f"Using reference genome: {reference_fasta}")
 
-        user_uploads_folder = Path(dirs["uploads_dir"])
-        print(user_uploads_folder)
-        if user_uploads_folder.exists():
-            sample_file_name = os.listdir(user_uploads_folder)
+        sample_path = None
 
-            for file in sample_file_name:
-                if file.endswith(".fasta"):
-                    sample_path = os.path.join(user_uploads_folder, file)
-                    print(sample_path)
-
-                # # Run BLAST using command line
-                result_file = blast_cmdline(
-                    str(sample_path), str(reference_fasta), str(dirs["blast_dir"])
+        # If a specific FASTA path is provided, use it
+        if query_fasta_path:
+            if os.path.exists(query_fasta_path) and (
+                query_fasta_path.endswith(".fasta") or query_fasta_path.endswith(".fa")
+            ):
+                sample_path = query_fasta_path
+                logger.info(f"Using provided query FASTA file: {sample_path}")
+            else:
+                logger.error(
+                    f"Provided file does not exist or is not a FASTA file: {query_fasta_path}"
                 )
-                logger.info(f"BLAST analysis complete. Results saved to {result_file}")
-                return result_file
+                return None
+        # Otherwise, try to find a file in the uploads directory
         else:
-            logger.error(f"Sample directory does not exist: {user_uploads_folder}")
+            user_uploads_folder = Path(dir["uploads_dir"])
+            logger.info(f"Checking uploads folder: {user_uploads_folder}")
+
+            if user_uploads_folder.exists():
+                sample_files = [
+                    f
+                    for f in os.listdir(user_uploads_folder)
+                    if f.endswith(".fasta") or f.endswith(".fa")
+                ]
+
+                if sample_files:
+                    sample_path = os.path.join(user_uploads_folder, sample_files[0])
+                    logger.info(f"Using query file from uploads: {sample_path}")
+                else:
+                    logger.error(
+                        f"No FASTA files found in uploads directory: {user_uploads_folder}"
+                    )
+                    return None
+            else:
+                logger.error(f"Sample directory does not exist: {user_uploads_folder}")
+                return None
+
+        # Run BLAST using command line
+        result_file = blast_cmdline(str(sample_path), str(reference_fasta), str(blast_dir))
+        logger.info(f"BLAST analysis complete. Results saved to {result_file}")
+        print(f"BLAST analysis complete. Results saved to {result_file}")
+        return result_file
 
     except subprocess.CalledProcessError:
         logger.error("BLAST+ tools not found. Please install BLAST+ (sudo apt install ncbi-blast+)")
     except Exception as e:
         logger.exception(f"Error running BLAST: {e}")
+        return None
+
+
+# Example usage
+if __name__ == "__main__":
+    # Example with specific path
+    # perform_blast_aligning("/path/to/your/specific/file.fasta")
+    disease_path = "C:/Users/Kajus/.kath/shared/data/fasta_files/samples/diseases/alzheimer/unknown_transcript1_1519314819.fasta"
+
+    # Example with default behavior (using uploads directory)
+    perform_blast_aligning(disease_path)

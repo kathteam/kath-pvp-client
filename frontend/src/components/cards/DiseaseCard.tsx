@@ -14,7 +14,7 @@ import {
   Box
 } from '@mui/material';
 
-export default function DiseaseDownloadCard(): JSX.Element {
+export default function DiseaseCard(): JSX.Element {
   const [queryParams, setQueryParams] = useState<{
     disease: string;
     ref_max: number;

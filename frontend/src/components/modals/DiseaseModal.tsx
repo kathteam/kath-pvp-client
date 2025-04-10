@@ -1,11 +1,12 @@
-import { JSX } from "react";
-import { Modal, Box, Typography, Chip, Button, Divider, Paper } from "@mui/material";
+import { JSX } from 'react';
+import { Modal, Box, Typography, Chip, Button, Divider, Paper } from '@mui/material';
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import CloseIcon from '@mui/icons-material/Close';
+import { Disease } from '@/models';
+
 
 export default function DiseaseModal(props: {
-  clinicalSignificance: string;
-  disease: string;
+  diseases: Disease[];
   onClose?: () => void;
 }): JSX.Element {
   
@@ -67,27 +68,31 @@ export default function DiseaseModal(props: {
         </Box>
 
         <Box sx={{ p: 3 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              CLINICAL SIGNIFICANCE
-            </Typography>
-            <Chip 
-              label={props.clinicalSignificance} 
-              color={getSeverityColor(props.clinicalSignificance) as any}
-              sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
-            />
-          </Box>
+          {props.diseases.map((disease, index) => (
+            <Box key={index}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  CLINICAL SIGNIFICANCE
+                </Typography>
+                <Chip 
+                  label={disease.clinicalSignificance} 
+                  color={getSeverityColor(disease.clinicalSignificance) as any}
+                  sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
+                />
+              </Box>
 
-          <Divider sx={{ my: 2 }} />
+              <Divider sx={{ my: 2 }} />
 
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-              ASSOCIATED DISEASE
-            </Typography>
-            <Typography variant="body1" fontWeight="500">
-              {props.disease}
-            </Typography>
-          </Box>
+              <Box>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  ASSOCIATED DISEASE
+                </Typography>
+                <Typography variant="body1" fontWeight="500">
+                  {disease.disease}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
 
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
             <Button 

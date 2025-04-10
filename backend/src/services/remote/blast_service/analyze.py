@@ -1,61 +1,27 @@
-import os
-import time
-import re
 import csv
+import os
+import re
+import sys
+import time
 from pathlib import Path
-from logging import Logger
-from typing import Optional, List, Dict, Tuple, Union
-from dotenv import load_dotenv
+from typing import Dict, List, Optional, Tuple, Union
+
 from Bio.Blast import NCBIXML
 
+# Third-party imports
+from dotenv import load_dotenv
+
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
+
+from shared.constants import (
+    PROGRAM_STORAGE_DIR_SHARED_BLAST,
+    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
+)
 from utils.logger import get_logger
 
-logger: Logger = get_logger(__name__)
-
-
-def initialize_directories():
-    """Initialize directory structure for the application."""
-    # Set up file paths
-    base_dir = os.path.join(os.path.expanduser("~"), ".KATH")
-    service_dir = os.path.join(base_dir, "environment")
-    fasta_dir = os.path.join(base_dir, "shared", "data", "fasta_files")
-    blast_dir = os.path.join(base_dir, "shared", "data", "blast_results")
-    uploads_dir = os.path.join(fasta_dir, "uploads")
-    ref_dir = os.path.join(fasta_dir, "reference")
-    samples_dir = os.path.join(fasta_dir, "samples")
-
-    # Create directories if they don"t exist
-    for dir_path in [
-        service_dir,
-        service_dir,
-        fasta_dir,
-        blast_dir,
-        uploads_dir,
-        ref_dir,
-        samples_dir,
-    ]:
-        os.makedirs(dir_path, exist_ok=True)
-
-    # Load environment variables
-    env_file = os.path.join(service_dir, ".env")
-    if os.path.exists(env_file):
-        load_dotenv(env_file)
-    else:
-        logger.warning("No .env file found. Generating a sample .env file")
-        # Create a sample .env file
-        with open(env_file, "w", encoding="utf-8") as f:
-            f.write("NCBI_API_KEY=\n")
-            f.write("NCBI_API_EMAIL=\n")
-
-    return {
-        "base_dir": base_dir,
-        "service_dir": service_dir,
-        "fasta_dir": fasta_dir,
-        "blast_dir": blast_dir,
-        "uploads_dir": uploads_dir,
-        "ref_dir": ref_dir,
-        "samples_dir": samples_dir,
-    }
+logger = get_logger(__name__)
 
 
 # Default timeout for HTTP requests (in seconds)
@@ -88,9 +54,9 @@ def extract_chromosome(subject_id: str) -> str:
         num = int(nc_match.group(1))
         if 1 <= num <= 22:
             return str(num)
-        if num == 23:
+        elif num == 23:
             return "X"
-        if num == 24:
+        elif num == 24:
             return "Y"
 
     # Try to extract just a number if it"s at the beginning or isolated
@@ -125,9 +91,9 @@ def parse_blast_results(
     alignment_summary = []
 
     try:
-        with open(result_file, encoding="utf-8") as result_handle:
+        with open(result_file) as result_handle:
             blast_records = NCBIXML.parse(result_handle)
-            for _, blast_record in enumerate(blast_records):
+            for i, blast_record in enumerate(blast_records):
                 query_id = blast_record.query.split()[0]
                 query_length = blast_record.query_length
 
@@ -172,10 +138,6 @@ def parse_blast_results(
                         if mutations:
                             log_mutation_summary(mutations)
 
-        # Always save mutations to CSV with proper CSV format
-        csv_file = result_file.with_suffix(".csv")
-        save_mutations_to_csv(all_mutations, csv_file)
-
         if return_mutations:
             return all_mutations, alignment_summary
 
@@ -183,15 +145,6 @@ def parse_blast_results(
 
     except Exception as e:
         logger.error(f"Error parsing BLAST results: {e}")
-        # Create empty CSV with proper structure on error
-        try:
-            csv_file = result_file.with_suffix(".csv")
-            with open(csv_file, "w", newline="", encoding="utf-8") as f:
-                writer = csv.writer(f)
-                writer.writerow(["error"])
-                writer.writerow([f"Error parsing BLAST results: {e}"])
-        except Exception:
-            pass
 
         if return_mutations:
             return [], []
@@ -317,7 +270,7 @@ def save_mutations_to_csv(mutations: List[Dict], csv_file: Union[str, Path]) -> 
         csv_file: Path to output CSV file
     """
     try:
-        with open(csv_file, "w", newline="", encoding="utf-8") as f:
+        with open(csv_file, "w", newline="") as f:
             if not mutations:
                 writer = csv.writer(f)
                 writer.writerow(["status"])
@@ -332,54 +285,86 @@ def save_mutations_to_csv(mutations: List[Dict], csv_file: Union[str, Path]) -> 
         logger.error(f"Failed to save mutations to CSV: {e}")
 
 
-def analyze_blast_xml():
+def analyze_blast_xml(xml_file_path: str = None):
     """
-    Main function that processes all BLAST results and outputs CSV-formatted mutation data
-    into a single consolidated file.
+    Function that processes BLAST results and outputs CSV-formatted mutation data.
+
+    Args:
+        xml_file_path: Path to specific XML file to analyze. If None, processes all XML files.
+
+    Returns:
+        Path to the consolidated CSV file
     """
     # Initialize directories
-    dirs = initialize_directories()
-    blast_dir = dirs["blast_dir"]
+    BLAST_DIR = PROGRAM_STORAGE_DIR_SHARED_BLAST
+    timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     # Create output directory for consolidated results
-    consolidated_dir = os.path.join(blast_dir, "consolidated")
+    if xml_file_path:
+        xml_basename = os.path.basename(xml_file_path).split(".")[0]
+        consolidated_dir = os.path.join(BLAST_DIR, f"consolidated_results_{xml_basename}_dir")
+    else:
+        consolidated_dir = os.path.join(BLAST_DIR, f"consolidated_results_{timestamp}")
     os.makedirs(consolidated_dir, exist_ok=True)
 
     # Get current timestamp for unique filename
-    timestamp = time.strftime("%Y%m%d-%H%M%S")
     consolidated_csv = os.path.join(consolidated_dir, f"all_mutations_{timestamp}.csv")
 
-    files = os.listdir(blast_dir)
-
-    if not files:
-        logger.error("No BLAST result files found in directory")
-        # Create empty CSV indicating no files found
-        with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["error"])
-            writer.writerow(["No BLAST result files found in directory"])
-        return consolidated_csv
-
-    # Process all XML files found
-    xml_files = [f for f in files if f.endswith(".xml")]
-    if not xml_files:
-        logger.error("No XML BLAST result files found in directory")
-        with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            writer.writerow(["error"])
-            writer.writerow(["No XML BLAST result files found in directory"])
-        return consolidated_csv
-
-    # Collect all mutations
+    # Collect all mutations and alignments
     all_mutations = []
     all_alignments = []
 
-    for xml_file in xml_files:
-        file_path = os.path.join(blast_dir, xml_file)
-        file_id = os.path.splitext(xml_file)[0]  # Use filename without extension as ID
+    # If specific XML file is provided
+    if xml_file_path:
+        if not os.path.exists(xml_file_path):
+            logger.error(f"Specified XML file not found: {xml_file_path}")
+            with open(consolidated_csv, "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["error"])
+                writer.writerow([f"Specified XML file not found: {xml_file_path}"])
+            return consolidated_csv
+
+        if not xml_file_path.endswith(".xml"):
+            logger.error(f"Provided file is not an XML file: {xml_file_path}")
+            with open(consolidated_csv, "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["error"])
+                writer.writerow([f"Provided file is not an XML file: {xml_file_path}"])
+            return consolidated_csv
+
+        xml_files = [xml_file_path]
+        # Use filename without path and extension as ID
+        file_id_func = lambda path: os.path.splitext(os.path.basename(path))[0]
+    else:
+        # Process all XML files in the BLAST directory
+        files = os.listdir(BLAST_DIR)
+
+        if not files:
+            logger.error("No BLAST result files found in directory")
+            with open(consolidated_csv, "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["error"])
+                writer.writerow(["No BLAST result files found in directory"])
+            return consolidated_csv
+
+        xml_files = [os.path.join(BLAST_DIR, f) for f in files if f.endswith(".xml")]
+        if not xml_files:
+            logger.error("No XML BLAST result files found in directory")
+            with open(consolidated_csv, "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["error"])
+                writer.writerow(["No XML BLAST result files found in directory"])
+            return consolidated_csv
+
+        # Use filename without extension as ID
+        file_id_func = lambda path: os.path.splitext(os.path.basename(path))[0]
+
+    # Process each XML file
+    for file_path in xml_files:
+        file_id = file_id_func(file_path)
 
         try:
-            logger.info(f"Processing {xml_file}...")
+            logger.info(f"Processing {file_path}...")
             mutations, alignments = parse_blast_results(file_path, return_mutations=True)
 
             # Add file identifier to each mutation
@@ -394,7 +379,7 @@ def analyze_blast_xml():
             all_alignments.extend(alignments)
 
         except Exception as e:
-            logger.error(f"Error processing {xml_file}: {e}")
+            logger.error(f"Error processing {file_path}: {e}")
             # Add an error entry so we know this file had problems
             all_mutations.append(
                 {
@@ -416,7 +401,7 @@ def analyze_blast_xml():
 
     # Save consolidated mutations to CSV
     try:
-        with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
+        with open(consolidated_csv, "w", newline="") as f:
             if not all_mutations:
                 writer = csv.writer(f)
                 writer.writerow(["status"])
@@ -448,7 +433,7 @@ def analyze_blast_xml():
         # Also save consolidated alignments if there are any
         if all_alignments:
             alignment_csv = os.path.join(consolidated_dir, f"all_alignments_{timestamp}.csv")
-            with open(alignment_csv, "w", newline="", encoding="utf-8") as f:
+            with open(alignment_csv, "w", newline="") as f:
                 if not all_alignments:
                     writer = csv.writer(f)
                     writer.writerow(["status"])
@@ -477,10 +462,17 @@ def analyze_blast_xml():
 
         # Create a simple summary CSV with counts per file
         summary_csv = os.path.join(consolidated_dir, f"summary_{timestamp}.csv")
-        with open(summary_csv, "w", newline="", encoding="utf-8") as f:
+        with open(summary_csv, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(
-                ["file_id", "total_mutations", "SNP_count", "INS_count", "DEL_count", "ERROR_count"]
+                [
+                    "file_id",
+                    "total_mutations",
+                    "SNP_count",
+                    "INS_count",
+                    "DEL_count",
+                    "ERROR_count",
+                ]
             )
 
             # Group mutations by file_id
@@ -517,8 +509,22 @@ def analyze_blast_xml():
     except Exception as e:
         logger.error(f"Error saving consolidated results: {e}")
         error_csv = os.path.join(consolidated_dir, f"error_{timestamp}.csv")
-        with open(error_csv, "w", newline="", encoding="utf-8") as f:
+        with open(error_csv, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerow(["error"])
             writer.writerow([f"Error saving consolidated results: {str(e)}"])
         return error_csv
+
+
+if __name__ == "__main__":
+    # Example of analyzing a specific XML file
+    # analyze_blast_xml("path/to/specific/blast_results.xml")
+
+    # Example of analyzing all XML files in the BLAST directory
+
+    blast_xml = os.path.join(
+        PROGRAM_STORAGE_DIR_SHARED_BLAST,
+        "unknown_transcript1_1519314819_vs_GRCh38_direct_blast.xml",
+    )
+
+    analyze_blast_xml(blast_xml)

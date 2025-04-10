@@ -1,2 +1,2 @@
-export { default as LogoIcon } from './logo_icon';
-export { default as TitleIcon } from './title_icon';
+export { default as LogoIcon } from './LogoIcon';
+export { default as TitleIcon } from './TitleIcon';

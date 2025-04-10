@@ -1,0 +1,1 @@
+from .prepare_disease import generate_json_diseases

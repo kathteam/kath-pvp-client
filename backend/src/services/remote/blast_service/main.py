@@ -9,7 +9,7 @@ from shared.constants import (
 
 from .align import perform_blast_aligning
 from .analyze import analyze_blast_xml
-from services.analysis_service.app.find_disease import process_variants
+from .find import process_variants
 
 
 class BlastService:

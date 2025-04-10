@@ -1,5 +1,5 @@
 import { RouteObject } from 'react-router-dom';
-import publicRoutes from './public_routes';
+import publicRoutes from './publicRoutes';
 
 export const routes: RouteObject[] = [
   ...publicRoutes,

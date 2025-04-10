@@ -10,21 +10,17 @@ The desktop application frontend is developed using Vite, TypeScript and React f
 
 ## Initialization
 
-### Windows
-
 ```shell
 npm run init
-python -m venv .venv 
-.venv\Scripts\activate
-pip install -r requirements.txt
-pip install -r requirements_dev.txt
 ```
+
+### Windows
 
 **Important:** _You will also need [BLAST+](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-2.16.0+-win64.exe) tools to be installed in your system._
 
 ### Linux
 
-Currently not supported.
+Currently not tested if it works.
 
 ### Mac OS
 

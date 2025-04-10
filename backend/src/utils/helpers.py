@@ -11,7 +11,11 @@ logger: Logger = get_logger(__name__)
 def get_entrypoint() -> str:
     base_dir: str = os.path.dirname(__file__)
 
+    # TODO Fix at some point (first three work for build exe, other three for development)
     possible_paths: dict[str, str] = {
+        os.path.join(base_dir, "../../gui/index.html"): "../gui/index.html",
+        os.path.join(base_dir, "../../Resources/gui/index.html"): "../Resources/gui/index.html",
+        os.path.join(base_dir, "./../gui/index.html"): "./gui/index.html",
         os.path.join(base_dir, "../../../gui/index.html"): "../../gui/index.html",
         os.path.join(
             base_dir, "../../../Resources/gui/index.html"

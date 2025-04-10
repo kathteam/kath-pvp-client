@@ -113,9 +113,12 @@ disable=raw-checker-failed,
         use-implicit-booleaness-not-comparison-to-zero,
         logging-fstring-interpolation,
         broad-exception-caught,
-        missing-docstring,  # Added to reduce noise during initial development
-        too-few-public-methods,  # Added to allow simple classes
-        duplicate-code  # Added to reduce noise on similar code patterns
+        missing-docstring, # Added to reduce noise during initial development
+        too-few-public-methods, # Added to allow simple classes
+        duplicate-code, # Added to reduce noise on similar code patterns
+        too-many-locals, # Added to reduce noise on complex functions
+        too-many-branches, # Added to reduce noise on complex functions
+        too-many-statements # Added to reduce noise on complex functions
 
 
 [METHOD_ARGS]

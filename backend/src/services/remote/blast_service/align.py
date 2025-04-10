@@ -1,3 +1,4 @@
+import re
 import os
 import sys
 import subprocess
@@ -43,7 +44,7 @@ def initialize_directories():
     else:
         logger.warning("No .env file found. Generating a sample .env file")
         # Create a sample .env file
-        with open(env_file, "w") as f:
+        with open(env_file, "w", encoding="utf-8") as f:
             f.write("NCBI_API_KEY=\n")
             f.write("NCBI_API_EMAIL=\n")
 
@@ -101,7 +102,7 @@ def blast_cmdline(
         ]
 
         # Redirect output to devnull to suppress console output
-        with open(os.devnull, "w") as devnull:
+        with open(os.devnull, "w", encoding="utf-8") as devnull:
             process = subprocess.run(
                 makeblastdb_cmd, stdout=devnull, stderr=subprocess.PIPE, text=True, check=False
             )
@@ -168,8 +169,6 @@ def extract_chromosome(subject_id: str) -> str:
     # - chr1, chrX, chrY, etc.
     # - 1, 2, 3, etc. (just number)
 
-    import re
-
     # Try to find chromosome in format "chr1" or "chrX"
     chr_match = re.search(r"chr([0-9XYMxym]+)", subject_id)
     if chr_match:
@@ -181,9 +180,9 @@ def extract_chromosome(subject_id: str) -> str:
         num = int(nc_match.group(1))
         if 1 <= num <= 22:
             return str(num)
-        elif num == 23:
+        if num == 23:
             return "X"
-        elif num == 24:
+        if num == 24:
             return "Y"
 
     # Try to extract just a number if it"s at the beginning or isolated
@@ -198,7 +197,7 @@ def parse_blast_results(result_file: str):
     """Parse and log BLAST results from XML file."""
     logger.info(f"Parsing BLAST results from {result_file}")
 
-    with open(result_file) as result_handle:
+    with open(result_file, encoding="utf-8") as result_handle:
         blast_records = NCBIXML.parse(result_handle)
         for blast_record in blast_records:
             for alignment in blast_record.alignments:
@@ -246,11 +245,13 @@ def perform_blast_aligning() -> str:
         Path to BLAST results file
     """
     load_dotenv()  # Make sure environment variables are loaded
-    PRIVATE_API = os.environ.get("NCBI_API_KEY")
-    PRIVATE_EMAIL = os.environ.get("NCBI_API_EMAIL")
+    # pylint: disable=unused-variable
+    private_api = os.environ.get("NCBI_API_KEY")
+    private_email = os.environ.get("NCBI_API_EMAIL")
+    # pylint: enable=unused-variable
 
-    dir = initialize_directories()
-    reference_path = dir["ref_dir"]
+    dirs = initialize_directories()
+    reference_path = dirs["ref_dir"]
 
     # Use command line BLAST+
     try:
@@ -271,7 +272,7 @@ def perform_blast_aligning() -> str:
         reference_fasta = os.path.join(reference_path, ref_files[0])
         logger.info(f"Using reference genome: {reference_fasta}")
 
-        user_uploads_folder = Path(dir["uploads_dir"])
+        user_uploads_folder = Path(dirs["uploads_dir"])
         print(user_uploads_folder)
         if user_uploads_folder.exists():
             sample_file_name = os.listdir(user_uploads_folder)
@@ -283,7 +284,7 @@ def perform_blast_aligning() -> str:
 
                 # # Run BLAST using command line
                 result_file = blast_cmdline(
-                    str(sample_path), str(reference_fasta), str(dir["blast_dir"])
+                    str(sample_path), str(reference_fasta), str(dirs["blast_dir"])
                 )
                 logger.info(f"BLAST analysis complete. Results saved to {result_file}")
                 return result_file

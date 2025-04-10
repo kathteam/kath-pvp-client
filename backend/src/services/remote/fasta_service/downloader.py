@@ -42,7 +42,7 @@ def initialize_directories():
     else:
         logger.warning("No .env file found. Generating a sample .env file")
         # Create a sample .env file
-        with open(env_file, "w") as f:
+        with open(env_file, "w", encoding="utf-8") as f:
             f.write("NCBI_API_KEY=\n")
             f.write("NCBI_API_EMAIL=\n")
 
@@ -62,7 +62,7 @@ def log_download(source: str, identifier: str, file_path: str, fasta_dir: Path):
     """Log a successful download."""
     log_file = os.path.join(fasta_dir, "downloads.log")
     with open(log_file, "a", encoding="utf-8") as f:
-        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {source} | {identifier} | {file_path}\n")
+        f.write(f"{time.strftime("%Y-%m-%d %H:%M:%S")} | {source} | {identifier} | {file_path}\n")
 
 
 def reference_genome_exists(ref_dir: Path, version: str = REF_GENOME) -> bool:
@@ -88,10 +88,12 @@ def download_reference_genome_direct(
         return str(output_file)
 
     # URLs for complete reference genomes
+    # pylint: disable=line-too-long
     urls = {
         "GRCh38": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz",
         "GRCh37": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.14_GRCh37.p13/GCA_000001405.14_GRCh37.p13_genomic.fna.gz",
     }
+    # pylint: enable=line-too-long
 
     url = urls.get(version)
     if not url:
@@ -138,10 +140,10 @@ def handle_gene_download_nucleotide(
 
         # Skip if already downloaded
         if os.path.exists(file_path):
-            logger.info("File already exists: %s", file_path)
+            logger.info(f"File already exists: {file_path}")
             return str(file_path)
 
-        logger.info("Downloading sequence for nucleotide ID: %s", seq_id)
+        logger.info(f"Downloading sequence for nucleotide ID: {seq_id}")
 
         # Download sequence
         seq_handle = Entrez.efetch(db="nucleotide", id=seq_id, rettype="fasta", retmode="text")
@@ -156,7 +158,7 @@ def handle_gene_download_nucleotide(
 
         seq_handle.close()
 
-        logger.info("Downloaded %s for gene %s to %s", seq_id, symbol, file_path)
+        logger.info(f"Downloaded {seq_id} for gene {symbol} to {file_path}")
         log_download("Disease", f"{disease_term}:{symbol}", str(file_path), fasta_dir)
 
         # Be nice to NCBI by adding a delay
@@ -164,10 +166,10 @@ def handle_gene_download_nucleotide(
         return str(file_path)
 
     except IOError as e:
-        logger.error("File IO error downloading %s: %s", seq_id, str(e))
+        logger.error(f"File IO error downloading {seq_id}: {str(e)}")
         return None
     except Exception as e:
-        logger.error("Failed to download %s: %s", seq_id, str(e))
+        logger.error(f"Failed to download {seq_id}: {str(e)}")
         return None
 
 
@@ -292,37 +294,37 @@ def download_disease_related_genes_clinvar(
         gene_ids = search_results["IdList"]
 
         if not gene_ids:
-            logger.warning("No genes found for term: %s", disease_term)
+            logger.warning(f"No genes found for term: {disease_term}")
             return downloaded_files
 
-        logger.info("Found %s genes related to %s", len(gene_ids), disease_term)
+        logger.info(f"Found {len(gene_ids)} genes related to {disease_term}")
 
         # For each gene, get the nucleotide sequences
         for gene_id in gene_ids:
             try:
-                logger.info("Processing gene ID: %s", gene_id)
+                logger.info(f"Processing gene ID: {gene_id}")
 
                 # Direct search for nucleotide sequences by gene ID
                 nucleotide_ids = search_nucleotide_by_gene_id(gene_id)
 
                 gene_symbol = "unknown"
                 if not nucleotide_ids:
-                    logger.info("No direct nucleotide sequences found for gene ID: %s", gene_id)
+                    logger.info(f"No direct nucleotide sequences found for gene ID: {gene_id}")
 
                     # Try to get gene symbol
                     gene_symbol = get_gene_symbol(gene_id)
-                    logger.info("Found gene symbol: %s", gene_symbol)
+                    logger.info(f"Found gene symbol: {gene_symbol}")
 
                     # Try searching by gene symbol
                     nucleotide_ids = search_nucleotide_by_symbol(gene_symbol)
-                    logger.info("Found %s nucleotide sequences by gene symbol", len(nucleotide_ids))
+                    logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene symbol")
                 else:
-                    logger.info("Found %s nucleotide sequences by gene ID", len(nucleotide_ids))
+                    logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene ID")
                     gene_symbol = get_gene_symbol(gene_id)
 
                 # If we still don"t have any nucleotide IDs, skip this gene
                 if not nucleotide_ids:
-                    logger.warning("No nucleotide sequences found for gene ID: %s", gene_id)
+                    logger.warning(f"No nucleotide sequences found for gene ID: {gene_id}")
                     continue
 
                 # Download each nucleotide sequence
@@ -333,11 +335,11 @@ def download_disease_related_genes_clinvar(
                         downloaded_files.append(file_path)
 
             except Exception as e:
-                logger.error("Error processing gene %s: %s", gene_id, str(e))
+                logger.error(f"Error processing gene {gene_id}: {str(e)}")
                 continue
 
         return downloaded_files
 
     except Exception as e:
-        logger.error("Error searching for disease genes: %s", str(e))
+        logger.error(f"Error searching for disease genes: {str(e)}")
         raise

@@ -7,7 +7,7 @@ added_files = [
 ]
 
 a = Analysis(
-    ['./backend/main.py'],
+    ['./backend/src/main.py'],
     pathex=['./dist'],
     binaries=[],
     datas=added_files,
@@ -40,7 +40,7 @@ exe = EXE(
     strip=False,
     upx=True,
     upx_exclude=[],
-    icon='./backend/assets/logo.png',
+    icon='./backend/src/assets/logo.png',
     runtime_tmpdir=None,
     console=False,
     disable_windowed_traceback=False,

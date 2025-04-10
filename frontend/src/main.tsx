@@ -17,7 +17,7 @@ declare global {
           fullscreen: () => Promise<void>;
         },
 
-        file_manager: {
+        file_controller: {
           list_files: (path: string) => Promise<{
             filename: string; 
             type: string; 
@@ -25,9 +25,9 @@ declare global {
             item_count: number | null; 
           }[]>;
           upload_file: (path: string, file_name: string, file_content: number[]) => Promise<void>;
-          [method: string]: (...args: any[]) => Promise<any>;
           rename_file: (path: string, old_name: string, new_name: string) => Promise<void>;
           delete_file: (path: string, file_name: string) => Promise<void>;
+          [method: string]: (...args: any[]) => Promise<any>;
         },
         
         fasta_service: {

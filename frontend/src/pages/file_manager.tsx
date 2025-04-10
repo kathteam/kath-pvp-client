@@ -29,7 +29,7 @@ export default function FileManager() {
   useEffect(() => {
     const fetchFiles = async (path: string) => {
       try {
-        const files = await window.pywebview.api.file_manager.list_files(path);
+        const files = await window.pywebview.api.file_controller.list_files(path);
         setFileList(files);
       } catch (error) {
         console.error('Error fetching files:', error);
@@ -99,7 +99,7 @@ export default function FileManager() {
         const fileContent = await file.arrayBuffer();
         const fileName = file.name;
 
-        await window.pywebview.api.file_manager.upload_file(
+        await window.pywebview.api.file_controller.upload_file(
           currentPath,
           fileName,
           Array.from(new Uint8Array(fileContent))
@@ -107,7 +107,7 @@ export default function FileManager() {
       }
 
       // Refresh the file list after upload
-      const updatedFiles = await window.pywebview.api.file_manager.list_files(currentPath);
+      const updatedFiles = await window.pywebview.api.file_controller.list_files(currentPath);
       setFileList(updatedFiles);
     } catch (error) {
       console.error('Error uploading files:', error);
@@ -143,7 +143,6 @@ export default function FileManager() {
 
   const handleRenameFile = (oldName: string) => async (event: React.MouseEvent<HTMLElement>) => {
     event.stopPropagation(); // Prevent the menu from closing before the action is complete
-    console.log('Rename file:', oldName);
     setSelectedFile(oldName);
     setOpenRenameDialog(true);
   };
@@ -151,9 +150,8 @@ export default function FileManager() {
   const handleRenameConfirm = async () => {
     if (selectedFile) {
       const newName = (document.getElementById('new-name') as HTMLInputElement).value;
-      console.log(newName);
-      await window.pywebview.api.file_manager.rename_file(currentPath, selectedFile, newName);
-      const updatedFiles = await window.pywebview.api.file_manager.list_files(currentPath);
+      await window.pywebview.api.file_controller.rename_file(currentPath, selectedFile, newName);
+      const updatedFiles = await window.pywebview.api.file_controller.list_files(currentPath);
       setFileList(updatedFiles);
     }
     setOpenRenameDialog(false);
@@ -168,11 +166,11 @@ export default function FileManager() {
   const handleDeleteConfirm = async () => {
     if (selectedFile) {
       try {
-        await window.pywebview.api.file_manager.delete_file(currentPath, selectedFile);
-        const updatedFiles = await window.pywebview.api.file_manager.list_files(currentPath);
+        await window.pywebview.api.file_controller.delete_file(currentPath, selectedFile);
+        const updatedFiles = await window.pywebview.api.file_controller.list_files(currentPath);
         setFileList(updatedFiles);
       } catch (error) {
-        console.error("Error deleting file:", error);
+        console.error('Error deleting file:', error);
       }
     }
     setOpenDeleteDialog(false);

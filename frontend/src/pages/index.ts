@@ -1,5 +1,5 @@
-export { default as Dashboard } from './dashboard';
-export { default as GVATool } from './gvatool';
-export { default as FileManager } from './file_manager';
-export { default as Macros } from './macros';
-export { default as Manual } from './manual';
+export { default as Dashboard } from './Dashboard';
+export { default as GVATool } from './Gvatool';
+export { default as FileManager } from './FileManager';
+export { default as Macros } from './Macros';
+export { default as Manual } from './Manual';

@@ -12,16 +12,16 @@ jobs:
         include:
           - os: windows-latest
             name: windows
-            venv_cmd: python -m venv .venv
-            activate_cmd: .venv\\Scripts\\activate
+            venv_cmd: python -m venv .\\backend\\.venv
+            activate_cmd: .\\backend\\.venv\\Scripts\\activate
           - os: ubuntu-latest
             name: linux
-            venv_cmd: python3 -m venv .venv
-            activate_cmd: source .venv/bin/activate
+            venv_cmd: python3 -m venv ./backend/.venv
+            activate_cmd: source ./backend/.venv/bin/activate
           - os: macos-latest
             name: macos
-            venv_cmd: python3 -m venv .venv
-            activate_cmd: source .venv/bin/activate
+            venv_cmd: python3 -m venv ./backend/.venv
+            activate_cmd: source ./backend/.venv/bin/activate
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -39,7 +39,10 @@ jobs:
           node-version: '22'
 
       - name: Install Node.js dependencies
-        run: npm run init
+        run: |
+          npm install
+          cd frontend
+          npm install
 
       - name: Create and activate virtual environment
         run: |

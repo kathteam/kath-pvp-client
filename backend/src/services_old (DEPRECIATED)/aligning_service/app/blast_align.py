@@ -97,6 +97,8 @@ def blast_cmdline(
         "blastn",  # Use fast mode
     ]
 
+    logger.info(f"Executing BLAST command: {' '.join(blastn_cmd)}")
+
     process = subprocess.run(blastn_cmd, capture_output=True, text=True, check=False)
 
     if process.returncode != 0:

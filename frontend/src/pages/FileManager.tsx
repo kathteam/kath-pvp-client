@@ -11,7 +11,7 @@ import {
 import { KeyboardReturn,
   Folder,InsertDriveFile, Description, TableChart, Storage,
   BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
-  Movie, Audiotrack, Archive, MoreVert } from '@mui/icons-material';
+  Movie, Audiotrack, Archive, MoreVert, ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import { Menu, MenuItem, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText } from '@mui/material';
 
@@ -24,7 +24,14 @@ export default function FileManager() {
     item_count: number | null;
   }[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('/');
-  const [inputPath, setInputPath] = useState<string>(currentPath); // Track the user input for the path
+  const [inputPath, setInputPath] = useState<string>(currentPath);
+  const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
+  const [typeFilter, setTypeFilter] = useState<string>(''); // Filter for file type
+  const [sizeFilter, setSizeFilter] = useState<string>(''); // Filter for file size
+  const [sortConfig, setSortConfig] = useState<{ column: string; direction: 'asc' | 'desc' | null }>({
+    column: '',
+    direction: null,
+  });
 
   useEffect(() => {
     const fetchFiles = async (path: string) => {
@@ -42,25 +49,82 @@ export default function FileManager() {
   const handleNavigateUp = () => {
     const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
     setCurrentPath(parentPath);
-    setInputPath(parentPath); // Update the input field as well
+    setInputPath(parentPath);
   };
 
   const handleFolderClick = (folderName: string) => {
     const newPath = `${currentPath}/${folderName}`.replace('//', '/');
     setCurrentPath(newPath);
-    setInputPath(newPath); // Update the input field as well
+    setInputPath(newPath);
   };
 
   const handlePathChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setInputPath(event.target.value); // Update the input field value
+    setInputPath(event.target.value);
   };
 
-  // Update the current path when <Enter> is pressed
   const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      setCurrentPath(inputPath); 
+      setCurrentPath(inputPath);
     }
   };
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value);
+  };
+
+  const handleTypeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTypeFilter(event.target.value);
+  };
+
+  const handleSizeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSizeFilter(event.target.value);
+  };
+
+  const handleSort = (column: string) => {
+    setSortConfig((prev) => {
+      if (prev.column === column) {
+        // Toggle sort direction
+        const newDirection = prev.direction === 'asc' ? 'desc' : prev.direction === 'desc' ? null : 'asc';
+        return { column, direction: newDirection };
+      }
+      return { column, direction: 'asc' }; // Default to ascending
+    });
+  };
+
+  const filteredFiles = fileList.filter((file) => {
+    const matchesName = file.filename.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = typeFilter ? file.type.toLowerCase().includes(typeFilter.toLowerCase()) : true;
+    
+    const sizeColumn = file.type === 'folder'
+      ? `${file.item_count} items`
+      : `${file.size_kb?.toFixed(2)} KB`;
+    const matchesSize = sizeFilter
+      ? sizeColumn.toLowerCase().includes(sizeFilter.toLowerCase())
+      : true;
+
+    return matchesName && matchesType && matchesSize;
+  });
+
+  const sortedFiles = [...filteredFiles].sort((a, b) => {
+    if (!sortConfig.direction) return 0; // No sorting
+    const isAsc = sortConfig.direction === 'asc';
+    if (sortConfig.column === 'Name') {
+      return isAsc ? a.filename.localeCompare(b.filename) : b.filename.localeCompare(a.filename);
+    }
+    if (sortConfig.column === 'Type') {
+      return isAsc ? a.type.localeCompare(b.type) : b.type.localeCompare(a.type);
+    }
+    if (sortConfig.column === 'Size') {
+      const sizeA = a.type === 'folder'
+        ? `${a.item_count} items`
+        : `${a.size_kb?.toFixed(2)} KB`;
+      const sizeB = b.type === 'folder'
+        ? `${b.item_count} items`
+        : `${b.size_kb?.toFixed(2)} KB`;
+      return isAsc ? sizeA.localeCompare(sizeB) : sizeB.localeCompare(sizeA);
+    }
+    return 0;
+  });
 
   const getFileIcon = (fileType: string) => {
     switch (fileType) {
@@ -236,10 +300,94 @@ export default function FileManager() {
           )}
         </Box>
 
+
+        {/* File List with Column Headers and Filters */}
         <Box sx={{ mt: 3 }}>
           {fileList.length > 0 ? (
             <>
-              {/* .. folder for navigation */}
+              {/* Column Headers */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  fontWeight: 'bold',
+                  borderTop: '1px solid #ddd',
+                }}
+              >
+                <Typography
+                  variant="body1"
+                  sx={{ flex: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => handleSort('Name')}
+                >
+                  Name
+                  {sortConfig.column === 'Name' && sortConfig.direction && (
+                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
+                  )}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => handleSort('Type')}
+                >
+                  Type
+                  {sortConfig.column === 'Type' && sortConfig.direction && (
+                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
+                  )}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                  onClick={() => handleSort('Size')}
+                >
+                  Size
+                  {sortConfig.column === 'Size' && sortConfig.direction && (
+                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
+                  )}
+                </Typography>
+              </Box>
+
+              {/* Filter Boxes */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  borderBottom: '1px solid #ddd',
+                }}
+              >
+                <TextField
+                  placeholder="Filter by name"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  sx={{ flex: 2, mr: 1 }}
+                />
+                <TextField
+                  placeholder="Filter by type"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={typeFilter}
+                  onChange={handleTypeFilterChange}
+                  sx={{ flex: 1, mr: 1 }}
+                />
+                <TextField
+                  placeholder="Filter by size"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  value={sizeFilter}
+                  onChange={handleSizeFilterChange}
+                  sx={{ flex: 1 }}
+                />
+              </Box>
+
+              {/* Parent Directory */}
               {currentPath !== '/' && (
                 <Box
                   sx={{
@@ -252,18 +400,23 @@ export default function FileManager() {
                   }}
                   onClick={handleNavigateUp}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Folder sx={{ mr: 1, color: 'primary.main' }} /> {/* Icon for parent directory */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
+                    <Folder sx={{ mr: 1, color: 'primary.main' }} />
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                       ..
                     </Typography>
                   </Box>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
                     Parent Directory
+                  </Typography>
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
+                    Folder
                   </Typography>
                 </Box>
               )}
-              {fileList.map((file, index) => (
+
+              {/* Sorted Files */}
+              {sortedFiles.map((file, index) => (
                 <Box
                   key={index}
                   sx={{
@@ -276,19 +429,19 @@ export default function FileManager() {
                   }}
                   onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    {getFileIcon(file.type)} {/* Dynamically render the icon based on file type */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
+                    {getFileIcon(file.type)}
                     <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                       {file.filename}
                     </Typography>
                   </Box>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
+                    {file.type}
+                  </Typography>
+                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
                     {file.type === 'folder'
                       ? `${file.item_count} items`
                       : `${file.size_kb?.toFixed(2)} KB`}
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    {file.type}
                   </Typography>
                   <MoreVert
                     onClick={(e) => handleOptionsClick(e, file.filename)} // Pass filename here

@@ -1,4 +1,3 @@
-import os
 from logging import Logger
 
 from utils.logger import get_logger

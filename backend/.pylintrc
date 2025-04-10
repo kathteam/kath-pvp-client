@@ -118,7 +118,11 @@ disable=raw-checker-failed,
         duplicate-code, # Added to reduce noise on similar code patterns
         too-many-locals, # Added to reduce noise on complex functions
         too-many-branches, # Added to reduce noise on complex functions
-        too-many-statements # Added to reduce noise on complex functions
+        too-many-statements, # Added to reduce noise on complex functions
+        broad-exception-raised, # Added to reduce noise on exception handling
+        unnecessary-lambda-assignment, # Added to reduce noise on lambda usage
+        too-many-return-statements, # Added to reduce noise on complex functions
+        logging-not-lazy, # Added to reduce noise on logging usage
 
 
 [METHOD_ARGS]

@@ -1,6 +1,6 @@
 import os
-import pandas as pd
 from typing import List, Dict, Any
+import pandas as pd
 
 
 def _read_disease_data(file_path: str) -> pd.DataFrame:

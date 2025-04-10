@@ -19,7 +19,7 @@ class DiseaseService:
             # Read and prepare disease data
             prepared_data = generate_json_diseases(file_path)
             json_format = []
-            for _, row in prepared_data.iterrows():
+            for _, row in enumerate(prepared_data):
                 json_format.append(
                     {
                         "clinical_significance": row["clinical_significance"],

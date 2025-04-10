@@ -5,24 +5,18 @@ import sys
 import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-
 from Bio.Blast import NCBIXML
 
-# Third-party imports
-from dotenv import load_dotenv
+from shared.constants import (
+    PROGRAM_STORAGE_DIR_SHARED_BLAST,
+)
+from utils.logger import get_logger
 
 backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 if backend_dir not in sys.path:
     sys.path.append(backend_dir)
 
-from shared.constants import (
-    PROGRAM_STORAGE_DIR_SHARED_BLAST,
-    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
-)
-from utils.logger import get_logger
-
 logger = get_logger(__name__)
-
 
 # Default timeout for HTTP requests (in seconds)
 DEFAULT_TIMEOUT = 60
@@ -54,10 +48,11 @@ def extract_chromosome(subject_id: str) -> str:
         num = int(nc_match.group(1))
         if 1 <= num <= 22:
             return str(num)
-        elif num == 23:
+        if num == 23:
             return "X"
-        elif num == 24:
+        if num == 24:
             return "Y"
+        return "-"
 
     # Try to extract just a number if it"s at the beginning or isolated
     num_match = re.search(r"\b([0-9]+|[XYxy])\b", subject_id)
@@ -91,9 +86,9 @@ def parse_blast_results(
     alignment_summary = []
 
     try:
-        with open(result_file) as result_handle:
+        with open(result_file, encoding="utf-8") as result_handle:
             blast_records = NCBIXML.parse(result_handle)
-            for i, blast_record in enumerate(blast_records):
+            for _, blast_record in enumerate(blast_records):
                 query_id = blast_record.query.split()[0]
                 query_length = blast_record.query_length
 
@@ -270,7 +265,7 @@ def save_mutations_to_csv(mutations: List[Dict], csv_file: Union[str, Path]) -> 
         csv_file: Path to output CSV file
     """
     try:
-        with open(csv_file, "w", newline="") as f:
+        with open(csv_file, "w", newline="", encoding="utf-8") as f:
             if not mutations:
                 writer = csv.writer(f)
                 writer.writerow(["status"])
@@ -296,15 +291,18 @@ def analyze_blast_xml(xml_file_path: str = None):
         Path to the consolidated CSV file
     """
     # Initialize directories
-    BLAST_DIR = PROGRAM_STORAGE_DIR_SHARED_BLAST
     timestamp = time.strftime("%Y%m%d-%H%M%S")
 
     # Create output directory for consolidated results
     if xml_file_path:
         xml_basename = os.path.basename(xml_file_path).split(".")[0]
-        consolidated_dir = os.path.join(BLAST_DIR, f"consolidated_results_{xml_basename}_dir")
+        consolidated_dir = os.path.join(
+            PROGRAM_STORAGE_DIR_SHARED_BLAST, f"consolidated_results_{xml_basename}_dir"
+        )
     else:
-        consolidated_dir = os.path.join(BLAST_DIR, f"consolidated_results_{timestamp}")
+        consolidated_dir = os.path.join(
+            PROGRAM_STORAGE_DIR_SHARED_BLAST, f"consolidated_results_{timestamp}"
+        )
     os.makedirs(consolidated_dir, exist_ok=True)
 
     # Get current timestamp for unique filename
@@ -318,7 +316,7 @@ def analyze_blast_xml(xml_file_path: str = None):
     if xml_file_path:
         if not os.path.exists(xml_file_path):
             logger.error(f"Specified XML file not found: {xml_file_path}")
-            with open(consolidated_csv, "w", newline="") as f:
+            with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(["error"])
                 writer.writerow([f"Specified XML file not found: {xml_file_path}"])
@@ -326,7 +324,7 @@ def analyze_blast_xml(xml_file_path: str = None):
 
         if not xml_file_path.endswith(".xml"):
             logger.error(f"Provided file is not an XML file: {xml_file_path}")
-            with open(consolidated_csv, "w", newline="") as f:
+            with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(["error"])
                 writer.writerow([f"Provided file is not an XML file: {xml_file_path}"])
@@ -337,20 +335,22 @@ def analyze_blast_xml(xml_file_path: str = None):
         file_id_func = lambda path: os.path.splitext(os.path.basename(path))[0]
     else:
         # Process all XML files in the BLAST directory
-        files = os.listdir(BLAST_DIR)
+        files = os.listdir(PROGRAM_STORAGE_DIR_SHARED_BLAST)
 
         if not files:
             logger.error("No BLAST result files found in directory")
-            with open(consolidated_csv, "w", newline="") as f:
+            with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(["error"])
                 writer.writerow(["No BLAST result files found in directory"])
             return consolidated_csv
 
-        xml_files = [os.path.join(BLAST_DIR, f) for f in files if f.endswith(".xml")]
+        xml_files = [
+            os.path.join(PROGRAM_STORAGE_DIR_SHARED_BLAST, f) for f in files if f.endswith(".xml")
+        ]
         if not xml_files:
             logger.error("No XML BLAST result files found in directory")
-            with open(consolidated_csv, "w", newline="") as f:
+            with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 writer.writerow(["error"])
                 writer.writerow(["No XML BLAST result files found in directory"])
@@ -401,7 +401,7 @@ def analyze_blast_xml(xml_file_path: str = None):
 
     # Save consolidated mutations to CSV
     try:
-        with open(consolidated_csv, "w", newline="") as f:
+        with open(consolidated_csv, "w", newline="", encoding="utf-8") as f:
             if not all_mutations:
                 writer = csv.writer(f)
                 writer.writerow(["status"])
@@ -433,7 +433,7 @@ def analyze_blast_xml(xml_file_path: str = None):
         # Also save consolidated alignments if there are any
         if all_alignments:
             alignment_csv = os.path.join(consolidated_dir, f"all_alignments_{timestamp}.csv")
-            with open(alignment_csv, "w", newline="") as f:
+            with open(alignment_csv, "w", newline="", encoding="utf-8") as f:
                 if not all_alignments:
                     writer = csv.writer(f)
                     writer.writerow(["status"])
@@ -462,7 +462,7 @@ def analyze_blast_xml(xml_file_path: str = None):
 
         # Create a simple summary CSV with counts per file
         summary_csv = os.path.join(consolidated_dir, f"summary_{timestamp}.csv")
-        with open(summary_csv, "w", newline="") as f:
+        with open(summary_csv, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(
                 [
@@ -509,7 +509,7 @@ def analyze_blast_xml(xml_file_path: str = None):
     except Exception as e:
         logger.error(f"Error saving consolidated results: {e}")
         error_csv = os.path.join(consolidated_dir, f"error_{timestamp}.csv")
-        with open(error_csv, "w", newline="") as f:
+        with open(error_csv, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(["error"])
             writer.writerow([f"Error saving consolidated results: {str(e)}"])

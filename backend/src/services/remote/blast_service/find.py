@@ -5,20 +5,19 @@ import sys
 import time
 from logging import Logger
 from typing import Any, Dict, List, Optional, Union
-
 import pandas as pd
 import requests
 from Bio import Entrez
-
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
 
 from shared.constants import (
     PROGRAM_STORAGE_DIR_SHARED_BLAST,
     PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES,
 )
 from utils.logger import get_logger
+
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
 
 os.makedirs(PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES, exist_ok=True)
 os.makedirs(PROGRAM_STORAGE_DIR_SHARED_BLAST, exist_ok=True)
@@ -37,7 +36,7 @@ def track_api_queries(response) -> None:
     os.makedirs(folder, exist_ok=True)
     file_number = len(os.listdir(folder)) + 1
     file_path = os.path.join(folder, f"api_query_{file_number}.json")
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(response, f, indent=4)
 
 
@@ -117,7 +116,8 @@ def query_into_myvariant(hgvs_list: List[str]) -> Optional[Dict[str, Any]]:
     if not hgvs_list:
         return []
 
-    url = f"{MYVARIANT_API_URL}?assembly=hg38&fields=clinvar"  # Add more fields if needed (e.g., dbsnp)
+    # Add more fields if needed (e.g., dbsnp)
+    url = f"{MYVARIANT_API_URL}?assembly=hg38&fields=clinvar"
     data_payload = {"ids": hgvs_list}
     headers = {"Content-Type": "application/json"}
 
@@ -139,14 +139,15 @@ def query_into_myvariant(hgvs_list: List[str]) -> Optional[Dict[str, Any]]:
             logger.error(f"HTTP error during MyVariant.info batch query: {e}")
         else:
             logger.warning(
-                f"MyVariant.info batch query returned 404 (likely all variants not found or issue with request format)."
+                "MyVariant.info batch query returned 404 "
+                + "(likely all variants not found or issue with request format)."
             )
         return None
     except requests.exceptions.RequestException as e:
         logger.error(f"Network error during MyVariant.info batch query: {e}")
         return None
     except json.JSONDecodeError:
-        logger.error(f"Error decoding JSON response from MyVariant.info batch query.")
+        logger.error("Error decoding JSON response from MyVariant.info batch query.")
         try:
             logger.error(f"Response Text: {response.text[:500]}...")  # Log beginning of text
         except NameError:
@@ -164,8 +165,7 @@ def format_variant_hgvs(
     if alternate == "-":
         if len(reference) == 1:
             return f"chr{chrom_str}:g.{position}del"
-        else:
-            return f"chr{chrom_str}:g.{position}_{position + len(reference) - 1}del"
+        return f"chr{chrom_str}:g.{position}_{position + len(reference) - 1}del"
     # SNP / MNP
     return f"chr{chrom_str}:g.{position}{reference}>{alternate}"
 
@@ -300,7 +300,7 @@ def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE):
 
     if variants.empty:
         logger.error("No valid variants to process")
-        return
+        return []
 
     all_disease_data = []
     total_variants = len(variants)
@@ -312,7 +312,8 @@ def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE):
         batch_variants = variants.iloc[batch_start:batch_end]
 
         logger.info(
-            f"Processing batch {batch_start//batch_size + 1}: variants {batch_start+1}-{batch_end} of {total_variants}"
+            f"Processing batch {batch_start//batch_size + 1}: variants "
+            + f"{batch_start+1}-{batch_end} of {total_variants}"
         )
 
         valid_hgvs = []

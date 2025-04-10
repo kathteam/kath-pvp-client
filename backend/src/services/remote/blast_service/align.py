@@ -6,16 +6,13 @@ databases including NCBI, Ensembl, and ClinVar.
 """
 
 import os
+import re
 import subprocess
 import sys
+import json
 from pathlib import Path
 from typing import Optional
-
 from Bio.Blast import NCBIXML
-
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
 
 from shared.constants import (
     PROGRAM_STORAGE_DIR_SHARED_BLAST,
@@ -23,9 +20,11 @@ from shared.constants import (
 )
 from utils.logger import get_logger
 
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
 
 logger = get_logger(__name__)
-
 
 # Default timeout for HTTP requests (in seconds)
 DEFAULT_TIMEOUT = 60
@@ -109,9 +108,8 @@ def blast_cmdline(
 
     mutations_file = output_file.replace(".xml", "_significant_mutations.json")
     if mutations:
-        import json
 
-        with open(mutations_file, "w") as f:
+        with open(mutations_file, "w", encoding="utf-8") as f:
             json.dump(mutations, f, indent=2)
         logger.info(f"Saved {len(mutations)} significant mutations to {mutations_file}")
 
@@ -133,8 +131,6 @@ def extract_chromosome(subject_id: str) -> str:
     # - chr1, chrX, chrY, etc.
     # - 1, 2, 3, etc. (just number)
 
-    import re
-
     chr_match = re.search(r"chr([0-9XYMxym]+)", subject_id)
     if chr_match:
         return chr_match.group(1).upper()
@@ -145,10 +141,11 @@ def extract_chromosome(subject_id: str) -> str:
         num = int(nc_match.group(1))
         if 1 <= num <= 22:
             return str(num)
-        elif num == 23:
+        if num == 23:
             return "X"
-        elif num == 24:
+        if num == 24:
             return "Y"
+        return "-"
 
     num_match = re.search(r"\b([0-9]+|[XYxy])\b", subject_id)
     if num_match:
@@ -169,7 +166,7 @@ def parse_blast_results(result_file: str, min_score=100, min_identity=95, max_mu
     """
     significant_mutations = []
 
-    with open(result_file) as result_handle:
+    with open(result_file, encoding="utf-8") as result_handle:
         blast_records = NCBIXML.parse(result_handle)
         for blast_record in blast_records:
             for alignment in blast_record.alignments:
@@ -254,7 +251,9 @@ def perform_blast_aligning(query_fasta_path: str = None) -> str:
         if not ref_files:
             logger.error(f"No reference genome FASTA files found in {reference_path}")
             sys.exit(1)
+            # pylint: disable=unreachable
             return None
+            # pylint: enable=unreachable
 
         # Use the first reference file found
         reference_fasta = os.path.join(reference_path, ref_files[0])
@@ -275,7 +274,7 @@ def perform_blast_aligning(query_fasta_path: str = None) -> str:
                 return None
         # Otherwise, try to find a file in the uploads directory
         else:
-            user_uploads_folder = Path(dir["uploads_dir"])
+            user_uploads_folder = Path(blast_dir["uploads_dir"])
             logger.info(f"Checking uploads folder: {user_uploads_folder}")
 
             if user_uploads_folder.exists():
@@ -314,7 +313,9 @@ def perform_blast_aligning(query_fasta_path: str = None) -> str:
 if __name__ == "__main__":
     # Example with specific path
     # perform_blast_aligning("/path/to/your/specific/file.fasta")
-    disease_path = "C:/Users/Kajus/.kath/shared/data/fasta_files/samples/diseases/alzheimer/unknown_transcript1_1519314819.fasta"
+    # pylint: disable=line-too-long
+    DISEASE_PATH = "C:/Users/Kajus/.kath/shared/data/fasta_files/samples/diseases/alzheimer/unknown_transcript1_1519314819.fasta"
+    # pylint: enable=line-too-long
 
     # Example with default behavior (using uploads directory)
-    perform_blast_aligning(disease_path)
+    perform_blast_aligning(DISEASE_PATH)

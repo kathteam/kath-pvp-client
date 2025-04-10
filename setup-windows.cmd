@@ -2,13 +2,6 @@
 
 REM Setup Frontend
 echo Setting up frontend dependencies...
-if exist package.json (
-    call npm install
-) else (
-    echo Error: package.json not found in root directory
-    exit /b 1
-)
-
 if exist frontend (
     pushd frontend
     if exist package.json (

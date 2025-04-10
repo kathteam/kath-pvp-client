@@ -5,13 +5,6 @@ set -e
 
 # Setup Frontend
 echo "Setting up frontend dependencies..."
-if [ -f "package.json" ]; then
-    npm install
-else
-    echo "Error: package.json not found in root directory"
-    exit 1
-fi
-
 if [ -d "frontend" ]; then
     pushd frontend
     if [ -f "package.json" ]; then

@@ -3,7 +3,7 @@
   "version": "0.3.0",
   "description": "Client side of Product Development Project module at KTU.",
   "scripts": {
-    "init": "run-script-os",
+    "init": "npm install && run-script-os",
     "init:windows": ".\\setup-windows.cmd",
     "init:default": "./setup-default.sh",
     "dev": "cd frontend && npm run dev",

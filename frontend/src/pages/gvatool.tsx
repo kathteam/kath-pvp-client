@@ -122,8 +122,8 @@ export default function GVATool(): JSX.Element {
           </Snackbar>
         </Stack>
       </Container>
-      <DiseaseCard/>
       <BlastCard/>
+      <DiseaseCard/>
     </>
   );
 }

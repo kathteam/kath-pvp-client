@@ -54,6 +54,20 @@ declare global {
             status: string;
             result_file: string;
           }>;
+          disease_extraction: (fasta_file: string) => Promise<{
+            status: string;
+            result_file: string;
+          }>;
+          [method: string]: (...args: any[]) => Promise<any>;
+        },
+
+        disease_service: {
+          get_disease_data: (file_path: string) => Promise<{
+            disease_data: {
+              clinical_significance: string;
+              disease_name: string;
+            }[];
+          }>;
           [method: string]: (...args: any[]) => Promise<any>;
         },
 

@@ -1,5 +1,5 @@
 from .local import UiController, FileController
-from .remote import HttpClient, FastaService, BlastService
+from .remote import HttpClient, FastaService, BlastService, DiseaseInformationService
 
 
 class Api:
@@ -22,3 +22,5 @@ class Api:
         self.fasta_service = FastaService()
         # Initialize blast service
         self.blast_service = BlastService()
+
+        self.data_service = DiseaseInformationService()

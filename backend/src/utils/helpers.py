@@ -2,6 +2,7 @@ import os
 from logging import Logger
 from webview import Window
 
+from services.remote.fasta_service import FastaService
 from utils.logger import get_logger
 
 logger: Logger = get_logger(__name__)
@@ -34,6 +35,49 @@ def get_entrypoint() -> str:
 
 def initial_func(window: Window) -> None:
     _initial_route(window)
+    _initial_setup(window)
+
+
+def _initial_setup(window: Window) -> None:
+    # Notify frontend that setup has started
+    window.evaluate_js(
+        """
+        window.dispatchEvent(new CustomEvent('setup-status', {
+            detail: { status: 'started' }
+        }))
+        """
+    )
+
+    # Define setup tasks
+    fastaService = FastaService()
+    tasks: list[tuple[function, str]] = [
+        (fastaService.download_reference_genome_grch38, "Downloading reference genome"),
+    ]
+
+    # Perform setup tasks
+    for i, (task, message) in enumerate(tasks):
+        progress = i / len(tasks)
+        window.evaluate_js(
+            f"""
+            window.dispatchEvent(new CustomEvent('setup-status', {{
+                detail: {{
+                    status: 'progress', 
+                    progress: {progress}, 
+                    message: "{message}"
+                }}
+            }}))
+            """
+        )
+        task()
+
+    # Notify frontend that setup is complete
+    window.evaluate_js(
+        """
+        window.dispatchEvent(new CustomEvent('setup-status', {
+            detail: { status: 'completed' }
+        }))
+        """
+    )
 
 
 def _initial_route(window: Window) -> None:

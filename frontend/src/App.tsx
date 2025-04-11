@@ -10,6 +10,7 @@ import {
   MenuBook as MenuBookIcon
 } from '@mui/icons-material';
 import { createTheme } from '@mui/material';
+import { SetupProvider } from '@/states/setup';
 
 const navigation: Navigation = [
   {
@@ -113,8 +114,10 @@ const theme = createTheme({
 
 export default function App(): JSX.Element {
   return (
-    <ReactRouterAppProvider navigation={navigation} theme={theme}>
-      <Outlet />
-    </ReactRouterAppProvider>
+    <SetupProvider>
+      <ReactRouterAppProvider navigation={navigation} theme={theme}>
+        <Outlet />
+      </ReactRouterAppProvider>
+    </SetupProvider>
   );
 }

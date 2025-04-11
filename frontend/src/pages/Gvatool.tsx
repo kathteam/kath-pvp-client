@@ -1,4 +1,4 @@
-import { JSX, useState } from 'react';
+import { JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
@@ -13,19 +13,19 @@ import {
 
 import DiseaseDownloadCard from '@/components/cards/DiseaseDownloadCard';
 import DiseaseOptionCard from '@/components/cards/DiseaseOptionCard';
+import { SetupCard } from '@/components/cards';
+import { useSetupState } from '@/states/setup';
 
 export default function GVATool(): JSX.Element {
+  const navigate = useNavigate();
+
   const [referenceGenomePath, setReferenceGenomePath] = useState<{
     status: string;
     reference_genome_path: string;
   }>();
 
-  const navigate = useNavigate();
-
   const downloadReferenceGenome = async () => {
-
     setReferenceGenomePath({ status: 'processing', reference_genome_path: '' });
-
     try {
       const response = await window.pywebview.api.fasta_service.download_reference_genome_grch38();
       setReferenceGenomePath(response);
@@ -35,6 +35,23 @@ export default function GVATool(): JSX.Element {
       setReferenceGenomePath({ status: 'error', reference_genome_path: '' });
     }
   };
+
+  const setupState = useSetupState();
+  const [showMainContent, setShowMainContent] = useState(() => {
+    if (setupState.status === 'completed') {
+      return true;
+    }
+    return false;
+  });
+  // const [playAnimation, setPlayAnimation] = useState(false);
+
+  useEffect(() => {
+    if (setupState.status === 'completed' && !showMainContent) {
+      setTimeout(() => {
+        setShowMainContent(true);
+      }, 1500);
+    }
+  }, [setupState.status, showMainContent]);
 
   const getButtonColor = () => {
     if (!referenceGenomePath) {
@@ -49,6 +66,12 @@ export default function GVATool(): JSX.Element {
     return 'error';
   };
 
+  // Show setup screen if not completed
+  if (setupState.status !== 'completed' || !showMainContent) {
+    return <SetupCard {...setupState} />;
+  }
+
+  // Show main content if setup is completed
   return (
     <>
       <Container

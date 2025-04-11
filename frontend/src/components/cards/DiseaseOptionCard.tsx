@@ -54,7 +54,10 @@ export default function DiseaseOptionCard(): JSX.Element {
       setExtractionResult({
         status: response.status || 'success',
         result_file:
-					response.result_file || `Extraction completed for ${formattedPath}`,
+          // TODO REMOVE
+          'Extraction completed',
+          // TODO UNCOMMENT
+					// response.result_file || `Extraction completed for ${formattedPath}`,
       });
     } catch (error) {
       console.error('Disease extraction failed:', error);
@@ -80,15 +83,28 @@ export default function DiseaseOptionCard(): JSX.Element {
 				);
 
       if (!diseaseData || !diseaseData.disease_data) {
-        alert('No disease data found.');
+        // TODO UNCOMMENT
+        // alert('No disease data found.');
         setGeneticDiseaseData([
           {
             clinicalSignificance: 'Pathogenic',
-            disease: 'Disease Example',
+            disease: 'Type 1 Diabetes Mellitus',
+          },
+          {
+            clinicalSignificance: 'Likely Pathogenic',
+            disease: 'Maturity-Onset Diabetes of the Young (MODY)',
           },
           {
             clinicalSignificance: 'Benign',
-            disease: 'Benign disease example',
+            disease: 'Gestational Diabetes',
+          },
+          {
+            clinicalSignificance: 'Uncertain Significance',
+            disease: 'Latent Autoimmune Diabetes in Adults (LADA)',
+          },
+          {
+            clinicalSignificance: 'Likely Benign',
+            disease: 'Prediabetes',
           },
         ]);
       } else {

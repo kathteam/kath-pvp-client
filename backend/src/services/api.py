@@ -23,4 +23,4 @@ class Api:
         # Initialize blast service
         self.blast_service = BlastService()
         # Initialize disease service
-        self.data_service = DiseaseService()
+        self.disease_service = DiseaseService()

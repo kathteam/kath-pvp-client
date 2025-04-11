@@ -70,7 +70,7 @@ export default function DiseaseModal(props: {
         <Box sx={{ p: 3 }}>
           {props.diseases.map((disease, index) => (
             <Box key={index}>
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ mb: 1 }}>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   CLINICAL SIGNIFICANCE
                 </Typography>
@@ -80,9 +80,6 @@ export default function DiseaseModal(props: {
                   sx={{ fontWeight: 'bold', fontSize: '0.9rem' }}
                 />
               </Box>
-
-              <Divider sx={{ my: 2 }} />
-
               <Box>
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   ASSOCIATED DISEASE
@@ -91,6 +88,9 @@ export default function DiseaseModal(props: {
                   {disease.disease}
                 </Typography>
               </Box>
+              {index < props.diseases.length - 1 && (
+                <Divider sx={{ my: 2 }} />
+              )}
             </Box>
           ))}
 

@@ -43,7 +43,6 @@ export default function GVATool(): JSX.Element {
     }
     return false;
   });
-  // const [playAnimation, setPlayAnimation] = useState(false);
 
   useEffect(() => {
     if (setupState.status === 'completed' && !showMainContent) {

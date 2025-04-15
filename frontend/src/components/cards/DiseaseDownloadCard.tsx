@@ -1,25 +1,28 @@
 import { JSX, useState } from 'react';
-import { 
-  Container, 
-  TextField, 
-  Button, 
-  Typography, 
-  Card, 
-  CardContent, 
-  Grid, 
-  CircularProgress, 
+import {
+  Container,
+  TextField,
+  Button,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  CircularProgress,
   Divider,
   Paper,
   Chip,
-  Box
+  Box,
+  Fade,
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 export default function DiseaseDownloadCard(): JSX.Element {
   const [queryParams, setQueryParams] = useState<{
     disease: string;
     ref_max: number;
   }>({ disease: '', ref_max: 10 });
-  
+
   const [diseaseData, setDiseaseData] = useState<{
     status: string;
     disease_term: string;
@@ -27,8 +30,7 @@ export default function DiseaseDownloadCard(): JSX.Element {
     downloaded_files: string[];
     count: number;
   }>();
-  
-  //   const [disease, setDisease] = useState<string[]>([]);
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -44,12 +46,13 @@ export default function DiseaseDownloadCard(): JSX.Element {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
-      // Replace with your actual API endpoint
-      const response = await window.pywebview.api.fasta_service.create_disease_download(queryParams.disease, queryParams.ref_max);
+      const response = await window.pywebview.api.fasta_service.create_disease_download(
+        queryParams.disease,
+        queryParams.ref_max
+      );
       setDiseaseData(response);
-    //   setDisease(response.downloaded_files || []);
     } catch (err) {
       setError('Failed to fetch disease data. Please try again.');
       console.error('Error fetching disease data:', err);
@@ -58,120 +61,151 @@ export default function DiseaseDownloadCard(): JSX.Element {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    if (status === 'completed') return 'success';
+    if (status === 'processing') return 'warning';
+    if (status === 'error') return 'error';
+    return 'default';
+  };
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
-        Disease Query Tool
-      </Typography>
-      <Typography variant="body1" color="text.secondary" gutterBottom>
-        Use this tool to search for references related to a specific disease. Results in FASTA format.
-      </Typography>
-      
-      <Card elevation={3} sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Search Parameters
-          </Typography>
-          
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={8}>
-                <TextField
-                  fullWidth
-                  label="Disease Name"
-                  name="disease"
-                  value={queryParams.disease}
-                  onChange={handleInputChange}
-                  required
-                  helperText="Enter a disease name (e.g. 'diabetes', 'alzheimer')"
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  fullWidth
-                  label="Max References"
-                  name="ref_max"
-                  type="number"
-                  value={queryParams.ref_max}
-                  onChange={handleInputChange}
-                  required
-                  inputProps={{ min: 1 }}
-                  variant="outlined"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  type="submit"
-                  disabled={loading || !queryParams.disease}
-                  fullWidth
-                >
-                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Search'}
-                </Button>
-              </Grid>
-            </Grid>
-          </form>
-        </CardContent>
-      </Card>
-
-      {error && (
-        <Paper sx={{ p: 2, mb: 3, bgcolor: '#fdeded' }}>
-          <Typography color="error">{error}</Typography>
-        </Paper>
-      )}
-
-      {diseaseData && (
-        <Card elevation={3}>
+      <Fade in>
+        <Card
+          elevation={6}
+          sx={{
+            mb: 4,
+            borderRadius: 4,
+            boxShadow: 8,
+          }}
+        >
           <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Results for "{diseaseData.disease_term}"
+            <Typography
+              variant="h4"
+              component="h1"
+              gutterBottom
+              sx={{ mb: 2, fontWeight: 700, textAlign: 'center' }}
+            >
+              Disease Query Tool
             </Typography>
-            
-            <Box sx={{ mb: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={6} sm={4}>
-                  <Typography variant="body2" color="text.secondary">Status</Typography>
-                  <Chip 
-                    label={diseaseData.status} 
-                    color={diseaseData.status === 'completed' ? 'success' : 'primary'} 
-                    size="small"
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              gutterBottom
+              sx={{ textAlign: 'center', mb: 3 }}
+            >
+              Search for references related to a specific disease. Results are in FASTA format.
+            </Typography>
+            <Divider sx={{ mb: 3 }} />
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={3} alignItems="center">
+                <Grid item xs={12} sm={8}>
+                  <TextField
+                    fullWidth
+                    label="Disease Name"
+                    name="disease"
+                    value={queryParams.disease}
+                    onChange={handleInputChange}
+                    required
+                    helperText="e.g. 'diabetes', 'alzheimer'"
+                    variant="outlined"
                   />
                 </Grid>
-                <Grid item xs={6} sm={4}>
-                  <Typography variant="body2" color="text.secondary">Max Results</Typography>
-                  <Typography variant="body1">{diseaseData.max_results}</Typography>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    label="Max References"
+                    name="ref_max"
+                    type="number"
+                    value={queryParams.ref_max}
+                    onChange={handleInputChange}
+                    required
+                    inputProps={{ min: 1 }}
+                    variant="outlined"
+                  />
                 </Grid>
-                <Grid item xs={6} sm={4}>
-                  <Typography variant="body2" color="text.secondary">References Found</Typography>
-                  <Typography variant="body1">{diseaseData.count}</Typography>
+                <Grid item xs={12}>
+                  <Button
+                    variant="contained"
+                    type="submit"
+                    fullWidth
+                    size="large"
+                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SearchIcon />}
+                    disabled={loading || !queryParams.disease}
+                    sx={{
+                      fontWeight: 600,
+                      background: 'linear-gradient(90deg, #4C7380 0%, #5D8D9D 100%)',
+                      color: '#fff',
+                      '&:hover': {
+                        background: 'linear-gradient(90deg, #3a5a68 0%, #4c7380 100%)',
+                      },
+                    }}
+                  >
+                    {loading ? 'Searching...' : 'Search'}
+                  </Button>
                 </Grid>
               </Grid>
-            </Box>
-            
-            <Divider sx={{ my: 2 }} />
-            
-            {/* <Typography variant="subtitle1" gutterBottom>
-              Downloaded Files
-            </Typography>
-            
-            {disease.length > 0 ? (
-              <List sx={{ bgcolor: "#f5f5f5", borderRadius: 1 }}>
-                {disease.map((file, index) => (
-                  <ListItem key={index} divider={index < disease.length - 1}>
-                    <ListItemText primary={file} />
-                  </ListItem>
-                ))}
-              </List>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                No files downloaded yet.
-              </Typography>
-            )} */} 
-            {/* Will be implemented in the next step */}
+            </form>
+            {error && (
+              <Paper
+                sx={{
+                  p: 2,
+                  mt: 3,
+                  mb: 1,
+                  bgcolor: '#fdeded',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                }}
+                elevation={0}
+              >
+                <ErrorOutlineIcon color="error" />
+                <Typography color="error">{error}</Typography>
+              </Paper>
+            )}
           </CardContent>
         </Card>
+      </Fade>
+
+      {diseaseData && (
+        <Fade in>
+          <Card elevation={4} sx={{ borderRadius: 4, mb: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                Results for "{diseaseData.disease_term}"
+              </Typography>
+              <Divider sx={{ my: 2 }} />
+              <Box sx={{ mb: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      Status
+                    </Typography>
+                    <Chip
+                      label={diseaseData.status}
+                      color={getStatusColor(diseaseData.status)}
+                      size="small"
+                      sx={{ fontWeight: 600, textTransform: 'capitalize' }}
+                    />
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      Max Results
+                    </Typography>
+                    <Typography variant="body1">{diseaseData.max_results}</Typography>
+                  </Grid>
+                  <Grid item xs={6} sm={4}>
+                    <Typography variant="body2" color="text.secondary">
+                      References Found
+                    </Typography>
+                    <Typography variant="body1">{diseaseData.count}</Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+              {/* You can add a list of downloaded files or further actions here */}
+            </CardContent>
+          </Card>
+        </Fade>
       )}
     </Container>
   );

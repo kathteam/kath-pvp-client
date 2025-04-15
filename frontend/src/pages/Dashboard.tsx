@@ -8,68 +8,97 @@ import {
   Stack,
   Paper
 } from '@mui/material';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import PlagiarismIcon from '@mui/icons-material/Plagiarism';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import FullscreenIcon from '@mui/icons-material/Fullscreen';
 
 export default function Dashboard(): JSX.Element {
   const navigate = useNavigate();
 
   return (
-    <Container
-      maxWidth="md"
+    <Box
       sx={{
+        minHeight: '100vh',
         display: 'flex',
+        alignItems: 'center',
         justifyContent: 'center',
-        py: 4
+        py: 4,
       }}
     >
-      <Paper elevation={0} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Dashboard Page
-        </Typography>
-        <Typography variant="body1">
-          This is the dashboard page of our application.
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => window.pywebview.api.ui_controller.fullscreen()}
-          sx={{ mt: 2 }}
+      <Container maxWidth="sm">
+        <Paper
+          elevation={6}
+          sx={{
+            p: 5,
+            borderRadius: 4,
+            textAlign: 'center',
+            boxShadow: 6,
+          }}
         >
-          Test fullscreen
-        </Button>
-        <Box sx={{ p: 2, mt: 3 }}>
+          <DashboardIcon color="primary" sx={{ fontSize: 48, mb: 1 }} />
+          <Typography variant="h4" component="h1" gutterBottom fontWeight={700}>
+            Welcome to the Dashboard
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            Access all features and resources from here.
+          </Typography>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<FullscreenIcon />}
+            onClick={() => window.pywebview.api.ui_controller.fullscreen()}
+            sx={{ mb: 4 }}
+          >
+            Fullscreen Mode
+          </Button>
           <Stack
-            direction="row"
+            direction="column"
             spacing={2}
-            justifyContent="center"
-            flexWrap="wrap"
+            alignItems="center"
+            sx={{ mt: 2 }}
           >
             <Button
               variant="outlined"
+              startIcon={<PlagiarismIcon />}
+              fullWidth
+              size="large"
               onClick={() => navigate('/features/gvatool')}
             >
               GVATool
             </Button>
             <Button
               variant="outlined"
+              startIcon={<InventoryIcon />}
+              fullWidth
+              size="large"
               onClick={() => navigate('/system/file_manager')}
             >
               File Manager
             </Button>
             <Button
               variant="outlined"
+              startIcon={<AutoAwesomeIcon />}
+              fullWidth
+              size="large"
               onClick={() => navigate('/system/macros')}
             >
               Macros
             </Button>
             <Button
               variant="outlined"
+              startIcon={<MenuBookIcon />}
+              fullWidth
+              size="large"
               onClick={() => navigate('/resources/manual')}
             >
               Manual
             </Button>
           </Stack>
-        </Box>
-      </Paper>
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }

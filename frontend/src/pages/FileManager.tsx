@@ -34,6 +34,26 @@ export default function FileManager() {
     direction: null,
   });
 
+  const [openDbDialog, setOpenDbDialog] = useState(false);
+  const [dbFilename, setDbFilename] = useState<string>('personalized_gene_database.db');
+
+  const handleCreateDatabase = async () => {
+    try {
+      const dbPath = `${currentPath}/${dbFilename}`;
+      await window.pywebview.api.file_controller.create_vcf_database(dbPath);
+      console.log(`Database created at: ${dbPath}`);
+      alert('Personalized gene database created successfully!');
+
+      // Refresh the file list after creating the database
+      const updatedFiles = await window.pywebview.api.file_controller.list_files(currentPath);
+      setFileList(updatedFiles);
+    } catch (error) {
+      console.error('Error creating personalized gene database:', error);
+      alert('Failed to create personalized gene database.');
+    }
+    setOpenDbDialog(false);
+  };
+
   useEffect(() => {
     const fetchFiles = async (path: string) => {
       try {
@@ -505,18 +525,7 @@ export default function FileManager() {
           <Button
             variant="contained"
             color="primary"
-            onClick={async () => {
-              try {
-                const kathDirectory = await window.pywebview.api.file_controller.get_kath_directory();
-                const dbPath = `${kathDirectory}/personalized_gene_database.db`;
-                await window.pywebview.api.file_controller.create_vcf_database(dbPath);
-                console.log(`Database created at: ${dbPath}`);
-                alert('Personalized gene database created successfully!');
-              } catch (error) {
-                console.error('Error creating personalized gene database:', error);
-                alert('Failed to create personalized gene database.');
-              }
-            }}
+            onClick={() => setOpenDbDialog(true)}
           >
             Create personalized gene database
           </Button>
@@ -553,6 +562,29 @@ export default function FileManager() {
           <DialogActions>
             <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
             <Button onClick={handleDeleteConfirm}>Delete</Button>
+          </DialogActions>
+        </Dialog>
+        <Dialog open={openDbDialog} onClose={() => setOpenDbDialog(false)}>
+          <DialogTitle>Create Database</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Enter a name for the database file:
+            </DialogContentText>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="db-filename"
+              label="Database Filename"
+              type="text"
+              fullWidth
+              variant="standard"
+              value={dbFilename}
+              onChange={(e) => setDbFilename(e.target.value)}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenDbDialog(false)}>Cancel</Button>
+            <Button onClick={handleCreateDatabase}>Create</Button>
           </DialogActions>
         </Dialog>
       </Paper>

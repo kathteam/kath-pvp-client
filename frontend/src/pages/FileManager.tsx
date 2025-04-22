@@ -13,8 +13,8 @@ import { KeyboardReturn,
   Folder,InsertDriveFile, Description, TableChart, Storage,
   BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
   Movie, Audiotrack, Archive, MoreVert, ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
-import { useDropzone } from 'react-dropzone';
 import { Menu, MenuItem, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText } from '@mui/material';
+import DragAndDrop from '../components/cards/DragAndDrop';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -199,14 +199,6 @@ export default function FileManager() {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    onDragEnter: () => console.warn('Drag entered'),
-    onDragOver: () => console.warn('Dragging over'),
-    onDragLeave: () => console.warn('Drag left'),
-    multiple: false
-  });
-
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -298,29 +290,7 @@ export default function FileManager() {
         </Box>
 
         {/* Drag-and-Drop Area */}
-        <Box
-          {...getRootProps()}
-          sx={{
-            border: '2px dashed #ddd',
-            borderRadius: 2,
-            p: 3,
-            textAlign: 'center',
-            backgroundColor: isDragActive ? '#f0f0f0' : 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <input {...getInputProps()} type="file" />
-          {isDragActive ? (
-            <Typography variant="body1" color="primary">
-              Drop the files here...
-            </Typography>
-          ) : (
-            <Typography variant="body1" color="textSecondary">
-              Drag and drop files here, or click to select files
-            </Typography>
-          )}
-        </Box>
-
+        <DragAndDrop onDrop={onDrop} />
 
         {/* File List with Column Headers and Filters */}
         <Box sx={{ mt: 3 }}>

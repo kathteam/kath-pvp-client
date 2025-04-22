@@ -11,10 +11,10 @@ import {
 
 import { KeyboardReturn,
   Folder,InsertDriveFile, Description, TableChart, Storage,
-  BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
-  Movie, Audiotrack, Archive, MoreVert, ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
+  BlurOn, PictureAsPdf, Terminal, Coronavirus, Image, Movie, Audiotrack, Archive } from '@mui/icons-material';
 import { Menu, MenuItem, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText } from '@mui/material';
 import DragAndDrop from '../components/cards/DragAndDrop';
+import FileList from '../components/cards/FileListCard';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -26,9 +26,9 @@ export default function FileManager() {
   }[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('/');
   const [inputPath, setInputPath] = useState<string>(currentPath);
-  const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
-  const [typeFilter, setTypeFilter] = useState<string>(''); // Filter for file type
-  const [sizeFilter, setSizeFilter] = useState<string>(''); // Filter for file size
+  const [searchQuery] = useState<string>(''); // State for search query
+  const [typeFilter] = useState<string>(''); // Filter for file type
+  const [sizeFilter] = useState<string>(''); // Filter for file size
   const [sortConfig, setSortConfig] = useState<{ column: string; direction: 'asc' | 'desc' | null }>({
     column: '',
     direction: null,
@@ -87,18 +87,6 @@ export default function FileManager() {
     if (event.key === 'Enter') {
       setCurrentPath(inputPath);
     }
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handleTypeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTypeFilter(event.target.value);
-  };
-
-  const handleSizeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSizeFilter(event.target.value);
   };
 
   const handleSort = (column: string) => {
@@ -292,158 +280,18 @@ export default function FileManager() {
         {/* Drag-and-Drop Area */}
         <DragAndDrop onDrop={onDrop} />
 
-        {/* File List with Column Headers and Filters */}
+        {/* File List Component */}
         <Box sx={{ mt: 3 }}>
-          {fileList.length > 0 ? (
-            <>
-              {/* Column Headers */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  fontWeight: 'bold',
-                  borderTop: '1px solid #ddd',
-                }}
-              >
-                <Typography
-                  variant="body1"
-                  sx={{ flex: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  onClick={() => handleSort('Name')}
-                >
-                  Name
-                  {sortConfig.column === 'Name' && sortConfig.direction && (
-                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
-                  )}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  onClick={() => handleSort('Type')}
-                >
-                  Type
-                  {sortConfig.column === 'Type' && sortConfig.direction && (
-                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
-                  )}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  onClick={() => handleSort('Size')}
-                >
-                  Size
-                  {sortConfig.column === 'Size' && sortConfig.direction && (
-                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
-                  )}
-                </Typography>
-              </Box>
-
-              {/* Filter Boxes */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  borderBottom: '1px solid #ddd',
-                }}
-              >
-                <TextField
-                  placeholder="Filter by name"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  sx={{ flex: 2, mr: 1 }}
-                />
-                <TextField
-                  placeholder="Filter by type"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={typeFilter}
-                  onChange={handleTypeFilterChange}
-                  sx={{ flex: 1, mr: 1 }}
-                />
-                <TextField
-                  placeholder="Filter by size"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={sizeFilter}
-                  onChange={handleSizeFilterChange}
-                  sx={{ flex: 1 }}
-                />
-              </Box>
-
-              {/* Parent Directory */}
-              {currentPath !== '/' && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    borderBottom: '1px solid #ddd',
-                    cursor: 'pointer',
-                  }}
-                  onClick={handleNavigateUp}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
-                    <Folder sx={{ mr: 1, color: 'primary.main' }} />
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      ..
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    Parent Directory
-                  </Typography>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    Folder
-                  </Typography>
-                </Box>
-              )}
-
-              {/* Sorted Files */}
-              {sortedFiles.map((file, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    borderBottom: '1px solid #ddd',
-                    cursor: file.type === 'folder' ? 'pointer' : 'default',
-                  }}
-                  onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
-                    {getFileIcon(file.type)}
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {file.filename}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    {file.type}
-                  </Typography>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    {file.type === 'folder'
-                      ? `${file.item_count} items`
-                      : `${file.size_kb?.toFixed(2)} KB`}
-                  </Typography>
-                  <MoreVert
-                    onClick={(e) => handleOptionsClick(e, file.filename)} // Pass filename here
-                    sx={{ cursor: 'pointer' }}
-                  />
-                </Box>
-              ))}
-            </>
-          ) : (
-            <Typography variant="body1">No files available.</Typography>
-          )}
+          <FileList
+            files={sortedFiles}
+            currentPath={currentPath}
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            onNavigateUp={handleNavigateUp}
+            onFolderClick={handleFolderClick}
+            onOptionsClick={handleOptionsClick}
+            getFileIcon={getFileIcon}
+          />
         </Box>
 
         <Menu

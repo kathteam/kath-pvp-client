@@ -9,17 +9,13 @@ import {
   TextField,
   Menu,
   MenuItem,
-  Dialog,
-  DialogActions,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
 } from '@mui/material';
 
 import { KeyboardReturn } from '@mui/icons-material';
 import DragAndDrop from '../components/cards/DragAndDrop';
 import FileList from '../components/cards/FileListCard';
 import { getFileIcon } from '@/utils/FileManagerUtils';
+import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -325,62 +321,23 @@ export default function FileManager() {
           </Button>
         </Box>
 
-        <Dialog open={openRenameDialog} onClose={() => setOpenRenameDialog(false)}>
-          <DialogTitle>Rename File</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Enter a new name for the file:
-            </DialogContentText>
-            <TextField
-              autoFocus
-              margin="dense"
-              id="new-name"
-              label="New Name"
-              type="text"
-              fullWidth
-              variant="standard"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenRenameDialog(false)}>Cancel</Button>
-            <Button onClick={handleRenameConfirm}>Rename</Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
-          <DialogTitle>Delete File</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to delete the file?
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
-            <Button onClick={handleDeleteConfirm}>Delete</Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={openDbDialog} onClose={() => setOpenDbDialog(false)}>
-          <DialogTitle>Create Database</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Enter a name for the database file:
-            </DialogContentText>
-            <TextField
-              autoFocus
-              margin="dense"
-              id="db-filename"
-              label="Database Filename"
-              type="text"
-              fullWidth
-              variant="standard"
-              value={dbFilename}
-              onChange={(e) => setDbFilename(e.target.value)}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDbDialog(false)}>Cancel</Button>
-            <Button onClick={handleCreateDatabase}>Create</Button>
-          </DialogActions>
-        </Dialog>
+        <RenameDialog
+          open={openRenameDialog}
+          onClose={() => setOpenRenameDialog(false)}
+          onConfirm={handleRenameConfirm}
+        />
+        <DeleteDialog
+          open={openDeleteDialog}
+          onClose={() => setOpenDeleteDialog(false)}
+          onConfirm={handleDeleteConfirm}
+        />
+        <CreateDatabaseDialog
+          open={openDbDialog}
+          onClose={() => setOpenDbDialog(false)}
+          dbFilename={dbFilename}
+          setDbFilename={setDbFilename}
+          onConfirm={handleCreateDatabase}
+        />
       </Paper>
     </Container>
   );

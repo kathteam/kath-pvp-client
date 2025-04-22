@@ -28,6 +28,8 @@ declare global {
           rename_file: (path: string, old_name: string, new_name: string) => Promise<void>;
           delete_file: (path: string, file_name: string) => Promise<void>;
           [method: string]: (...args: any[]) => Promise<any>;
+          get_kath_directory: () => Promise<string>;
+          create_vcf_database: (db_path: string) => Promise<void>;
         },
         
         fasta_service: {

@@ -482,6 +482,26 @@ export default function FileManager() {
             Back to Dashboard
           </Button>
         </Box>
+        <Box sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={async () => {
+              try {
+                const kathDirectory = await window.pywebview.api.file_controller.get_kath_directory();
+                setCurrentPath(kathDirectory);
+                setInputPath(kathDirectory);
+                const files = await window.pywebview.api.file_controller.list_files(kathDirectory);
+                setFileList(files);
+              } catch (error) {
+                console.error('Error changing directory to kath:', error);
+              }
+            }}
+          >
+            Change directory to kath
+          </Button>
+        </Box>
+
         <Dialog open={openRenameDialog} onClose={() => setOpenRenameDialog(false)}>
           <DialogTitle>Rename File</DialogTitle>
           <DialogContent>

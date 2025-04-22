@@ -42,7 +42,6 @@ export default function FileManager() {
     try {
       const dbPath = `${currentPath}/${dbFilename}`;
       await window.pywebview.api.file_controller.create_vcf_database(dbPath);
-      console.log(`Database created at: ${dbPath}`);
       alert('Personalized gene database created successfully!');
 
       // Refresh the file list after creating the database

@@ -501,6 +501,26 @@ export default function FileManager() {
             Change directory to kath
           </Button>
         </Box>
+        <Box sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={async () => {
+              try {
+                const kathDirectory = await window.pywebview.api.file_controller.get_kath_directory();
+                const dbPath = `${kathDirectory}/personalized_gene_database.db`;
+                await window.pywebview.api.file_controller.create_vcf_database(dbPath);
+                console.log(`Database created at: ${dbPath}`);
+                alert('Personalized gene database created successfully!');
+              } catch (error) {
+                console.error('Error creating personalized gene database:', error);
+                alert('Failed to create personalized gene database.');
+              }
+            }}
+          >
+            Create personalized gene database
+          </Button>
+        </Box>
 
         <Dialog open={openRenameDialog} onClose={() => setOpenRenameDialog(false)}>
           <DialogTitle>Rename File</DialogTitle>

@@ -18,7 +18,7 @@ export default function MainLayout(): JSX.Element {
     <DashboardLayout slots={{
       appTitle: customAppTitle,
     }}>
-      <Box sx={{ flex: 1, border: 0 }}>
+      <Box sx={{ flex: 1, border: 0, overflow: 'hidden' }}>
         <Outlet />
       </Box>
     </DashboardLayout>

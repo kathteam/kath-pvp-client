@@ -56,8 +56,8 @@ export default function DiseaseOptionCard(): JSX.Element {
         result_file:
           // TODO REMOVE
           'Extraction completed',
-          // TODO UNCOMMENT
-					// response.result_file || `Extraction completed for ${formattedPath}`,
+        // TODO UNCOMMENT
+        // response.result_file || `Extraction completed for ${formattedPath}`,
       });
     } catch (error) {
       console.error('Disease extraction failed:', error);

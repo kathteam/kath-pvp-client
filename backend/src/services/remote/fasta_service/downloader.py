@@ -1,5 +1,8 @@
 import os
 import sys
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
+if backend_dir not in sys.path:
+    sys.path.append(backend_dir)
 import time
 import gzip
 import shutil
@@ -9,54 +12,21 @@ import requests
 from Bio import Entrez
 from dotenv import load_dotenv
 
-from utils.logger import get_logger
-from shared.constants import REF_GENOME, PROGRAM_STORAGE_DIR
+from src.utils.logger import get_logger
+from services.utils.script_setup import (
+    EnvSetup,
+    FolderSetup,
+)
 
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
+EnvSetup()
+FolderSetup()
+
+from shared.constants import REF_GENOME, PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_SAMPLES, PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_UPLOADS, PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA
 
 logger = get_logger(__name__)
 
 # Default timeout for HTTP requests (in seconds)
 DEFAULT_TIMEOUT = 60
-
-
-def initialize_directories():
-    """Initialize directory structure for the application."""
-    # Set up file paths
-    base_dir = PROGRAM_STORAGE_DIR
-    service_dir = os.path.join(base_dir, "environment")
-    fasta_dir = os.path.join(base_dir, "shared", "data", "fasta_files")
-    ref_dir = os.path.join(fasta_dir, "reference")
-    samples_dir = os.path.join(fasta_dir, "samples")
-
-    # Create directories if they don"t exist
-    for dir_path in [service_dir, fasta_dir, ref_dir, samples_dir]:
-        os.makedirs(dir_path, exist_ok=True)
-
-    # Load environment variables
-    env_file = os.path.join(service_dir, ".env")
-    if os.path.exists(env_file):
-        load_dotenv(env_file)
-    else:
-        logger.warning("No .env file found. Generating a sample .env file")
-        # Create a sample .env file
-        with open(env_file, "w", encoding="utf-8") as f:
-            f.write("NCBI_API_KEY=\n")
-            f.write("NCBI_API_EMAIL=\n")
-
-    return {
-        "base_dir": base_dir,
-        "service_dir": service_dir,
-        "fasta_dir": fasta_dir,
-        "ref_dir": ref_dir,
-        "samples_dir": samples_dir,
-    }
-
-
-dirs = initialize_directories()
-
 
 def log_download(source: str, identifier: str, file_path: str, fasta_dir: Path):
     """Log a successful download."""
@@ -256,8 +226,8 @@ def download_disease_related_genes_clinvar(
     disease_term: str,
     max_results: int = 1,
     output_dir: Optional[Path] = None,
-    samples_dir: Path = dirs["samples_dir"],
-    fasta_dir: Path = dirs["fasta_dir"],
+    samples_dir: Path = PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_SAMPLES,
+    fasta_dir: Path = PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
 ) -> List[str]:
     """
     Search for and download genes associated with a specific disease.
@@ -285,7 +255,7 @@ def download_disease_related_genes_clinvar(
         # First search for gene IDs related to the disease
         search_handle = Entrez.esearch(
             db="gene",
-            term=f"{disease_term}[Disease] AND Homo sapiens[Organism]",
+            term=f"((((\"{disease_term}\"[Disease\/Phenotype]) AND Pathogenic) OR likely_pathogenic) OR risk_factor) AND \"homo sapiens\"[Organism]",
             retmax=max_results,
         )
         search_results = Entrez.read(search_handle)
@@ -343,3 +313,10 @@ def download_disease_related_genes_clinvar(
     except Exception as e:
         logger.error(f"Error searching for disease genes: {str(e)}")
         raise
+    
+if __name__ == "__main__":
+    # Example usage
+    disease_term = "breast cancer"
+    max_results = 100
+    downloaded_files = download_disease_related_genes_clinvar(disease_term, max_results=max_results)
+    print(f"Downloaded files: {downloaded_files}")

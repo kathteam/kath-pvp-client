@@ -408,7 +408,6 @@ def _run_blast_and_parse_single(
             reference_genome_path=str(reference_fasta),
             output_dir=blast_output_dir, # blast_cmdline already creates unique XML name
         )
-        logger.info(f"BLAST XML results saved to: {blast_result_xml}")
 
     except (RuntimeError, FileNotFoundError) as e:
         logger.error(
@@ -433,9 +432,6 @@ def _run_blast_and_parse_single(
         if variations:
             logger.info(
                 f"Saved {len(variations)} identified variations to: {json_output_path}"
-            )
-            print(
-                f"Analysis complete for {actual_query_path.name}. Identified variations saved to: {json_output_path}"
             )
         else:
             logger.warning(
@@ -592,23 +588,23 @@ def process_fasta_directory(
 
 # Example usage:
 if __name__ == "__main__":
-    dummy_query_path = Path(PROGRAM_STORAGE_DIR_SHARED_BLAST) / "uploads" / "single_test.fasta"
-    # if not dummy_query_path.exists():
-    #     dummy_query_path.parent.mkdir(parents=True, exist_ok=True)
-    #     with open(dummy_query_path, "w") as f:
-    #         f.write(">TestQuery1\nACGTACGT\n") # Replace with actual sequence if needed
-    #     print(f"Created dummy query file: {dummy_query_path}")
+    # dummy_query_path = Path(PROGRAM_STORAGE_DIR_SHARED_BLAST) / "uploads" / "single_test.fasta"
+    # # if not dummy_query_path.exists():
+    # #     dummy_query_path.parent.mkdir(parents=True, exist_ok=True)
+    # #     with open(dummy_query_path, "w") as f:
+    # #         f.write(">TestQuery1\nACGTACGT\n") # Replace with actual sequence if needed
+    # #     print(f"Created dummy query file: {dummy_query_path}")
 
-    print(f"\n--- Running analysis for a single specified file: {dummy_query_path} ---")
-    # Make sure the dummy file exists and reference exists before running
-    if dummy_query_path.exists():
-         single_result = process_single_fasta(query_fasta_path=str(dummy_query_path))
-         if single_result:
-             print(f"Single file processing complete. Result JSON: {single_result}")
-         else:
-             print(f"Single file processing failed for {dummy_query_path}.")
-    else:
-         print(f"Skipping single file test, query file not found: {dummy_query_path}")
+    # print(f"\n--- Running analysis for a single specified file: {dummy_query_path} ---")
+    # # Make sure the dummy file exists and reference exists before running
+    # if dummy_query_path.exists():
+    #      single_result = process_single_fasta(query_fasta_path=str(dummy_query_path))
+    #      if single_result:
+    #          print(f"Single file processing complete. Result JSON: {single_result}")
+    #      else:
+    #          print(f"Single file processing failed for {dummy_query_path}.")
+    # else:
+    #      print(f"Skipping single file test, query file not found: {dummy_query_path}")
 
 
     # --- Example for processing a directory ---

@@ -22,6 +22,7 @@ EnvSetup()
 FolderSetup()
 
 from utils.logger import get_logger
+
 logger = get_logger(__name__)
 
 MYVARIANT_API_URL = "https://myvariant.info/v1/variant"

@@ -255,7 +255,7 @@ def download_disease_related_genes_clinvar(
         # First search for gene IDs related to the disease
         search_handle = Entrez.esearch(
             db="gene",
-            term=f"((((\"{disease_term}\"[Disease\/Phenotype]) AND Pathogenic) OR likely_pathogenic) OR risk_factor) AND \"homo sapiens\"[Organism]",
+            term=f"((\"{disease_term}\"[Disease/Phenotype]) AND Pathogenic[Clinical_Significance]) AND \"homo sapiens\"[Organism]",
             retmax=max_results,
         )
         search_results = Entrez.read(search_handle)
@@ -275,7 +275,7 @@ def download_disease_related_genes_clinvar(
                 logger.info(f"Processing gene ID: {gene_id}")
 
                 # Direct search for nucleotide sequences by gene ID
-                nucleotide_ids = search_nucleotide_by_gene_id(gene_id)
+                nucleotide_ids = search_nucleotide_by_gene_id(gene_id, 20)
 
                 gene_symbol = "unknown"
                 if not nucleotide_ids:
@@ -286,7 +286,7 @@ def download_disease_related_genes_clinvar(
                     logger.info(f"Found gene symbol: {gene_symbol}")
 
                     # Try searching by gene symbol
-                    nucleotide_ids = search_nucleotide_by_symbol(gene_symbol)
+                    nucleotide_ids = search_nucleotide_by_symbol(gene_symbol, 20)
                     logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene symbol")
                 else:
                     logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene ID")
@@ -316,7 +316,7 @@ def download_disease_related_genes_clinvar(
     
 if __name__ == "__main__":
     # Example usage
-    disease_term = "breast cancer"
+    disease_term = "leukemia"
     max_results = 100
     downloaded_files = download_disease_related_genes_clinvar(disease_term, max_results=max_results)
     print(f"Downloaded files: {downloaded_files}")

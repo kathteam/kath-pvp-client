@@ -28,8 +28,6 @@ class EnvSetup:
                 "Entrez API key is not set in the environment variables. Please set it in the .env file."
             )
             return
-        
-        print("Entrez email and API key loaded successfully.")
 
 
 class FolderSetup:

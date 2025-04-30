@@ -6,15 +6,16 @@ import {
   Button,
   Container,
   Paper,
-  TextField
+  TextField,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 
-import { KeyboardReturn,
-  Folder,InsertDriveFile, Description, TableChart, Storage,
-  BlurOn, PictureAsPdf, Terminal, Coronavirus, Image,
-  Movie, Audiotrack, Archive, MoreVert, ArrowDropUp, ArrowDropDown } from '@mui/icons-material';
-import { useDropzone } from 'react-dropzone';
-import { Menu, MenuItem, Dialog, DialogActions, DialogTitle, DialogContent, DialogContentText } from '@mui/material';
+import { KeyboardReturn } from '@mui/icons-material';
+import DragAndDrop from '../components/cards/DragAndDrop';
+import FileList from '../components/cards/FileListCard';
+import { getFileIcon } from '@/utils/FileManagerUtils';
+import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -26,13 +27,32 @@ export default function FileManager() {
   }[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('/');
   const [inputPath, setInputPath] = useState<string>(currentPath);
-  const [searchQuery, setSearchQuery] = useState<string>(''); // State for search query
-  const [typeFilter, setTypeFilter] = useState<string>(''); // Filter for file type
-  const [sizeFilter, setSizeFilter] = useState<string>(''); // Filter for file size
+  const [searchQuery] = useState<string>(''); // State for search query
+  const [typeFilter] = useState<string>(''); // Filter for file type
+  const [sizeFilter] = useState<string>(''); // Filter for file size
   const [sortConfig, setSortConfig] = useState<{ column: string; direction: 'asc' | 'desc' | null }>({
     column: '',
     direction: null,
   });
+
+  const [openDbDialog, setOpenDbDialog] = useState(false);
+  const [dbFilename, setDbFilename] = useState<string>('personalized_gene_database.db');
+
+  const handleCreateDatabase = async () => {
+    try {
+      const dbPath = `${currentPath}/${dbFilename}`;
+      await window.pywebview.api.file_controller.create_vcf_database(dbPath);
+      alert('Personalized gene database created successfully!');
+
+      // Refresh the file list after creating the database
+      const updatedFiles = await window.pywebview.api.file_controller.list_files(currentPath);
+      setFileList(updatedFiles);
+    } catch (error) {
+      console.error('Error creating personalized gene database:', error);
+      alert('Failed to create personalized gene database.');
+    }
+    setOpenDbDialog(false);
+  };
 
   useEffect(() => {
     const fetchFiles = async (path: string) => {
@@ -67,18 +87,6 @@ export default function FileManager() {
     if (event.key === 'Enter') {
       setCurrentPath(inputPath);
     }
-  };
-
-  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(event.target.value);
-  };
-
-  const handleTypeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setTypeFilter(event.target.value);
-  };
-
-  const handleSizeFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSizeFilter(event.target.value);
   };
 
   const handleSort = (column: string) => {
@@ -127,36 +135,7 @@ export default function FileManager() {
     return 0;
   });
 
-  const getFileIcon = (fileType: string) => {
-    switch (fileType) {
-      case 'text file':
-        return <Description sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .txt
-      case 'CSV':
-        return <TableChart sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .csv
-      case 'fasta':
-        return <Coronavirus sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .fasta or .fa
-      case 'VCF':
-        return <BlurOn sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .vcf
-      case 'database':
-        return <Storage sx={{ mr: 1, color: 'text.secondary' }} />; // Icon for .db or .sqlite
-      case 'PDF':
-        return <PictureAsPdf sx={{ mr: 1, color: 'error.main' }} />; // Icon for .pdf
-      case 'executable':
-        return <Terminal sx={{ mr: 1, color: 'success.main' }} />; // Icon for executables (.exe, .sh, etc.)
-      case 'folder':
-        return <Folder sx={{ mr: 1, color: 'primary.main' }} />; // Icon for folders
-      case 'image':
-        return <Image sx={{ mr: 1, color: 'info.main' }} />; // Icon for image files
-      case 'video':
-        return <Movie sx={{ mr: 1, color: 'info.main' }} />; // Icon for video files
-      case 'audio':
-        return <Audiotrack sx={{ mr: 1, color: 'info.main' }} />; // Icon for audio files
-      case 'archive':
-        return <Archive sx={{ mr: 1, color: 'warning.main' }} />; // Icon for archive files
-      default:
-        return <InsertDriveFile sx={{ mr: 1, color: 'text.secondary' }} />; // Default file icon
-    }
-  };
+  
 
   const onDrop = async (acceptedFiles: File[]) => {
     try {
@@ -178,14 +157,6 @@ export default function FileManager() {
       console.error('Error uploading files:', error);
     }
   };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    onDragEnter: () => console.warn('Drag entered'),
-    onDragOver: () => console.warn('Dragging over'),
-    onDragLeave: () => console.warn('Drag left'),
-    multiple: false
-  });
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -278,182 +249,20 @@ export default function FileManager() {
         </Box>
 
         {/* Drag-and-Drop Area */}
-        <Box
-          {...getRootProps()}
-          sx={{
-            border: '2px dashed #ddd',
-            borderRadius: 2,
-            p: 3,
-            textAlign: 'center',
-            backgroundColor: isDragActive ? '#f0f0f0' : 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <input {...getInputProps()} type="file" />
-          {isDragActive ? (
-            <Typography variant="body1" color="primary">
-              Drop the files here...
-            </Typography>
-          ) : (
-            <Typography variant="body1" color="textSecondary">
-              Drag and drop files here, or click to select files
-            </Typography>
-          )}
-        </Box>
+        <DragAndDrop onDrop={onDrop} />
 
-
-        {/* File List with Column Headers and Filters */}
+        {/* File List Component */}
         <Box sx={{ mt: 3 }}>
-          {fileList.length > 0 ? (
-            <>
-              {/* Column Headers */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  fontWeight: 'bold',
-                  borderTop: '1px solid #ddd',
-                }}
-              >
-                <Typography
-                  variant="body1"
-                  sx={{ flex: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  onClick={() => handleSort('Name')}
-                >
-                  Name
-                  {sortConfig.column === 'Name' && sortConfig.direction && (
-                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
-                  )}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  onClick={() => handleSort('Type')}
-                >
-                  Type
-                  {sortConfig.column === 'Type' && sortConfig.direction && (
-                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
-                  )}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ flex: 1, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                  onClick={() => handleSort('Size')}
-                >
-                  Size
-                  {sortConfig.column === 'Size' && sortConfig.direction && (
-                    sortConfig.direction === 'asc' ? <ArrowDropUp fontSize="small" /> : <ArrowDropDown fontSize="small" />
-                  )}
-                </Typography>
-              </Box>
-
-              {/* Filter Boxes */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 2,
-                  borderBottom: '1px solid #ddd',
-                }}
-              >
-                <TextField
-                  placeholder="Filter by name"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  sx={{ flex: 2, mr: 1 }}
-                />
-                <TextField
-                  placeholder="Filter by type"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={typeFilter}
-                  onChange={handleTypeFilterChange}
-                  sx={{ flex: 1, mr: 1 }}
-                />
-                <TextField
-                  placeholder="Filter by size"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  value={sizeFilter}
-                  onChange={handleSizeFilterChange}
-                  sx={{ flex: 1 }}
-                />
-              </Box>
-
-              {/* Parent Directory */}
-              {currentPath !== '/' && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    borderBottom: '1px solid #ddd',
-                    cursor: 'pointer',
-                  }}
-                  onClick={handleNavigateUp}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
-                    <Folder sx={{ mr: 1, color: 'primary.main' }} />
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      ..
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    Parent Directory
-                  </Typography>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    Folder
-                  </Typography>
-                </Box>
-              )}
-
-              {/* Sorted Files */}
-              {sortedFiles.map((file, index) => (
-                <Box
-                  key={index}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    borderBottom: '1px solid #ddd',
-                    cursor: file.type === 'folder' ? 'pointer' : 'default',
-                  }}
-                  onClick={() => file.type === 'folder' && handleFolderClick(file.filename)}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
-                    {getFileIcon(file.type)}
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      {file.filename}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    {file.type}
-                  </Typography>
-                  <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                    {file.type === 'folder'
-                      ? `${file.item_count} items`
-                      : `${file.size_kb?.toFixed(2)} KB`}
-                  </Typography>
-                  <MoreVert
-                    onClick={(e) => handleOptionsClick(e, file.filename)} // Pass filename here
-                    sx={{ cursor: 'pointer' }}
-                  />
-                </Box>
-              ))}
-            </>
-          ) : (
-            <Typography variant="body1">No files available.</Typography>
-          )}
+          <FileList
+            files={sortedFiles}
+            currentPath={currentPath}
+            sortConfig={sortConfig}
+            onSort={handleSort}
+            onNavigateUp={handleNavigateUp}
+            onFolderClick={handleFolderClick}
+            onOptionsClick={handleOptionsClick}
+            getFileIcon={getFileIcon}
+          />
         </Box>
 
         <Menu
@@ -482,39 +291,52 @@ export default function FileManager() {
             Back to Dashboard
           </Button>
         </Box>
-        <Dialog open={openRenameDialog} onClose={() => setOpenRenameDialog(false)}>
-          <DialogTitle>Rename File</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Enter a new name for the file:
-            </DialogContentText>
-            <TextField
-              autoFocus
-              margin="dense"
-              id="new-name"
-              label="New Name"
-              type="text"
-              fullWidth
-              variant="standard"
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenRenameDialog(false)}>Cancel</Button>
-            <Button onClick={handleRenameConfirm}>Rename</Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
-          <DialogTitle>Delete File</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to delete the file?
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
-            <Button onClick={handleDeleteConfirm}>Delete</Button>
-          </DialogActions>
-        </Dialog>
+        <Box sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={async () => {
+              try {
+                const kathDirectory = await window.pywebview.api.file_controller.get_kath_directory();
+                setCurrentPath(kathDirectory);
+                setInputPath(kathDirectory);
+                const files = await window.pywebview.api.file_controller.list_files(kathDirectory);
+                setFileList(files);
+              } catch (error) {
+                console.error('Error changing directory to kath:', error);
+              }
+            }}
+          >
+            Change directory to kath
+          </Button>
+        </Box>
+        <Box sx={{ mt: 3 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setOpenDbDialog(true)}
+          >
+            Create personalized gene database
+          </Button>
+        </Box>
+
+        <RenameDialog
+          open={openRenameDialog}
+          onClose={() => setOpenRenameDialog(false)}
+          onConfirm={handleRenameConfirm}
+        />
+        <DeleteDialog
+          open={openDeleteDialog}
+          onClose={() => setOpenDeleteDialog(false)}
+          onConfirm={handleDeleteConfirm}
+        />
+        <CreateDatabaseDialog
+          open={openDbDialog}
+          onClose={() => setOpenDbDialog(false)}
+          dbFilename={dbFilename}
+          setDbFilename={setDbFilename}
+          onConfirm={handleCreateDatabase}
+        />
       </Paper>
     </Container>
   );

@@ -32,7 +32,7 @@ def log_download(source: str, identifier: str, file_path: str, fasta_dir: Path):
     """Log a successful download."""
     log_file = os.path.join(fasta_dir, "downloads.log")
     with open(log_file, "a", encoding="utf-8") as f:
-        f.write(f"{time.strftime("%Y-%m-%d %H:%M:%S")} | {source} | {identifier} | {file_path}\n")
+        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {source} | {identifier} | {file_path}\n")
 
 
 def reference_genome_exists(ref_dir: Path, version: str = REF_GENOME) -> bool:

@@ -9,12 +9,15 @@ import {
   useTheme,
 } from '@mui/material';
 import DiseaseModal from '@/components/modals/DiseaseModal';
+import { useNavigate } from 'react-router-dom';
+import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 
 interface DiseaseOptionCardProps {
   initialFastaPath?: string;
 }
 
 export default function DiseaseOptionCard({ initialFastaPath = '' }: DiseaseOptionCardProps): JSX.Element {
+  const navigate = useNavigate();
   const [fastaFilePath, setFastaFilePath] = useState<string>(initialFastaPath);
   const [extractionResult, setExtractionResult] = useState<{
 		status: string;
@@ -29,6 +32,10 @@ export default function DiseaseOptionCard({ initialFastaPath = '' }: DiseaseOpti
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
 
   const theme = useTheme();
+
+  const handleBrowse = () => {
+    navigate('/system/file_manager');
+  };
 
   const handleDiseaseExtraction = async () => {
     if (!fastaFilePath) {
@@ -168,6 +175,14 @@ export default function DiseaseOptionCard({ initialFastaPath = '' }: DiseaseOpti
               label: { color: theme.palette.text.secondary },
             }}
           />
+          <Button
+            variant="contained"
+            color="info"
+            onClick={handleBrowse}
+            startIcon={<FolderOpenIcon />}
+          >
+            Browse
+          </Button>
         </Box>
 
         <Button

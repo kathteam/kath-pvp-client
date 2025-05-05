@@ -586,9 +586,10 @@ def process_fasta_directory(
     return processed_json_files
 
 
+
 # Example usage:
 if __name__ == "__main__":
-    # dummy_query_path = Path(PROGRAM_STORAGE_DIR_SHARED_BLAST) / "uploads" / "single_test.fasta"
+    dummy_query_path = "C:/Users/Kajus/.kath/shared/found_diseases/unknown_transcript1_1732746177_leukema.fasta"
     # # if not dummy_query_path.exists():
     # #     dummy_query_path.parent.mkdir(parents=True, exist_ok=True)
     # #     with open(dummy_query_path, "w") as f:
@@ -597,7 +598,7 @@ if __name__ == "__main__":
 
     # print(f"\n--- Running analysis for a single specified file: {dummy_query_path} ---")
     # # Make sure the dummy file exists and reference exists before running
-    # if dummy_query_path.exists():
+    # if dummy_query_path:
     #      single_result = process_single_fasta(query_fasta_path=str(dummy_query_path))
     #      if single_result:
     #          print(f"Single file processing complete. Result JSON: {single_result}")

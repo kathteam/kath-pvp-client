@@ -10,8 +10,12 @@ import {
 } from '@mui/material';
 import DiseaseModal from '@/components/modals/DiseaseModal';
 
-export default function DiseaseOptionCard(): JSX.Element {
-  const [fastaFilePath, setFastaFilePath] = useState<string>('');
+interface DiseaseOptionCardProps {
+  initialFastaPath?: string;
+}
+
+export default function DiseaseOptionCard({ initialFastaPath = '' }: DiseaseOptionCardProps): JSX.Element {
+  const [fastaFilePath, setFastaFilePath] = useState<string>(initialFastaPath);
   const [extractionResult, setExtractionResult] = useState<{
 		status: string;
 		result_file: string;

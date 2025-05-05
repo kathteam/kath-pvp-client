@@ -1,5 +1,5 @@
 import { JSX, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -18,6 +18,8 @@ import { useSetupState } from '@/states/setup';
 
 export default function GVATool(): JSX.Element {
   const navigate = useNavigate();
+  const location = useLocation();
+  const passedFastaPath = location.state?.fastaFilePath || '';
 
   const [referenceGenomePath, setReferenceGenomePath] = useState<{
     status: string;
@@ -146,7 +148,7 @@ export default function GVATool(): JSX.Element {
         </Stack>
       </Container>
       <DiseaseDownloadCard/>
-      <DiseaseOptionCard/>
+      <DiseaseOptionCard initialFastaPath={passedFastaPath || referenceGenomePath?.reference_genome_path || ''}/>
     </>
   );
 }

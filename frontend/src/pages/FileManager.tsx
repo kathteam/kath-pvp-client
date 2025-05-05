@@ -17,6 +17,7 @@ import FileList from '../components/cards/FileListCard';
 import { getFileIcon } from '@/utils/FileManagerUtils';
 import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
 
+
 export default function FileManager() {
   const navigate = useNavigate();
   const [fileList, setFileList] = useState<{
@@ -211,7 +212,13 @@ export default function FileManager() {
     }
     setOpenDeleteDialog(false);
   };
-  
+
+  const handleAnalyseFasta = (filename: string) => async (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setSelectedFile(filename);
+    const fullPath = `${currentPath}/${filename}`.replace('//', '/');
+    navigate('/features/gvatool', { state: { fastaFilePath: fullPath } });
+  };
 
   return (
     <Container
@@ -278,6 +285,9 @@ export default function FileManager() {
             <>
               <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
               <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
+              {selectedFileForMenu.toLowerCase().endsWith('.fasta') && (
+                <MenuItem onClick={(e) => handleAnalyseFasta(selectedFileForMenu)(e)}>Analyse with GVATool</MenuItem>
+              )}
             </>
           )}
         </Menu>

@@ -216,7 +216,7 @@ export default function FileManager() {
   const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{
       status: string;
-      result_file: string;
+      result_file: string[];
     }>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -232,7 +232,7 @@ export default function FileManager() {
       console.error('FASTA analysis failed:', error);
       setAnalysisResult({
         status: 'error',
-        result_file: `Failed to extract disease information: ${error || 'Unknown error'}`,
+        result_file: [`Failed to extract disease information: ${error || 'Unknown error'}`],
       });
     } finally {
       setIsAnalyzing(false);

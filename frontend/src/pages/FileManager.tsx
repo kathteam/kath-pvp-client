@@ -16,6 +16,7 @@ import DragAndDrop from '../components/cards/DragAndDrop';
 import FileList from '../components/cards/FileListCard';
 import { getFileIcon } from '@/utils/FileManagerUtils';
 import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
+import { Dialog, DialogTitle, DialogContent, CircularProgress } from '@mui/material';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -211,7 +212,32 @@ export default function FileManager() {
     }
     setOpenDeleteDialog(false);
   };
+
+  const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<{
+      status: string;
+      result_file: string;
+    }>();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAnalyzeFasta = async (filename: string) => {
+    const filePath = `${currentPath}/${filename}`;
+    setIsAnalyzing(true);
+    setAnalysisDialogOpen(true);
   
+    try {
+      const result = await window.pywebview.api.blast_service.disease_extraction(filePath);
+      setAnalysisResult(result);
+    } catch (error) {
+      console.error('FASTA analysis failed:', error);
+      setAnalysisResult({
+        status: 'error',
+        result_file: `Failed to extract disease information: ${error || 'Unknown error'}`,
+      });
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   return (
     <Container
@@ -276,6 +302,14 @@ export default function FileManager() {
         >
           {selectedFileForMenu && (
             <>
+              {selectedFileForMenu?.endsWith('.fasta') && (
+                <MenuItem onClick={() => {
+                  handleAnalyzeFasta(selectedFileForMenu);
+                  handleClose();
+                }}>
+                  Analyze
+                </MenuItem>
+              )}
               <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
               <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
             </>
@@ -337,6 +371,23 @@ export default function FileManager() {
           setDbFilename={setDbFilename}
           onConfirm={handleCreateDatabase}
         />
+        <Dialog open={analysisDialogOpen} onClose={() => setAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>FASTA Analysis Result</DialogTitle>
+          <DialogContent dividers>
+            {isAnalyzing ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : analysisResult ? (
+              <>
+                <Typography variant="h6">Status: {analysisResult.status}</Typography>
+                <Typography variant="body1">Result File: {analysisResult.result_file}</Typography>
+              </>
+            ) : (
+              <Typography variant="body1">No result.</Typography>
+            )}
+          </DialogContent>
+        </Dialog>
       </Paper>
     </Container>
   );

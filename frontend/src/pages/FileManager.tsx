@@ -16,6 +16,8 @@ import DragAndDrop from '../components/cards/DragAndDrop';
 import FileList from '../components/cards/FileListCard';
 import { getFileIcon } from '@/utils/FileManagerUtils';
 import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
+import { Dialog, DialogTitle, DialogContent, CircularProgress } from '@mui/material';
+import { DiseaseModal } from '@/components/modals';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -211,7 +213,77 @@ export default function FileManager() {
     }
     setOpenDeleteDialog(false);
   };
+
+  const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+  const [validity, setValidity] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<{
+      status: string;
+      result_file: string;
+    }>();
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAnalyzeFasta = async (filename: string) => {
+    const filePath = `${currentPath}/${filename}`;
+    setIsAnalyzing(true);
+    setAnalysisDialogOpen(true);
   
+    try {
+      const result = await window.pywebview.api.blast_service.disease_extraction(filePath);
+      setAnalysisResult(result);
+      setValidity(true);
+    } catch (error) {
+      console.error('FASTA analysis failed:', error);
+      setAnalysisResult({
+        status: 'error',
+        result_file: `Failed to extract disease information: ${error || 'Unknown error'}`,
+      });
+      setValidity(false);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+    // Genetical disease data management
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [geneticDiseaseData, setGeneticDiseaseData] = useState<{
+      clinicalSignificance: string;
+      disease: string;
+    }[]>([]);
+  
+      const handleDisplayGeneticDisease = async () => {
+      if (!analysisResult?.result_file) {
+        alert('Please extract disease information first.');
+        return;
+      }
+  
+      try {
+        const diseaseData =
+          await window.pywebview.api.disease_service.get_disease_data(
+            analysisResult.result_file
+          );
+  
+        if (!diseaseData) {
+          // TODO UNCOMMENT
+          // alert('No disease data found.');
+          setGeneticDiseaseData([
+            {
+              clinicalSignificance: 'Pathogenic',
+              disease: 'VERY EXAMPLE DISEASE',
+            },
+          ]);
+        } else {
+          setGeneticDiseaseData(diseaseData.map((item: any) => ({
+            clinicalSignificance: item.clinical_significance,
+            disease: item.disease_name,
+          })));
+        }
+
+        setShowModal(true);
+      } catch (error) {
+        console.error('Failed to fetch disease data:', error);
+        alert('Failed to fetch disease data.');
+      }
+    };
 
   return (
     <Container
@@ -276,6 +348,14 @@ export default function FileManager() {
         >
           {selectedFileForMenu && (
             <>
+              {selectedFileForMenu?.endsWith('.fasta') && (
+                <MenuItem onClick={() => {
+                  handleAnalyzeFasta(selectedFileForMenu);
+                  handleClose();
+                }}>
+                  Analyze
+                </MenuItem>
+              )}
               <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
               <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
             </>
@@ -337,7 +417,36 @@ export default function FileManager() {
           setDbFilename={setDbFilename}
           onConfirm={handleCreateDatabase}
         />
+        <Dialog open={analysisDialogOpen} onClose={() => setAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>FASTA Analysis Result</DialogTitle>
+          <DialogContent dividers>
+            {isAnalyzing ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : analysisResult ? (
+              <>
+                <Typography variant="h6">Status: {analysisResult.status}</Typography>
+                <Typography variant="body1">Result File: {analysisResult.result_file}</Typography>
+              </>
+            ) : (
+              <Typography variant="body1">No result.</Typography>
+            )}
+            {validity && (
+                          <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleDisplayGeneticDisease}>
+                            Display Genetic Disease Information
+                          </Button>)}
+          </DialogContent>
+        </Dialog>
       </Paper>
+      {showModal && (
+      <DiseaseModal
+        diseases={geneticDiseaseData}
+        onClose={() => setShowModal(false)}
+        />)}
     </Container>
   );
 }

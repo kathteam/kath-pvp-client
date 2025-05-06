@@ -42,7 +42,7 @@ declare global {
           }>;
           download_reference_genome_grch38: () => Promise<{
             status: string;
-            reference_genome_path: string;
+            reference_genome: string;
           }>;
           [method: string]: (...args: any[]) => Promise<any>;
         },
@@ -65,11 +65,9 @@ declare global {
 
         disease_service: {
           get_disease_data: (file_path: string) => Promise<{
-            disease_data: {
-              clinical_significance: string;
-              disease_name: string;
-            }[];
-          }>;
+            clinicalSignificance: string;
+            disease: string;
+          }[]>;
           [method: string]: (...args: any[]) => Promise<any>;
         },
 

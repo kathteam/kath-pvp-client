@@ -2,7 +2,6 @@ import os
 from logging import Logger
 from webview import Window
 
-from services.remote.fasta_service import FastaService
 from utils.logger import get_logger
 
 logger: Logger = get_logger(__name__)
@@ -47,6 +46,7 @@ def _initial_setup(window: Window) -> None:
         }))
         """
     )
+    from services.remote.fasta_service import FastaService
 
     # Define setup tasks
     fastaService = FastaService()

@@ -2,27 +2,28 @@ import json
 import os
 import re
 import sys
+
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+)
 import time
-from logging import Logger
 from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 import requests
-from Bio import Entrez
 
 from shared.constants import (
     PROGRAM_STORAGE_DIR_SHARED_BLAST,
     PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES,
 )
+from services.utils.script_setup import EnvSetup, FolderSetup
+from services.utils.hgvs_parser import parse_hgvs, format_to_hgvs
+
+EnvSetup()
+FolderSetup()
+
 from utils.logger import get_logger
 
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
-
-os.makedirs(PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES, exist_ok=True)
-os.makedirs(PROGRAM_STORAGE_DIR_SHARED_BLAST, exist_ok=True)
-
-logger: Logger = get_logger(__name__)
+logger = get_logger(__name__)
 
 MYVARIANT_API_URL = "https://myvariant.info/v1/variant"
 MYVARIANT_BATCH_SIZE = 1000
@@ -77,15 +78,18 @@ def validate_significance(clinical_significance: str) -> bool:
     Returns:
         bool: True if the clinical significance is valid, False otherwise.
     """
+    # Consider relaxing this filter if "Uncertain significance" or "association" are acceptable
     invalid_names = [
         "unknown",
         "not specified",
         "unspecified",
-        "Uncertain significance",
-        "association",
+        # "Uncertain significance", # Relaxed filter
+        # "association", # Relaxed filter
     ]
     if clinical_significance.lower() in invalid_names:
-        logger.error(f"Invalid clinical significance: {clinical_significance}")
+        logger.warning(
+            f"Filtered out significance: {clinical_significance}"
+        )  # Changed to warning
         return False
     return True
 
@@ -95,7 +99,9 @@ def validate_variant(
 ) -> bool:
     """Checks if the variant data components are plausible."""
 
-    if not re.match(r"^(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)$", str(chromosome), re.IGNORECASE):
+    if not re.match(
+        r"^(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)$", str(chromosome), re.IGNORECASE
+    ):
         logger.debug(f"Invalid chromosome format: {chromosome}")
         return False
     # Allow nucleotides and potentially '-' for indel representation in REF/ALT
@@ -117,7 +123,7 @@ def query_into_myvariant(hgvs_list: List[str]) -> Optional[Dict[str, Any]]:
         return []
 
     # Add more fields if needed (e.g., dbsnp)
-    url = f"{MYVARIANT_API_URL}?assembly=hg38&fields=clinvar"
+    url = f"{MYVARIANT_API_URL}?assembly=hg38&fields=clinvar,cosmic,gwascatalog,cadd,gnomad_genome,dbsnp"
     data_payload = {"ids": hgvs_list}
     headers = {"Content-Type": "application/json"}
 
@@ -130,7 +136,9 @@ def query_into_myvariant(hgvs_list: List[str]) -> Optional[Dict[str, Any]]:
         response.raise_for_status()
         results = response.json()
         if not isinstance(results, list):
-            logger.error(f"MyVariant.info batch response was not a list: {type(results)}")
+            logger.error(
+                f"MyVariant.info batch response was not a list: {type(results)}"
+            )
             return None
         logger.debug(f"Received {len(results)} results from batch.")
         return results
@@ -149,82 +157,218 @@ def query_into_myvariant(hgvs_list: List[str]) -> Optional[Dict[str, Any]]:
     except json.JSONDecodeError:
         logger.error("Error decoding JSON response from MyVariant.info batch query.")
         try:
-            logger.error(f"Response Text: {response.text[:500]}...")  # Log beginning of text
+            logger.error(
+                f"Response Text: {response.text[:500]}..."
+            )  # Log beginning of text
         except NameError:
             logger.error("Response object not available for logging text.")
         return None
 
 
-def format_variant_hgvs(
-    chromosome: Union[int, str], position: int, reference: str, alternate: str
-) -> str:
-    """Formats variant components into an HGVS string for MyVariant.info."""
-    chrom_str = str(chromosome).upper().replace("CHR", "")
-    if reference == "-":
-        return f"chr{chrom_str}:g.{position}_{position+1}ins{alternate}"
-    if alternate == "-":
-        if len(reference) == 1:
-            return f"chr{chrom_str}:g.{position}del"
-        return f"chr{chrom_str}:g.{position}_{position + len(reference) - 1}del"
-    # SNP / MNP
-    return f"chr{chrom_str}:g.{position}{reference}>{alternate}"
+def extract_clinvar_diseases(api_result: List[Dict]) -> List[Dict[str, Any]]:
+    """Extracts disease information from ClinVar data in MyVariant.info response.
 
+    Args:
+        api_result (List[Dict]): The response from MyVariant.info API
 
-def extract_clinvar_diseases(api_result: Dict) -> List[Dict[str, Any]]:
-
+    Returns:
+        List[Dict[str, Any]]: List of dictionaries containing disease information
+    """
     results = []
+
+    if not api_result:
+        logger.warning("No API result to process")
+        return results
 
     track_api_queries(api_result)
 
     for entry_batch in api_result:
-
         not_found = entry_batch.get("notfound", False)
         if not_found:
+            # Log variants that were explicitly not found by the API
+            hgvs_id_not_found = entry_batch.get("query", "Unknown HGVS ID")
+            logger.debug(f"Variant {hgvs_id_not_found} not found in MyVariant.info")
             continue
+
+        # Get variant information from HGVS
+        hgvs_id = entry_batch.get("_id", "")
+        parsed_hgvs = parse_hgvs(hgvs_id)
+
+        chromosome = None
+        position = None
+        reference = None
+        alternate = None
+
+        if parsed_hgvs:
+            chromosome = parsed_hgvs.get("chromosome")
+            position = parsed_hgvs.get("position")
+            reference = parsed_hgvs.get("reference")
+            alternate = parsed_hgvs.get("alternate")
+        else:
+            # Legacy fallback method if HGVS parsing fails
+            chromosome = (
+                hgvs_id.split(":g.")[0].replace("chr", "") if ":g." in hgvs_id else None
+            )
+
+            if ">" in hgvs_id:  # SNP/MNP format
+                position_part = hgvs_id.split(":g.")[1]
+                position_match = re.search(r"(\d+)", position_part)
+                position = int(position_match.group(1)) if position_match else None
+
+                alleles_match = re.search(r"(\d+)([ACGT]+)>([ACGT]+)", position_part)
+                if alleles_match:
+                    reference = alleles_match.group(2)
+                    alternate = alleles_match.group(3)
 
         json_data = entry_batch.get("clinvar", {})
         if not json_data:
-            logger.warning("No ClinVar data found")
-            return []
+            # Log when an entry exists but has no 'clinvar' field
+            logger.debug(f"No 'clinvar' data found for HGVS: {hgvs_id}")
+            continue
 
-        chromosome = json_data.get("chrom", "")
-        position = json_data.get("hg38", "").get("start", "")
-        reference = json_data.get("reference", "")
-        alternate = json_data.get("alt", "")
+        # Flag to track if any disease was extracted for this entry
+        disease_extracted_for_entry = False
 
-        for entry in json_data["rcv"]:
-            try:
-                clinical_significance = entry.get("clinical_significance", "")
-                if not validate_significance(clinical_significance):
+        # Process RCV records (Reference ClinVar records)
+        if "rcv" in json_data:
+            rcv_data = json_data["rcv"]
+            # Handle both list and single object formats for rcv
+            if isinstance(rcv_data, list):
+                rcv_list = rcv_data
+            else:
+                # If it's a single record, wrap it in a list for unified processing
+                rcv_list = [rcv_data]
+
+            for rcv in rcv_list:
+                try:
+                    clinical_significance = rcv.get("clinical_significance", "")
+                    if not validate_significance(clinical_significance):
+                        continue
+
+                    # Handle both string and dictionary formats for conditions
+                    conditions = rcv.get("conditions", {})  # Default to empty dict
+                    disease_names = []
+                    synonyms = []
+
+                    if isinstance(conditions, dict):
+                        # Handle case where 'conditions' is a dict (might contain 'name' or 'trait_set')
+                        if "name" in conditions:
+                            disease_names = [conditions.get("name", "")]
+                            synonyms = conditions.get("synonyms", [])
+                        elif (
+                            "trait_set" in conditions
+                        ):  # Handle potential nesting in trait_set
+                            trait_set = conditions["trait_set"]
+                            if isinstance(trait_set, list):
+                                for trait in trait_set:
+                                    if isinstance(trait, dict) and "name" in trait:
+                                        disease_names.append(trait.get("name", ""))
+                                        synonyms.extend(trait.get("synonyms", []))
+                            elif isinstance(trait_set, dict) and "name" in trait_set:
+                                disease_names = [trait_set.get("name", "")]
+                                synonyms = trait_set.get("synonyms", [])
+                    elif isinstance(conditions, list):
+                        # Handle case where 'conditions' is a list of dicts or strings
+                        for cond in conditions:
+                            if isinstance(cond, dict):
+                                disease_names.append(cond.get("name", ""))
+                                if "synonyms" in cond:
+                                    synonyms.extend(cond.get("synonyms", []))
+                            elif isinstance(cond, str):  # Handle simple string list
+                                disease_names.append(cond)
+                    elif isinstance(
+                        conditions, str
+                    ):  # Handle case where 'conditions' is just a string
+                        disease_names = [conditions]
+                    else:  # Log unexpected format
+                        logger.warning(
+                            f"Unexpected format for conditions in RCV for {hgvs_id}: {type(conditions)}"
+                        )
+                        disease_names = []
+                        synonyms = []
+
+                    # Process each disease name
+                    for disease_name in disease_names:
+                        if not validate_disease_name(disease_name):
+                            logger.debug(
+                                f"Invalid disease name '{disease_name}' skipped for HGVS: {hgvs_id}"
+                            )
+                            continue
+
+                        disease_info = {
+                            "clinical_significance": clinical_significance,
+                            "disease_name": disease_name,
+                            "synonyms": list(set(synonyms)),  # Ensure unique synonyms
+                            "chromosome": chromosome,
+                            "position": position,
+                            "reference": reference,
+                            "alternate": alternate,
+                            "hgvs_id": hgvs_id,
+                        }
+                        results.append(disease_info)
+                        disease_extracted_for_entry = True  # Mark as extracted
+                except Exception as e:
+                    logger.error(f"Error processing RCV record for {hgvs_id}: {e}")
                     continue
 
-                conditions = entry.get("conditions", [])
-                if not conditions:
-                    continue
+        # Also check for "clinvar.trait" which might contain disease info
+        elif "trait" in json_data:
+            traits = json_data["trait"]
+            if not isinstance(traits, list):
+                traits = [traits]  # Ensure it's a list
 
-                disease_name = conditions.get("name", "")
-                # synonims = conditions.get("synonyms", [])
-                if not validate_disease_name(disease_name):
-                    continue
+            for trait in traits:
+                if isinstance(trait, dict) and "name" in trait:
+                    disease_name = trait["name"]
+                    if validate_disease_name(disease_name):
+                        # Try to get clinical significance if available, otherwise default
+                        clinical_significance = json_data.get(
+                            "clinical_significance", "Association"
+                        )  # Default if not found elsewhere
 
-                disease_info = {
-                    "clinical_significance": clinical_significance,
-                    "disease_name": disease_name,
-                    # "synonyms": synonims,
-                    "chromosome": chromosome,
-                    "position": position,
-                    "reference": reference,
-                    "alternate": alternate,
-                }
+                        disease_info = {
+                            "clinical_significance": clinical_significance,
+                            "disease_name": disease_name,
+                            "synonyms": trait.get("synonyms", []),
+                            "chromosome": chromosome,
+                            "position": position,
+                            "reference": reference,
+                            "alternate": alternate,
+                            "hgvs_id": hgvs_id,
+                        }
+                        results.append(disease_info)
+                        disease_extracted_for_entry = True  # Mark as extracted
 
-                results.append(disease_info)
+        # Fallback check for "clinvar.disease_names"
+        elif "disease_names" in json_data:
+            for disease_name in json_data["disease_names"]:
+                if validate_disease_name(disease_name):
+                    # Try to get clinical significance from other fields if available
+                    clinical_significance = json_data.get(
+                        "clinical_significance", "Pathogenic"
+                    )  # Or maybe "Association"?
 
-            except KeyError as e:
-                logger.error(f"Key error in ClinVar data: {e}")
-                continue
+                    disease_info = {
+                        "clinical_significance": clinical_significance,
+                        "disease_name": disease_name,
+                        "synonyms": [],
+                        "chromosome": chromosome,
+                        "position": position,
+                        "reference": reference,
+                        "alternate": alternate,
+                        "hgvs_id": hgvs_id,
+                    }
+                    results.append(disease_info)
+                    disease_extracted_for_entry = True  # Mark as extracted
 
-        print(results)
-        return results
+        # Log if an entry had clinvar data but no disease was extracted after processing
+        if not disease_extracted_for_entry and json_data:
+            logger.debug(
+                f"Processed HGVS {hgvs_id} with ClinVar data, but no valid/extractable disease association found. ClinVar data keys: {list(json_data.keys())}"
+            )
+
+    logger.info(f"Extracted {len(results)} disease associations")
+    return results
 
 
 def shrink_and_count_duplicates(df: pd.DataFrame) -> pd.DataFrame:
@@ -237,7 +381,7 @@ def shrink_and_count_duplicates(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: DataFrame with unique rows and a count of duplicates.
     """
     df = df.groupby(list(df.columns)).size().reset_index(name="count")
-    df = df.remove_duplicates()
+    df = df.drop_duplicates()  # Use drop_duplicates() instead of remove_duplicates()
     df["count"] = df["count"].astype(int)
     return df
 
@@ -257,46 +401,61 @@ def save_to_csv(data: List[Dict[str, Any]], output_path: str):
         logger.error(f"Error saving results to CSV: {e}")
 
 
-def load_variants_from_csv(csv_path: str) -> pd.DataFrame:
-    """Loads variants from a CSV file.
+def load_variants_from_json(json_path: str) -> pd.DataFrame:
+    """Loads variants from a JSON file.
 
     Args:
-        csv_path (str): Path to the CSV file.
+        json_path (str): Path to the JSON file.
 
     Returns:
         pd.DataFrame: DataFrame with variant data.
     """
+
+    important_subset = ["chromosome", "position", "reference_allele", "query_allele"]
+
+    logger.info(f"Loading variants from {json_path}")
+
     try:
-        data = pd.read_csv(csv_path)
-        data = data.dropna(subset=["chromosome", "position", "reference", "query"])
-        data = data.drop_duplicates(subset=["chromosome", "position", "reference", "query"])
+        data = pd.read_json(json_path)
 
-        data["chromosome"] = data["chromosome"].astype(int)
-        data["position"] = data["position"].astype(int)
+        data = data[important_subset]
+        data = data.drop_duplicates(subset=important_subset)
 
-        # Rename query to alternate for consistency
-        if "query" in data.columns and "alternate" not in data.columns:
-            data = data.rename(columns={"query": "alternate"})
+        data["chromosome"] = data["chromosome"].astype(str)
+        data["position"] = data["position"].fillna(0).astype(int)
+
+        # Rename columns to match expected format
+        if "query_allele" in data.columns:
+            data = data.rename(columns={"query_allele": "alternate"})
+
+        if "reference_allele" in data.columns:
+            data = data.rename(columns={"reference_allele": "reference"})
 
         required_columns = ["chromosome", "position", "reference", "alternate"]
         if not all(col in data.columns for col in required_columns):
-            logger.error(f"CSV is missing required columns. Required: {required_columns}")
+            logger.error(
+                f"JSON is missing required columns. Required: {required_columns}"
+            )
             return pd.DataFrame()
 
-        logger.info(f"Loaded {len(data)} variants from {csv_path}")
+        logger.info(f"Loaded {len(data)} variants from {json_path}")
         return data[required_columns]
     except Exception as e:
-        logger.error(f"Error loading variants from CSV: {e}")
+        logger.error(f"Error loading variants from JSON: {e}")
         return pd.DataFrame()
 
 
-def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE):
+def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE) -> str:
     """Main function to process variants in batches.
 
     Args:
+        variants_file (str): Path to the variants JSON file
         batch_size (int): Number of variants to process in each batch
+
+    Returns:
+        List[Dict[str, Any]]: List of disease associations found
     """
-    variants = load_variants_from_csv(variants_file)
+    variants = load_variants_from_json(variants_file)
 
     if variants.empty:
         logger.error("No valid variants to process")
@@ -328,11 +487,13 @@ def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE):
                 logger.warning(f"Invalid variant data at index {index}, skipping")
                 continue
 
-            hgvs_id = format_variant_hgvs(chromosome, position, reference, alternate)
+            hgvs_id = format_to_hgvs(chromosome, position, reference, alternate)
             valid_hgvs.append(hgvs_id)
 
         if not valid_hgvs:
-            logger.warning(f"No valid variants in batch {batch_start//batch_size + 1}, skipping")
+            logger.warning(
+                f"No valid variants in batch {batch_start//batch_size + 1}, skipping"
+            )
             continue
 
         logger.info(f"Querying MyVariant.info with {len(valid_hgvs)} valid variants")
@@ -358,23 +519,37 @@ def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE):
         )
         save_to_csv(all_disease_data, output_file)
         logger.info(f"Found total of {len(all_disease_data)} disease associations")
+        return output_file
     else:
         logger.warning("No disease associations found in any batch")
 
-    return all_disease_data
+    return None
 
 
 def main():
-    # Configure NCBI Entrez
-    Entrez.email = "kajeliukasc@gmail.com"
-    Entrez.api_key = "7ca5ef526507701d64f16a090124cbc4aa08"
-
     variants_file = os.path.join(
         PROGRAM_STORAGE_DIR_SHARED_BLAST,
-        "consolidated_results_unknown_transcript2_2246031136_vs_GRCh38_direct_blast_dir",
-        "all_mutations_20250405-185834.csv",
+        "gene_7157_transcript1_2246031143_vs_GRCh38_direct_variations.json",
     )
-    process_variants(variants_file)
+
+    file_list = os.listdir(PROGRAM_STORAGE_DIR_SHARED_BLAST)
+
+    jsons_only = [file for file in file_list if file.endswith(".json")]
+
+    # jsons_only.append(os.path.join(PROGRAM_STORAGE_DIR_SHARED_BLAST, "unknown_transcript1_1890272221_vs_GRCh38_direct_variations.json"))
+
+    if not jsons_only:
+        print("No JSON files found in the directory")
+        return
+
+    for json_file in jsons_only:
+        variants_file = os.path.join(PROGRAM_STORAGE_DIR_SHARED_BLAST, json_file)
+        print(f"Processing file: {variants_file}")
+        things = process_variants(variants_file)
+        if things:
+            print(f"Found {len(things)} disease associations in {variants_file}")
+        else:
+            print(f"No disease associations found in {variants_file}")
 
 
 if __name__ == "__main__":

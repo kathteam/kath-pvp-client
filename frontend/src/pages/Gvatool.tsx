@@ -27,18 +27,18 @@ export default function GVATool(): JSX.Element {
 
   const [referenceGenomePath, setReferenceGenomePath] = useState<{
     status: string;
-    reference_genome_path: string;
+    reference_genome: string;
   }>();
 
   const downloadReferenceGenome = async () => {
-    setReferenceGenomePath({ status: 'processing', reference_genome_path: '' });
+    setReferenceGenomePath({ status: 'processing', reference_genome: '' });
     try {
       const response = await window.pywebview.api.fasta_service.download_reference_genome_grch38();
       setReferenceGenomePath(response);
     }
     catch (error) {
       console.error(error);
-      setReferenceGenomePath({ status: 'error', reference_genome_path: '' });
+      setReferenceGenomePath({ status: 'error', reference_genome: '' });
     }
   };
 
@@ -151,7 +151,7 @@ export default function GVATool(): JSX.Element {
               >
                 {!referenceGenomePath ? 'Processing...' :
                   referenceGenomePath.status === 'success'
-                    ? `Reference genome downloaded to: ${referenceGenomePath.reference_genome_path}`
+                    ? `Reference genome downloaded to: ${referenceGenomePath.reference_genome}`
                     : referenceGenomePath.status === 'processing'
                       ? 'Downloading reference genome...'
                       : 'Failed to download reference genome'}

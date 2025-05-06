@@ -445,7 +445,7 @@ def load_variants_from_json(json_path: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 
-def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE):
+def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE) -> str:
     """Main function to process variants in batches.
 
     Args:
@@ -519,10 +519,11 @@ def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE):
         )
         save_to_csv(all_disease_data, output_file)
         logger.info(f"Found total of {len(all_disease_data)} disease associations")
+        return output_file
     else:
         logger.warning("No disease associations found in any batch")
 
-    return all_disease_data
+    return None
 
 
 def main():

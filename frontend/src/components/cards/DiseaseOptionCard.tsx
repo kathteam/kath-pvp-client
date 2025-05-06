@@ -86,7 +86,7 @@ export default function DiseaseOptionCard(): JSX.Element {
           extractionResult.result_file
         );
 
-      if (!diseaseData || !diseaseData.disease_data) {
+      if (!diseaseData || diseaseData.length === 0) {
         // TODO UNCOMMENT
         // alert('No disease data found.');
         setGeneticDiseaseData([
@@ -112,7 +112,7 @@ export default function DiseaseOptionCard(): JSX.Element {
           },
         ]);
       } else {
-        setGeneticDiseaseData(diseaseData.disease_data.map((item: any) => ({
+        setGeneticDiseaseData(diseaseData.map((item: any) => ({
           clinicalSignificance: item.clinical_significance,
           disease: item.disease_name,
         })));

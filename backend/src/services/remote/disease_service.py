@@ -26,7 +26,6 @@ class DiseaseService:
                         "disease_name": row["disease_name"],
                     }
                 )
-
             return json_format
 
         except Exception as e:

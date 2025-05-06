@@ -17,6 +17,7 @@ import FileList from '../components/cards/FileListCard';
 import { getFileIcon } from '@/utils/FileManagerUtils';
 import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
 import { Dialog, DialogTitle, DialogContent, CircularProgress } from '@mui/material';
+import { DiseaseModal } from '@/components/modals';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -214,9 +215,10 @@ export default function FileManager() {
   };
 
   const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
+  const [validity, setValidity] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{
       status: string;
-      result_file: string[];
+      result_file: string;
     }>();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
@@ -228,16 +230,60 @@ export default function FileManager() {
     try {
       const result = await window.pywebview.api.blast_service.disease_extraction(filePath);
       setAnalysisResult(result);
+      setValidity(true);
     } catch (error) {
       console.error('FASTA analysis failed:', error);
       setAnalysisResult({
         status: 'error',
-        result_file: [`Failed to extract disease information: ${error || 'Unknown error'}`],
+        result_file: `Failed to extract disease information: ${error || 'Unknown error'}`,
       });
+      setValidity(false);
     } finally {
       setIsAnalyzing(false);
     }
   };
+
+    // Genetical disease data management
+    const [showModal, setShowModal] = useState<boolean>(false);
+    const [geneticDiseaseData, setGeneticDiseaseData] = useState<{
+      clinicalSignificance: string;
+      disease: string;
+    }[]>([]);
+  
+      const handleDisplayGeneticDisease = async () => {
+      if (!analysisResult?.result_file) {
+        alert('Please extract disease information first.');
+        return;
+      }
+  
+      try {
+        const diseaseData =
+          await window.pywebview.api.disease_service.get_disease_data(
+            analysisResult.result_file
+          );
+  
+        if (!diseaseData) {
+          // TODO UNCOMMENT
+          // alert('No disease data found.');
+          setGeneticDiseaseData([
+            {
+              clinicalSignificance: 'Pathogenic',
+              disease: 'VERY EXAMPLE DISEASE',
+            },
+          ]);
+        } else {
+          setGeneticDiseaseData(diseaseData.map((item: any) => ({
+            clinicalSignificance: item.clinical_significance,
+            disease: item.disease_name,
+          })));
+        }
+
+        setShowModal(true);
+      } catch (error) {
+        console.error('Failed to fetch disease data:', error);
+        alert('Failed to fetch disease data.');
+      }
+    };
 
   return (
     <Container
@@ -386,9 +432,21 @@ export default function FileManager() {
             ) : (
               <Typography variant="body1">No result.</Typography>
             )}
+            {validity && (
+                          <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={handleDisplayGeneticDisease}>
+                            Display Genetic Disease Information
+                          </Button>)}
           </DialogContent>
         </Dialog>
       </Paper>
+      {showModal && (
+      <DiseaseModal
+        diseases={geneticDiseaseData}
+        onClose={() => setShowModal(false)}
+        />)}
     </Container>
   );
 }

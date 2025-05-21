@@ -76,3 +76,4 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+backend/src/services/remote/blast_service/align2.py

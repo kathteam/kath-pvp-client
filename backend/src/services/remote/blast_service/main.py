@@ -8,6 +8,7 @@ from shared.constants import (
 
 from .align import process_single_fasta
 from .find import process_variants
+from services.remote.database_service.json_to_db import json_to_db
 
 
 class BlastService:
@@ -30,12 +31,24 @@ class BlastService:
         try:
             print(f"Processing file: {fasta_file}")
             # Perform blast aligning
+            # +++++++++++++++++++++++++++++++++++++++++++++++++
+            # Takes in fasta file and returns json file
             result_file = process_single_fasta(fasta_file)
-
+        
             if not result_file:
                 raise Exception("Failed to perform blast aligning")
+            
+            #++++++++++++++++++++++++++++++++++++++++++++++++
+            # Takes in Json file and returns db file
+            db_file = json_to_db(result_file)
+            
+            if not db_file:
+                raise Exception("Failed to insert data into the database")
+            
+            raise Exception("No diseases found or failed to process variants")
 
-
+            # +++++++++++++++++++++++++++++++++++++++++++++++++
+            # Takes in Json file and returns csv file
             disease_file = process_variants(result_file)
 
             if not disease_file:

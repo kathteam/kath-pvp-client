@@ -13,7 +13,7 @@ import requests
 from Bio import Entrez
 from dotenv import load_dotenv
 
-from src.utils.logger import get_logger
+from utils.logger import get_logger
 from services.utils.script_setup import (
     EnvSetup,
     FolderSetup,

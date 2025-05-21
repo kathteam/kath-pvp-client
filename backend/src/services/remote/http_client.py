@@ -1,7 +1,7 @@
 from logging import Logger
 from requests import Session, Response, exceptions
 
-from utils.logger import get_logger
+from utils import get_logger
 
 
 class HttpClient:

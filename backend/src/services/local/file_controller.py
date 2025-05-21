@@ -2,7 +2,7 @@ import os
 import sqlite3
 from logging import Logger
 
-from utils.logger import get_logger
+from utils import get_logger
 
 WORKDIR = os.path.join(os.path.expanduser("~"), "Documents")
 
@@ -87,7 +87,7 @@ class FileController:
             if ext in extensions:
                 return file_type
         return "file"
-    
+
     def get_kath_directory(self) -> str:
         """
         Determines the ~/.kath directory, creating it if it doesn't exist.
@@ -100,7 +100,6 @@ class FileController:
             os.makedirs(kath_dir)
         return kath_dir
 
-
     def create_vcf_database(self, db_path: str) -> None:
         """
         Creates a SQLite database with a table to store VCF data.
@@ -112,7 +111,8 @@ class FileController:
         cursor = connection.cursor()
 
         # Create a table for VCF data
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS vcf_data (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 chrom TEXT NOT NULL,
@@ -124,9 +124,8 @@ class FileController:
                 filter TEXT,
                 info TEXT
             )
-        """)
+        """
+        )
 
         connection.commit()
         connection.close()
-
-

@@ -1,7 +1,7 @@
 from logging import Logger
 
-from utils.logger import get_logger
-from services.utils.prepare_disease import generate_json_diseases
+from utils import get_logger
+from services.helpers import generate_json_diseases
 
 
 class DiseaseService:

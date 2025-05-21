@@ -1,9 +1,8 @@
 import os
 from logging import Logger
 
-from utils.logger import get_logger
-from shared.constants import REF_GENOME, PROGRAM_STORAGE_DIR_SHARED_DATA
-
+from utils import get_logger
+from shared import REF_GENOME, PROGRAM_STORAGE_DIR_SHARED_DATA
 from .downloader import (
     download_disease_related_genes_clinvar,
     download_reference_genome_direct,

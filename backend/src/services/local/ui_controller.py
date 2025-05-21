@@ -1,7 +1,7 @@
 from logging import Logger
 from webview import Window, windows
 
-from utils.logger import get_logger
+from utils import get_logger
 
 
 class UiController:

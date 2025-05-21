@@ -6,26 +6,19 @@ for genetic variants.
 """
 
 import re
-import logging
 from typing import Dict, List, Optional, Union, Tuple
 
-from utils.logger import get_logger
+from utils import get_logger
 
 logger = get_logger(__name__)
 
 # Regular expression patterns for different HGVS formats
-SNV_PATTERN = re.compile(
-    r"chr([0-9XYM]+):g\.(\d+)([ACGT])>([ACGT])"
-)  # Single nucleotide variant
+SNV_PATTERN = re.compile(r"chr([0-9XYM]+):g\.(\d+)([ACGT])>([ACGT])")  # Single nucleotide variant
 DNV_MNV_PATTERN = re.compile(
     r"chr([0-9XYM]+):g\.(\d+)([ACGT]{2,})>([ACGT]{2,})"
 )  # Di/Multi-nucleotide variant
-DELETION_PATTERN = re.compile(
-    r"chr([0-9XYM]+):g\.(\d+)(?:_(\d+))?del(?:[ACGT]*)?"
-)  # Deletion
-INSERTION_PATTERN = re.compile(
-    r"chr([0-9XYM]+):g\.(\d+)_(\d+)ins([ACGT]+)"
-)  # Insertion
+DELETION_PATTERN = re.compile(r"chr([0-9XYM]+):g\.(\d+)(?:_(\d+))?del(?:[ACGT]*)?")  # Deletion
+INSERTION_PATTERN = re.compile(r"chr([0-9XYM]+):g\.(\d+)_(\d+)ins([ACGT]+)")  # Insertion
 DELINS_PATTERN = re.compile(
     r"chr([0-9XYM]+):g\.(\d+)(?:_(\d+))?delins([ACGT]+)"
 )  # Deletion-insertion
@@ -195,9 +188,7 @@ def parse_hgvs(hgvs_id: str) -> Optional[Dict[str, Union[str, int]]]:
                     "normalized": False,
                 }
         except Exception as e:
-            logger.warning(
-                f"Failed to parse HGVS with basic method: {hgvs_id}, error: {e}"
-            )
+            logger.warning(f"Failed to parse HGVS with basic method: {hgvs_id}, error: {e}")
 
     logger.warning(f"Could not parse HGVS: {hgvs_id}")
     return None
@@ -260,9 +251,7 @@ def format_to_hgvs(chrom: str, pos: int, ref: str, alt: str) -> str:
                 return f"chr{chrom_str}:g.{pos}_{pos + len(ref) - 1}delins{alt}"
 
 
-def convert_genome_coordinates_to_hgvs(
-    chrom: str, start: int, end: int, ref: str, alt: str
-) -> str:
+def convert_genome_coordinates_to_hgvs(chrom: str, start: int, end: int, ref: str, alt: str) -> str:
     """
     Convert genomic coordinates to HGVS format
 
@@ -292,12 +281,7 @@ def convert_genome_coordinates_to_hgvs(
     elif len(ref) == 1 and len(alt) == 1 and start == end:
         # SNV
         return f"chr{chrom_str}:g.{start}{ref}>{alt}"
-    elif (
-        len(ref) > 1
-        and len(alt) > 1
-        and len(ref) == len(alt)
-        and (end - start + 1) == len(ref)
-    ):
+    elif len(ref) > 1 and len(alt) > 1 and len(ref) == len(alt) and (end - start + 1) == len(ref):
         # MNV
         return f"chr{chrom_str}:g.{start}{ref}>{alt}"
     else:
@@ -442,9 +426,7 @@ def vcf_to_hgvs(chrom: str, pos: int, ref: str, alt: str) -> str:
                     return f"chr{chrom_str}:g.{pos + 1}_{pos + deleted_bases}del"
             else:
                 # Delins
-                return (
-                    f"chr{chrom_str}:g.{pos + 1}_{pos + deleted_bases}delins{alt[1:]}"
-                )
+                return f"chr{chrom_str}:g.{pos + 1}_{pos + deleted_bases}delins{alt[1:]}"
         else:
             # Complete replacement
             return f"chr{chrom_str}:g.{pos}_{pos + len(ref) - 1}delins{alt}"

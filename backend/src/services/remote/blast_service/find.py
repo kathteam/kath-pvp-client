@@ -1,29 +1,19 @@
 import json
 import os
 import re
-import sys
-
-sys.path.append(
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-)
 import time
 from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 import requests
 
-from shared.constants import (
-    PROGRAM_STORAGE_DIR_SHARED_BLAST,
-    PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES,
-)
-from services.utils.script_setup import EnvSetup, FolderSetup
-from services.utils.hgvs_parser import parse_hgvs, format_to_hgvs
+from utils import get_logger
+from shared import PROGRAM_STORAGE_DIR_SHARED_BLAST, PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES
+from services.helpers import EnvSetup, FolderSetup, parse_hgvs, format_to_hgvs
+
+logger = get_logger(__name__)
 
 EnvSetup()
 FolderSetup()
-
-from utils.logger import get_logger
-
-logger = get_logger(__name__)
 
 MYVARIANT_API_URL = "https://myvariant.info/v1/variant"
 MYVARIANT_BATCH_SIZE = 1000
@@ -87,9 +77,7 @@ def validate_significance(clinical_significance: str) -> bool:
         # "association", # Relaxed filter
     ]
     if clinical_significance.lower() in invalid_names:
-        logger.warning(
-            f"Filtered out significance: {clinical_significance}"
-        )  # Changed to warning
+        logger.warning(f"Filtered out significance: {clinical_significance}")  # Changed to warning
         return False
     return True
 
@@ -99,9 +87,7 @@ def validate_variant(
 ) -> bool:
     """Checks if the variant data components are plausible."""
 
-    if not re.match(
-        r"^(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)$", str(chromosome), re.IGNORECASE
-    ):
+    if not re.match(r"^(?:[1-9]|1[0-9]|2[0-2]|X|Y|M|MT)$", str(chromosome), re.IGNORECASE):
         logger.debug(f"Invalid chromosome format: {chromosome}")
         return False
     # Allow nucleotides and potentially '-' for indel representation in REF/ALT
@@ -136,9 +122,7 @@ def query_into_myvariant(hgvs_list: List[str]) -> Optional[Dict[str, Any]]:
         response.raise_for_status()
         results = response.json()
         if not isinstance(results, list):
-            logger.error(
-                f"MyVariant.info batch response was not a list: {type(results)}"
-            )
+            logger.error(f"MyVariant.info batch response was not a list: {type(results)}")
             return None
         logger.debug(f"Received {len(results)} results from batch.")
         return results
@@ -157,9 +141,7 @@ def query_into_myvariant(hgvs_list: List[str]) -> Optional[Dict[str, Any]]:
     except json.JSONDecodeError:
         logger.error("Error decoding JSON response from MyVariant.info batch query.")
         try:
-            logger.error(
-                f"Response Text: {response.text[:500]}..."
-            )  # Log beginning of text
+            logger.error(f"Response Text: {response.text[:500]}...")  # Log beginning of text
         except NameError:
             logger.error("Response object not available for logging text.")
         return None
@@ -206,9 +188,7 @@ def extract_clinvar_diseases(api_result: List[Dict]) -> List[Dict[str, Any]]:
             alternate = parsed_hgvs.get("alternate")
         else:
             # Legacy fallback method if HGVS parsing fails
-            chromosome = (
-                hgvs_id.split(":g.")[0].replace("chr", "") if ":g." in hgvs_id else None
-            )
+            chromosome = hgvs_id.split(":g.")[0].replace("chr", "") if ":g." in hgvs_id else None
 
             if ">" in hgvs_id:  # SNP/MNP format
                 position_part = hgvs_id.split(":g.")[1]
@@ -255,9 +235,7 @@ def extract_clinvar_diseases(api_result: List[Dict]) -> List[Dict[str, Any]]:
                         if "name" in conditions:
                             disease_names = [conditions.get("name", "")]
                             synonyms = conditions.get("synonyms", [])
-                        elif (
-                            "trait_set" in conditions
-                        ):  # Handle potential nesting in trait_set
+                        elif "trait_set" in conditions:  # Handle potential nesting in trait_set
                             trait_set = conditions["trait_set"]
                             if isinstance(trait_set, list):
                                 for trait in trait_set:
@@ -433,9 +411,7 @@ def load_variants_from_json(json_path: str) -> pd.DataFrame:
 
         required_columns = ["chromosome", "position", "reference", "alternate"]
         if not all(col in data.columns for col in required_columns):
-            logger.error(
-                f"JSON is missing required columns. Required: {required_columns}"
-            )
+            logger.error(f"JSON is missing required columns. Required: {required_columns}")
             return pd.DataFrame()
 
         logger.info(f"Loaded {len(data)} variants from {json_path}")
@@ -491,9 +467,7 @@ def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE) -> str:
             valid_hgvs.append(hgvs_id)
 
         if not valid_hgvs:
-            logger.warning(
-                f"No valid variants in batch {batch_start//batch_size + 1}, skipping"
-            )
+            logger.warning(f"No valid variants in batch {batch_start//batch_size + 1}, skipping")
             continue
 
         logger.info(f"Querying MyVariant.info with {len(valid_hgvs)} valid variants")

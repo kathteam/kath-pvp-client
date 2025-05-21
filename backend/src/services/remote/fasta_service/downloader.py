@@ -1,9 +1,4 @@
 import os
-import sys
-
-backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
-if backend_dir not in sys.path:
-    sys.path.append(backend_dir)
 import time
 import gzip
 import shutil
@@ -11,23 +6,18 @@ from pathlib import Path
 from typing import Optional, List, Tuple
 import requests
 from Bio import Entrez
-from dotenv import load_dotenv
 
-from src.utils.logger import get_logger
-from services.utils.script_setup import (
-    EnvSetup,
-    FolderSetup,
+from utils import get_logger
+from shared import (
+    REF_GENOME,
+    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_SAMPLES,
+    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
 )
+from services.helpers import EnvSetup, FolderSetup
 
 EnvSetup()
 FolderSetup()
 
-from shared.constants import (
-    REF_GENOME,
-    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_SAMPLES,
-    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_UPLOADS,
-    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
-)
 
 logger = get_logger(__name__)
 
@@ -39,9 +29,7 @@ def log_download(source: str, identifier: str, file_path: str, fasta_dir: Path):
     """Log a successful download."""
     log_file = os.path.join(fasta_dir, "downloads.log")
     with open(log_file, "a", encoding="utf-8") as f:
-        f.write(
-            f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {source} | {identifier} | {file_path}\n"
-        )
+        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} | {source} | {identifier} | {file_path}\n")
 
 
 def reference_genome_exists(ref_dir: Path, version: str = REF_GENOME) -> bool:
@@ -130,9 +118,7 @@ def handle_gene_download_nucleotide(
         logger.info(f"Downloading sequence for nucleotide ID: {seq_id}")
 
         # Download sequence
-        seq_handle = Entrez.efetch(
-            db="nucleotide", id=seq_id, rettype="fasta", retmode="text"
-        )
+        seq_handle = Entrez.efetch(db="nucleotide", id=seq_id, rettype="fasta", retmode="text")
 
         # Handle content as both string or bytes
         content = seq_handle.read()
@@ -177,9 +163,7 @@ def get_gene_symbol(gene_id: str) -> str:
         gene_symbol = "unknown"
         if gene_record and "Entrezgene" in gene_record[0]:
             gene_info = gene_record[0]["Entrezgene"]
-            gene_symbol = gene_info.get("Gene-ref", {}).get(
-                "Gene-ref_locus", f"gene_{gene_id}"
-            )
+            gene_symbol = gene_info.get("Gene-ref", {}).get("Gene-ref_locus", f"gene_{gene_id}")
 
         return gene_symbol
     except Exception as e:
@@ -199,14 +183,11 @@ def search_nucleotide_by_gene_id(gene_id: str, max_results: int = 3) -> List[str
         List of nucleotide IDs
     """
     search_term = (
-        f"{gene_id}[Gene ID] AND refseq[Filter] AND "
-        f"mRNA[Filter] AND Homo sapiens[Organism]"
+        f"{gene_id}[Gene ID] AND refseq[Filter] AND " f"mRNA[Filter] AND Homo sapiens[Organism]"
     )
 
     try:
-        direct_handle = Entrez.esearch(
-            db="nucleotide", term=search_term, retmax=max_results
-        )
+        direct_handle = Entrez.esearch(db="nucleotide", term=search_term, retmax=max_results)
         direct_results = Entrez.read(direct_handle)
         direct_handle.close()
 
@@ -233,9 +214,7 @@ def search_nucleotide_by_symbol(gene_symbol: str, max_results: int = 3) -> List[
     )
 
     try:
-        symbol_handle = Entrez.esearch(
-            db="nucleotide", term=symbol_search, retmax=max_results
-        )
+        symbol_handle = Entrez.esearch(db="nucleotide", term=symbol_search, retmax=max_results)
         symbol_results = Entrez.read(symbol_handle)
         symbol_handle.close()
 
@@ -267,9 +246,7 @@ def download_disease_related_genes_clinvar(
     """
     print(f"Downloading disease-related genes for {disease_term}...")
     if output_dir is None:
-        output_dir = os.path.join(
-            samples_dir, "diseases", disease_term.replace(" ", "_").lower()
-        )
+        output_dir = os.path.join(samples_dir, "diseases", disease_term.replace(" ", "_").lower())
         os.makedirs(output_dir, exist_ok=True)
 
     downloaded_files = []
@@ -304,9 +281,7 @@ def download_disease_related_genes_clinvar(
 
                 gene_symbol = "unknown"
                 if not nucleotide_ids:
-                    logger.info(
-                        f"No direct nucleotide sequences found for gene ID: {gene_id}"
-                    )
+                    logger.info(f"No direct nucleotide sequences found for gene ID: {gene_id}")
 
                     # Try to get gene symbol
                     gene_symbol = get_gene_symbol(gene_id)
@@ -314,20 +289,14 @@ def download_disease_related_genes_clinvar(
 
                     # Try searching by gene symbol
                     nucleotide_ids = search_nucleotide_by_symbol(gene_symbol, 20)
-                    logger.info(
-                        f"Found {len(nucleotide_ids)} nucleotide sequences by gene symbol"
-                    )
+                    logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene symbol")
                 else:
-                    logger.info(
-                        f"Found {len(nucleotide_ids)} nucleotide sequences by gene ID"
-                    )
+                    logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene ID")
                     gene_symbol = get_gene_symbol(gene_id)
 
                 # If we still don"t have any nucleotide IDs, skip this gene
                 if not nucleotide_ids:
-                    logger.warning(
-                        f"No nucleotide sequences found for gene ID: {gene_id}"
-                    )
+                    logger.warning(f"No nucleotide sequences found for gene ID: {gene_id}")
                     continue
 
                 # Download each nucleotide sequence
@@ -339,9 +308,7 @@ def download_disease_related_genes_clinvar(
                         disease_term,
                         output_dir,
                     )
-                    file_path = handle_gene_download_nucleotide(
-                        download_info, fasta_dir
-                    )
+                    file_path = handle_gene_download_nucleotide(download_info, fasta_dir)
                     if file_path:
                         downloaded_files.append(file_path)
 
@@ -360,7 +327,5 @@ if __name__ == "__main__":
     # Example usage
     disease_term = "leukemia"
     max_results = 100
-    downloaded_files = download_disease_related_genes_clinvar(
-        disease_term, max_results=max_results
-    )
+    downloaded_files = download_disease_related_genes_clinvar(disease_term, max_results=max_results)
     print(f"Downloaded files: {downloaded_files}")

@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 from Bio import Entrez
-from src.shared.constants import *
+from shared.constants import *
 
 from utils.logger import get_logger
 

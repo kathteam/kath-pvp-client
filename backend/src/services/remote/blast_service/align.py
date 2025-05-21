@@ -13,8 +13,9 @@ import json
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from Bio.Blast import NCBIXML
+from services.remote.database_service.xml_to_db import xml_to_db
 
-from src.shared.constants import (
+from shared.constants import (
     PROGRAM_STORAGE_DIR_SHARED_BLAST,
     PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
 )
@@ -152,6 +153,8 @@ def blast_cmdline(
         logger.error("`blastn` command not found. Is BLAST+ installed and in PATH?")
         raise
 
+    xml_to_db(output_file)    
+    
     return str(output_file)
 
 
@@ -202,176 +205,143 @@ def extract_chromosome(subject_id: str) -> str:
     return "Unknown"
 
 
+import os
+import sqlite3
+from typing import List, Dict, Any
+
+BASE_OUTPUT_DIR = os.path.join(os.path.expanduser("~"), ".kath", "shared", "data", "blast_results")
+DB_FILENAME = "xml.db"
+db_file = os.path.join(BASE_OUTPUT_DIR, DB_FILENAME)
+
+#+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#Takes in xml file(db) and returns json file
 def parse_blast_results(
-    result_file: str,
     min_hsp_score: float = 50.0,
     min_identity_perc: float = 95.0,
     min_hsp_length: int = 50,
     evalue_threshold: float = 1e-10,
 ) -> List[Dict[str, Any]]:
     """
-    Parse BLAST XML results, identify variations (substitutions, insertions, deletions),
+    Parse BLAST results from SQLite DB (latest file_id), identify variations,
     and filter based on alignment quality metrics.
-
-    Args:
-        result_file: Path to BLAST XML output file.
-        min_hsp_score: Minimum bit score for an HSP to be considered.
-        min_identity_perc: Minimum percent identity for an HSP (0-100).
-        min_hsp_length: Minimum alignment length for an HSP.
-        evalue_threshold: Maximum E-value for an HSP.
-
-    Returns:
-        A list of dictionaries, each describing a detected variation.
     """
     variations = []
-    logger.info(f"Parsing BLAST results from: {result_file}")
+    logger.info(f"Parsing BLAST results from database: {db_file}")
 
-    try:
-        with open(result_file, "r", encoding="utf-8") as result_handle:
-            blast_records = NCBIXML.parse(result_handle)
+    conn = sqlite3.connect(db_file)
+    cursor = conn.cursor()
 
-            query_count = 0
-            total_hsps_processed = 0
-            total_variations_found = 0
-
-            for blast_record in blast_records:
-                query_count += 1
-                logger.debug(
-                    f"Processing Query: {blast_record.query} ({blast_record.query_length} bp)"
-                )
-                if not blast_record.alignments:
-                    logger.debug(
-                        f"  No significant alignments found for query {blast_record.query}"
-                    )
-                    continue
-
-                for alignment in blast_record.alignments:
-                    subject_id = alignment.hit_id or alignment.title
-                    chromosome = extract_chromosome(subject_id)
-                    logger.debug(
-                        f"  Alignment Hit: {subject_id} (Length: {alignment.length} bp) -> Chromosome: {chromosome}"
-                    )
-
-                    hsp_index = 0
-                    for hsp in alignment.hsps:
-                        hsp_index += 1
-                        total_hsps_processed += 1
-                        percent_identity = (hsp.identities / hsp.align_length) * 100
-
-                        # --- Quality Filtering ---
-                        if (
-                            hsp.expect > evalue_threshold
-                            or hsp.bits < min_hsp_score
-                            or percent_identity < min_identity_perc
-                            or hsp.align_length < min_hsp_length
-                        ):
-                            logger.debug(
-                                f"    Skipping HSP {hsp_index} (Score: {hsp.bits:.1f}, "
-                                f"E-value: {hsp.expect:.2g}, Ident: {percent_identity:.1f}%, "
-                                f"Len: {hsp.align_length}) due to quality filters."
-                            )
-                            continue
-
-                        logger.debug(
-                            f"    Processing HSP {hsp_index} (Score: {hsp.bits:.1f}, "
-                            f"E-value: {hsp.expect:.2g}, Ident: {percent_identity:.1f}%, "
-                            f"Len: {hsp.align_length}, Strand: {hsp.strand})"
-                        )
-
-                        # --- Detailed Variation Extraction ---
-                        query_seq = hsp.query
-                        match_seq = hsp.match
-                        sbjct_seq = hsp.sbjct
-
-                        query_pos = hsp.query_start - 1  # 0-based index
-                        sbjct_pos = hsp.sbjct_start - 1  # 0-based index
-
-                        hsp_variations = 0
-                        for i in range(hsp.align_length):
-                            q_base = query_seq[i]
-                            s_base = sbjct_seq[i]
-                            m_char = match_seq[i]
-
-                            q_pos_current = -1
-                            if q_base != "-":
-                                query_pos += 1
-                                q_pos_current = query_pos
-
-                            s_pos_current = -1
-                            if s_base != "-":
-                                sbjct_pos += 1
-                                s_pos_current = sbjct_pos
-
-                            # Identify variation type
-                            variation_type = None
-                            ref_allele = None
-                            alt_allele = None
-
-                            if q_base != s_base:
-                                if q_base == "-":
-                                    variation_type = "insertion"
-                                    ref_allele = "-"
-                                    alt_allele = s_base
-                                elif s_base == "-":
-                                    variation_type = "deletion"
-                                    ref_allele = q_base
-                                    alt_allele = "-"
-                                else:  # Substitution (Mismatch)
-                                    variation_type = "substitution"
-                                    ref_allele = s_base  # Reference base from subject
-                                    alt_allele = q_base  # Alternative base from query
-
-                            if variation_type:
-                                hsp_variations += 1
-                                variation_details = {
-                                    "query_id": blast_record.query,
-                                    "subject_id": subject_id,
-                                    "chromosome": chromosome,
-                                    "position": (
-                                        s_pos_current + 1
-                                        if s_pos_current != -1
-                                        else None
-                                    ),
-                                    "variation_type": variation_type,
-                                    "reference_allele": ref_allele,
-                                    "query_allele": alt_allele,
-                                    "query_position": (
-                                        q_pos_current + 1
-                                        if q_pos_current != -1
-                                        else None
-                                    ),
-                                    "hsp_score": hsp.bits,
-                                    "hsp_evalue": hsp.expect,
-                                    "hsp_identity": percent_identity,
-                                    "hsp_align_length": hsp.align_length,
-                                    "hsp_query_start": hsp.query_start,
-                                    "hsp_subject_start": hsp.sbjct_start,
-                                    "hsp_strand": hsp.strand,
-                                    "hsp_gaps": hsp.gaps,
-                                }
-                                variations.append(variation_details)
-
-                        if hsp_variations > 0:
-                            logger.debug(
-                                f"      Found {hsp_variations} variations in this HSP."
-                            )
-                        total_variations_found += hsp_variations
-
-        logger.info(f"Processed {query_count} queries and {total_hsps_processed} HSPs.")
-        if variations:
-            logger.info(
-                f"Total variations found meeting quality criteria: {len(variations)}"
-            )
-        else:
-            logger.info("No variations found meeting quality criteria after filtering.")
-
-    except FileNotFoundError:
-        logger.error(f"BLAST result file not found: {result_file}")
-        return []
-    except Exception as e:
-        logger.exception(f"Error parsing BLAST XML file {result_file}: {e}")
+    # Get the latest file_id
+    cursor.execute("SELECT MAX(file_id) FROM hsps")
+    result = cursor.fetchone()
+    if not result or result[0] is None:
+        logger.warning("No file_id found in database.")
+        conn.close()
         return []
 
+    latest_file_id = result[0]
+    logger.info(f"Using data from file_id: {latest_file_id}")
+
+    # Fetch all HSPs for the latest file_id
+    cursor.execute("""
+        SELECT
+            hit_id, hsp_num, bit_score, score, evalue, query_from, query_to,
+            hit_from, hit_to, query_frame, hit_frame, identity, positive, gaps,
+            align_len, qseq, hseq, midline
+        FROM hsps
+        WHERE file_id = ?
+    """, (latest_file_id,))
+    hsps = cursor.fetchall()
+
+    # Get column names for mapping
+    col_names = [desc[0] for desc in cursor.description]
+
+    for hsp_row in hsps:
+        hsp = dict(zip(col_names, hsp_row))
+        # Calculate percent identity
+        try:
+            percent_identity = (hsp["identity"] / hsp["align_len"]) * 100
+        except Exception:
+            percent_identity = 0
+
+        # --- Quality Filtering ---
+        if (
+            hsp["evalue"] > evalue_threshold
+            or hsp["bit_score"] < min_hsp_score
+            or percent_identity < min_identity_perc
+            or hsp["align_len"] < min_hsp_length
+        ):
+            continue
+
+        # --- Detailed Variation Extraction ---
+        query_seq = hsp["qseq"]
+        sbjct_seq = hsp["hseq"]
+        match_seq = hsp["midline"]
+
+        query_pos = hsp["query_from"] - 1  # 0-based index
+        sbjct_pos = hsp["hit_from"] - 1    # 0-based index
+
+        for i in range(hsp["align_len"]):
+            q_base = query_seq[i]
+            s_base = sbjct_seq[i]
+            m_char = match_seq[i]
+
+            q_pos_current = -1
+            if q_base != "-":
+                query_pos += 1
+                q_pos_current = query_pos
+
+            s_pos_current = -1
+            if s_base != "-":
+                sbjct_pos += 1
+                s_pos_current = sbjct_pos
+
+            # Identify variation type
+            variation_type = None
+            ref_allele = None
+            alt_allele = None
+
+            if q_base != s_base:
+                if q_base == "-":
+                    variation_type = "insertion"
+                    ref_allele = "-"
+                    alt_allele = s_base
+                elif s_base == "-":
+                    variation_type = "deletion"
+                    ref_allele = q_base
+                    alt_allele = "-"
+                else:  # Substitution (Mismatch)
+                    variation_type = "substitution"
+                    ref_allele = s_base
+                    alt_allele = q_base
+
+            if variation_type:
+                variation_details = {
+                    "query_id": None,  # Not stored in DB, set to None or fetch if available
+                    "subject_id": hsp["hit_id"],
+                    "chromosome": None,  # Not stored in DB, set to None or fetch if available
+                    "position": (
+                        s_pos_current + 1 if s_pos_current != -1 else None
+                    ),
+                    "variation_type": variation_type,
+                    "reference_allele": ref_allele,
+                    "query_allele": alt_allele,
+                    "query_position": (
+                        q_pos_current + 1 if q_pos_current != -1 else None
+                    ),
+                    "hsp_score": hsp["bit_score"],
+                    "hsp_evalue": hsp["evalue"],
+                    "hsp_identity": percent_identity,
+                    "hsp_align_length": hsp["align_len"],
+                    "hsp_query_start": hsp["query_from"],
+                    "hsp_subject_start": hsp["hit_from"],
+                    "hsp_strand": None,  # Not stored in DB, set to None or fetch if available
+                    "hsp_gaps": hsp["gaps"],
+                }
+                variations.append(variation_details)
+
+    conn.close()
+    logger.info(f"Total variations found meeting quality criteria: {len(variations)}")
     return variations
 
 
@@ -422,7 +392,7 @@ def _run_blast_and_parse_single(
 
     # --- Parse Results ---
     try:
-        variations = parse_blast_results(blast_result_xml)
+        variations = parse_blast_results()
 
         # --- Save Variations to JSON ---
         # Always save a JSON file, even if empty, to indicate processing occurred

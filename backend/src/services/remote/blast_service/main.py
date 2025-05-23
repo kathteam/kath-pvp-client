@@ -1,10 +1,7 @@
 from logging import Logger
 
-from utils.logger import get_logger
-from shared.constants import (
-    PROGRAM_STORAGE_DIR_SHARED_BLAST,
-    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_UPLOADS,
-)
+from utils import get_logger
+from shared import PROGRAM_STORAGE_DIR_SHARED_BLAST, PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_UPLOADS
 
 from .align import process_single_fasta
 from .find import process_variants
@@ -35,7 +32,6 @@ class BlastService:
             if not result_file:
                 raise Exception("Failed to perform blast aligning")
 
-
             disease_file = process_variants(result_file)
 
             if not disease_file:
@@ -46,4 +42,3 @@ class BlastService:
         except Exception as e:
             self.logger.error(f"Error performing thorough analysis: {str(e)}")
             return {"status": "error", "result_file": "Failed to perform thorough analysis"}
-        

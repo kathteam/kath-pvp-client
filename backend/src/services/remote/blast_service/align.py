@@ -14,28 +14,18 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 from Bio.Blast import NCBIXML
 
-from src.shared.constants import (
-    PROGRAM_STORAGE_DIR_SHARED_BLAST,
-    PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA,
-)
+from utils import get_logger
+from shared import PROGRAM_STORAGE_DIR_SHARED_BLAST, PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA
+
 
 PROGRAM_STORAGE_DIR_SHARED_BLAST.mkdir(parents=True, exist_ok=True)
-Path(PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA, "reference").mkdir(
-    parents=True, exist_ok=True
-)
+Path(PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA, "reference").mkdir(parents=True, exist_ok=True)
 Path(PROGRAM_STORAGE_DIR_SHARED_BLAST, "uploads").mkdir(parents=True, exist_ok=True)
 
-import logging
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
-def blast_cmdline(
-    query_fasta_path: str, reference_genome_path: str, output_dir: Path
-) -> str:
+def blast_cmdline(query_fasta_path: str, reference_genome_path: str, output_dir: Path) -> str:
     """
     Run BLAST using direct command-line execution of BLAST+ tools.
 
@@ -58,9 +48,7 @@ def blast_cmdline(
     if not query_path.is_file():
         raise FileNotFoundError(f"Query FASTA file not found: {query_fasta_path}")
     if not ref_path.is_file():
-        raise FileNotFoundError(
-            f"Reference genome file not found: {reference_genome_path}"
-        )
+        raise FileNotFoundError(f"Reference genome file not found: {reference_genome_path}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -69,9 +57,7 @@ def blast_cmdline(
     output_file = output_dir / f"{query_filename}_vs_{reference_filename}_blast.xml"
     db_path = ref_path.parent / reference_filename
 
-    logger.info(
-        f"Running BLAST+ alignment for {query_filename} against {reference_filename}..."
-    )
+    logger.info(f"Running BLAST+ alignment for {query_filename} against {reference_filename}...")
     db_files = list(ref_path.parent.glob(f"{reference_filename}.n*"))
     if not db_files:
         logger.info(f"Creating BLAST database for {reference_filename}...")
@@ -100,13 +86,9 @@ def blast_cmdline(
             logger.debug(f"makeblastdb stderr:\n{process.stderr}")
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to create BLAST database: {e.stderr}")
-            raise RuntimeError(
-                f"makeblastdb failed with exit code {e.returncode}"
-            ) from e
+            raise RuntimeError(f"makeblastdb failed with exit code {e.returncode}") from e
         except FileNotFoundError:
-            logger.error(
-                "`makeblastdb` command not found. Is BLAST+ installed and in PATH?"
-            )
+            logger.error("`makeblastdb` command not found. Is BLAST+ installed and in PATH?")
             raise
     else:
         logger.info(f"Using existing BLAST database at {db_path}")
@@ -328,17 +310,13 @@ def parse_blast_results(
                                     "subject_id": subject_id,
                                     "chromosome": chromosome,
                                     "position": (
-                                        s_pos_current + 1
-                                        if s_pos_current != -1
-                                        else None
+                                        s_pos_current + 1 if s_pos_current != -1 else None
                                     ),
                                     "variation_type": variation_type,
                                     "reference_allele": ref_allele,
                                     "query_allele": alt_allele,
                                     "query_position": (
-                                        q_pos_current + 1
-                                        if q_pos_current != -1
-                                        else None
+                                        q_pos_current + 1 if q_pos_current != -1 else None
                                     ),
                                     "hsp_score": hsp.bits,
                                     "hsp_evalue": hsp.expect,
@@ -352,16 +330,12 @@ def parse_blast_results(
                                 variations.append(variation_details)
 
                         if hsp_variations > 0:
-                            logger.debug(
-                                f"      Found {hsp_variations} variations in this HSP."
-                            )
+                            logger.debug(f"      Found {hsp_variations} variations in this HSP.")
                         total_variations_found += hsp_variations
 
         logger.info(f"Processed {query_count} queries and {total_hsps_processed} HSPs.")
         if variations:
-            logger.info(
-                f"Total variations found meeting quality criteria: {len(variations)}"
-            )
+            logger.info(f"Total variations found meeting quality criteria: {len(variations)}")
         else:
             logger.info("No variations found meeting quality criteria after filtering.")
 
@@ -377,6 +351,7 @@ def parse_blast_results(
 
 # ... (keep existing imports and constants) ...
 # ... (keep blast_cmdline, extract_chromosome, parse_blast_results functions) ...
+
 
 def _run_blast_and_parse_single(
     actual_query_path: Path,
@@ -406,19 +381,17 @@ def _run_blast_and_parse_single(
         blast_result_xml = blast_cmdline(
             query_fasta_path=str(actual_query_path),
             reference_genome_path=str(reference_fasta),
-            output_dir=blast_output_dir, # blast_cmdline already creates unique XML name
+            output_dir=blast_output_dir,  # blast_cmdline already creates unique XML name
         )
 
     except (RuntimeError, FileNotFoundError) as e:
-        logger.error(
-            f"BLAST command execution failed for {actual_query_path.name}: {e}"
-        )
-        return None # Indicate failure for this file
+        logger.error(f"BLAST command execution failed for {actual_query_path.name}: {e}")
+        return None  # Indicate failure for this file
     except Exception as e:
         logger.exception(
             f"An unexpected error occurred during BLAST execution for {actual_query_path.name}: {e}"
         )
-        return None # Indicate failure for this file
+        return None  # Indicate failure for this file
 
     # --- Parse Results ---
     try:
@@ -430,9 +403,7 @@ def _run_blast_and_parse_single(
             json.dump(variations if variations else [], f, indent=2)
 
         if variations:
-            logger.info(
-                f"Saved {len(variations)} identified variations to: {json_output_path}"
-            )
+            logger.info(f"Saved {len(variations)} identified variations to: {json_output_path}")
         else:
             logger.warning(
                 f"No variations met the filtering criteria for {actual_query_path.name}."
@@ -440,13 +411,13 @@ def _run_blast_and_parse_single(
             print(
                 f"Analysis complete for {actual_query_path.name}. No significant variations found. Results file: {json_output_path}"
             )
-        return str(json_output_path) # Return path whether variations were found or not
+        return str(json_output_path)  # Return path whether variations were found or not
 
     except Exception as e:
         logger.exception(
             f"An unexpected error occurred during BLAST parsing or saving results for {actual_query_path.name}: {e}"
         )
-        return None # Indicate failure for this file
+        return None  # Indicate failure for this file
 
 
 def process_single_fasta(
@@ -490,8 +461,14 @@ def process_single_fasta(
 
     # --- Validate Query File ---
     query_path_obj = Path(query_fasta_path)
-    if not query_path_obj.is_file() or query_path_obj.suffix.lower() not in [".fasta", ".fa", ".fna"]:
-        logger.error(f"Provided query file is not a valid FASTA file or does not exist: {query_fasta_path}")
+    if not query_path_obj.is_file() or query_path_obj.suffix.lower() not in [
+        ".fasta",
+        ".fa",
+        ".fna",
+    ]:
+        logger.error(
+            f"Provided query file is not a valid FASTA file or does not exist: {query_fasta_path}"
+        )
         return None
 
     # Ensure output directory exists
@@ -564,7 +541,9 @@ def process_fasta_directory(
         + list(uploads_dir.glob("*.fna"))
     )
     if not query_files_to_process:
-        logger.error(f"No FASTA files (.fa, .fasta, .fna) found in uploads directory: {uploads_dir}")
+        logger.error(
+            f"No FASTA files (.fa, .fasta, .fna) found in uploads directory: {uploads_dir}"
+        )
         return []
     logger.info(f"Found {len(query_files_to_process)} query files in uploads directory.")
 
@@ -582,14 +561,17 @@ def process_fasta_directory(
             processed_json_files.append(result_path)
         # If result_path is None, the error was already logged in the helper function
 
-    logger.info(f"Directory workflow finished. Successfully processed {len(processed_json_files)} out of {len(query_files_to_process)} files.")
+    logger.info(
+        f"Directory workflow finished. Successfully processed {len(processed_json_files)} out of {len(query_files_to_process)} files."
+    )
     return processed_json_files
-
 
 
 # Example usage:
 if __name__ == "__main__":
-    dummy_query_path = "C:/Users/Kajus/.kath/shared/found_diseases/unknown_transcript1_1732746177_leukema.fasta"
+    dummy_query_path = (
+        "C:/Users/Kajus/.kath/shared/found_diseases/unknown_transcript1_1732746177_leukema.fasta"
+    )
     # # if not dummy_query_path.exists():
     # #     dummy_query_path.parent.mkdir(parents=True, exist_ok=True)
     # #     with open(dummy_query_path, "w") as f:
@@ -607,23 +589,23 @@ if __name__ == "__main__":
     # else:
     #      print(f"Skipping single file test, query file not found: {dummy_query_path}")
 
-
     # --- Example for processing a directory ---
     print("\n--- Running analysis using file(s) from uploads directory ---")
     # Ensure upload dir exists and contains FASTA files
     # Ensure reference genome exists in ./fasta_data/reference/
 
-    result_json_list = process_fasta_directory() # Uses default uploads_dir
+    result_json_list = process_fasta_directory()  # Uses default uploads_dir
     if result_json_list:
         print(f"Directory processing complete. Result JSON files generated:")
         print(f"Directory processing complete. Result JSON files generated:")
         for json_path in result_json_list:
             print(f"- {json_path}")
             from find import process_variants
-            process_variants(json_path) # Process each JSON file for variants
+
+            process_variants(json_path)  # Process each JSON file for variants
 
     else:
-            "Directory analysis failed, found no query files, or encountered errors during processing."
+        "Directory analysis failed, found no query files, or encountered errors during processing."
 
 # Remove the old perform_blast_alignment_and_find_variations function
 # del perform_blast_alignment_and_find_variations

@@ -2,7 +2,7 @@ import os
 from logging import Logger
 from webview import Window
 
-from utils.logger import get_logger
+from .logger import get_logger
 
 logger: Logger = get_logger(__name__)
 

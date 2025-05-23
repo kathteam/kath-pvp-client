@@ -2,9 +2,9 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 from Bio import Entrez
-from src.shared.constants import *
 
-from utils.logger import get_logger
+from shared.constants import *
+from utils import get_logger
 
 logger = get_logger(__name__)
 

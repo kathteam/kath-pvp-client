@@ -70,14 +70,14 @@ const theme = createTheme({
     light: {
       palette: {
         primary: {
-          main: '#1E1E24',
+          main: '#4C7380',
         },
         secondary: {
           main: '#5D8D9D',
         },
         background: {
-          default: '#FFF8F0',
-          paper: '#FFF9FB',
+          default: '#f7f8fa',
+          paper: '#ffffff',
         },
         divider: '#ebecf0',
         text: {
@@ -90,14 +90,14 @@ const theme = createTheme({
       palette: {
         mode: 'dark',
         primary: {
-          main: '#FCE4D8',
+          main: '#4C7380',
         },
         secondary: {
           main: '#5D8D9D',
         },
         background: {
-          default: '#252627',
-          paper: '#191716',
+          default: '#1F1F1F',
+          paper: '#181818',
         },
         divider: '#2B2B2B',
         text: {

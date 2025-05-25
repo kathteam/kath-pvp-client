@@ -29,6 +29,7 @@ export default function FileManager() {
   }[]>([]);
   const [currentPath, setCurrentPath] = useState<string>('');
   const [inputPath, setInputPath] = useState<string>('');
+  const [kathRootDirectory, setKathRootDirectory] = useState<string>('');
   const [searchQuery] = useState<string>(''); // State for search query
   const [typeFilter] = useState<string>(''); // Filter for file type
   const [sizeFilter] = useState<string>(''); // Filter for file size
@@ -62,10 +63,12 @@ export default function FileManager() {
         const kathDirectory = await window.pywebview.api.file_controller.get_kath_directory();
         setCurrentPath(kathDirectory);
         setInputPath(kathDirectory);
+        setKathRootDirectory(kathDirectory);
       } catch (error) {
         console.error('Error getting kath directory:', error);
         setCurrentPath('/');
         setInputPath('/');
+        setKathRootDirectory('/');
       }
     };
     
@@ -89,8 +92,16 @@ export default function FileManager() {
 
   const handleNavigateUp = () => {
     const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
-    setCurrentPath(parentPath);
-    setInputPath(parentPath);
+    
+    if (parentPath.length >= kathRootDirectory.length && 
+        parentPath.startsWith(kathRootDirectory)) {
+      setCurrentPath(parentPath);
+      setInputPath(parentPath);
+    } else {
+      // If trying to navigate above Kath directory reset to Kath directory
+      setCurrentPath(kathRootDirectory);
+      setInputPath(kathRootDirectory);
+    }
   };
 
   const handleFolderClick = (folderName: string) => {
@@ -105,7 +116,13 @@ export default function FileManager() {
 
   const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      setCurrentPath(inputPath);
+      if (inputPath.startsWith(kathRootDirectory)) {
+        setCurrentPath(inputPath);
+      } else {
+        // Reset to Kath directory if trying to navigate elsewhere
+        setCurrentPath(kathRootDirectory);
+        setInputPath(kathRootDirectory);
+      }
     }
   };
 

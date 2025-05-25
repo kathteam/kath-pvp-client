@@ -27,8 +27,9 @@ export default function FileManager() {
     size_kb: number | null;
     item_count: number | null;
   }[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>('/');
-  const [inputPath, setInputPath] = useState<string>(currentPath);
+  const [currentPath, setCurrentPath] = useState<string>('');
+  const [inputPath, setInputPath] = useState<string>('');
+  const [kathRootDirectory, setKathRootDirectory] = useState<string>('');
   const [searchQuery] = useState<string>(''); // State for search query
   const [typeFilter] = useState<string>(''); // Filter for file type
   const [sizeFilter] = useState<string>(''); // Filter for file size
@@ -57,10 +58,30 @@ export default function FileManager() {
   };
 
   useEffect(() => {
+    const initializeKathDirectory = async () => {
+      try {
+        const kathDirectory = await window.pywebview.api.file_controller.get_kath_directory();
+        setCurrentPath(kathDirectory);
+        setInputPath(kathDirectory);
+        setKathRootDirectory(kathDirectory);
+      } catch (error) {
+        console.error('Error getting kath directory:', error);
+        setCurrentPath('/');
+        setInputPath('/');
+        setKathRootDirectory('/');
+      }
+    };
+    
+    initializeKathDirectory();
+  }, []);
+
+  useEffect(() => {
     const fetchFiles = async (path: string) => {
       try {
-        const files = await window.pywebview.api.file_controller.list_files(path);
-        setFileList(files);
+        if (path) {
+          const files = await window.pywebview.api.file_controller.list_files(path);
+          setFileList(files);
+        }
       } catch (error) {
         console.error('Error fetching files:', error);
       }
@@ -71,8 +92,16 @@ export default function FileManager() {
 
   const handleNavigateUp = () => {
     const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
-    setCurrentPath(parentPath);
-    setInputPath(parentPath);
+    
+    if (parentPath.length >= kathRootDirectory.length && 
+        parentPath.startsWith(kathRootDirectory)) {
+      setCurrentPath(parentPath);
+      setInputPath(parentPath);
+    } else {
+      // If trying to navigate above Kath directory reset to Kath directory
+      setCurrentPath(kathRootDirectory);
+      setInputPath(kathRootDirectory);
+    }
   };
 
   const handleFolderClick = (folderName: string) => {
@@ -87,7 +116,13 @@ export default function FileManager() {
 
   const handlePathSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
-      setCurrentPath(inputPath);
+      if (inputPath.startsWith(kathRootDirectory)) {
+        setCurrentPath(inputPath);
+      } else {
+        // Reset to Kath directory if trying to navigate elsewhere
+        setCurrentPath(kathRootDirectory);
+        setInputPath(kathRootDirectory);
+      }
     }
   };
 
@@ -243,47 +278,47 @@ export default function FileManager() {
     }
   };
 
-    // Genetical disease data management
-    const [showModal, setShowModal] = useState<boolean>(false);
-    const [geneticDiseaseData, setGeneticDiseaseData] = useState<{
+  // Genetical disease data management
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [geneticDiseaseData, setGeneticDiseaseData] = useState<{
       clinicalSignificance: string;
       disease: string;
     }[]>([]);
   
-      const handleDisplayGeneticDisease = async () => {
-      if (!analysisResult?.result_file) {
-        alert('Please extract disease information first.');
-        return;
-      }
+  const handleDisplayGeneticDisease = async () => {
+    if (!analysisResult?.result_file) {
+      alert('Please extract disease information first.');
+      return;
+    }
   
-      try {
-        const diseaseData =
+    try {
+      const diseaseData =
           await window.pywebview.api.disease_service.get_disease_data(
             analysisResult.result_file
           );
   
-        if (!diseaseData) {
-          // TODO UNCOMMENT
-          // alert('No disease data found.');
-          setGeneticDiseaseData([
-            {
-              clinicalSignificance: 'Pathogenic',
-              disease: 'VERY EXAMPLE DISEASE',
-            },
-          ]);
-        } else {
-          setGeneticDiseaseData(diseaseData.map((item: any) => ({
-            clinicalSignificance: item.clinical_significance,
-            disease: item.disease_name,
-          })));
-        }
-
-        setShowModal(true);
-      } catch (error) {
-        console.error('Failed to fetch disease data:', error);
-        alert('Failed to fetch disease data.');
+      if (!diseaseData) {
+        // TODO UNCOMMENT
+        // alert('No disease data found.');
+        setGeneticDiseaseData([
+          {
+            clinicalSignificance: 'Pathogenic',
+            disease: 'VERY EXAMPLE DISEASE',
+          },
+        ]);
+      } else {
+        setGeneticDiseaseData(diseaseData.map((item: any) => ({
+          clinicalSignificance: item.clinical_significance,
+          disease: item.disease_name,
+        })));
       }
-    };
+
+      setShowModal(true);
+    } catch (error) {
+      console.error('Failed to fetch disease data:', error);
+      alert('Failed to fetch disease data.');
+    }
+  };
 
   return (
     <Container
@@ -375,25 +410,6 @@ export default function FileManager() {
           <Button
             variant="contained"
             color="primary"
-            onClick={async () => {
-              try {
-                const kathDirectory = await window.pywebview.api.file_controller.get_kath_directory();
-                setCurrentPath(kathDirectory);
-                setInputPath(kathDirectory);
-                const files = await window.pywebview.api.file_controller.list_files(kathDirectory);
-                setFileList(files);
-              } catch (error) {
-                console.error('Error changing directory to kath:', error);
-              }
-            }}
-          >
-            Change directory to kath
-          </Button>
-        </Box>
-        <Box sx={{ mt: 3 }}>
-          <Button
-            variant="contained"
-            color="primary"
             onClick={() => setOpenDbDialog(true)}
           >
             Create personalized gene database
@@ -433,19 +449,19 @@ export default function FileManager() {
               <Typography variant="body1">No result.</Typography>
             )}
             {validity && (
-                          <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleDisplayGeneticDisease}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleDisplayGeneticDisease}>
                             Display Genetic Disease Information
-                          </Button>)}
+              </Button>)}
           </DialogContent>
         </Dialog>
       </Paper>
       {showModal && (
-      <DiseaseModal
-        diseases={geneticDiseaseData}
-        onClose={() => setShowModal(false)}
+        <DiseaseModal
+          diseases={geneticDiseaseData}
+          onClose={() => setShowModal(false)}
         />)}
     </Container>
   );

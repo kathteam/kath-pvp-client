@@ -278,47 +278,47 @@ export default function FileManager() {
     }
   };
 
-    // Genetical disease data management
-    const [showModal, setShowModal] = useState<boolean>(false);
-    const [geneticDiseaseData, setGeneticDiseaseData] = useState<{
+  // Genetical disease data management
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const [geneticDiseaseData, setGeneticDiseaseData] = useState<{
       clinicalSignificance: string;
       disease: string;
     }[]>([]);
   
-      const handleDisplayGeneticDisease = async () => {
-      if (!analysisResult?.result_file) {
-        alert('Please extract disease information first.');
-        return;
-      }
+  const handleDisplayGeneticDisease = async () => {
+    if (!analysisResult?.result_file) {
+      alert('Please extract disease information first.');
+      return;
+    }
   
-      try {
-        const diseaseData =
+    try {
+      const diseaseData =
           await window.pywebview.api.disease_service.get_disease_data(
             analysisResult.result_file
           );
   
-        if (!diseaseData) {
-          // TODO UNCOMMENT
-          // alert('No disease data found.');
-          setGeneticDiseaseData([
-            {
-              clinicalSignificance: 'Pathogenic',
-              disease: 'VERY EXAMPLE DISEASE',
-            },
-          ]);
-        } else {
-          setGeneticDiseaseData(diseaseData.map((item: any) => ({
-            clinicalSignificance: item.clinical_significance,
-            disease: item.disease_name,
-          })));
-        }
-
-        setShowModal(true);
-      } catch (error) {
-        console.error('Failed to fetch disease data:', error);
-        alert('Failed to fetch disease data.');
+      if (!diseaseData) {
+        // TODO UNCOMMENT
+        // alert('No disease data found.');
+        setGeneticDiseaseData([
+          {
+            clinicalSignificance: 'Pathogenic',
+            disease: 'VERY EXAMPLE DISEASE',
+          },
+        ]);
+      } else {
+        setGeneticDiseaseData(diseaseData.map((item: any) => ({
+          clinicalSignificance: item.clinical_significance,
+          disease: item.disease_name,
+        })));
       }
-    };
+
+      setShowModal(true);
+    } catch (error) {
+      console.error('Failed to fetch disease data:', error);
+      alert('Failed to fetch disease data.');
+    }
+  };
 
   return (
     <Container
@@ -449,19 +449,19 @@ export default function FileManager() {
               <Typography variant="body1">No result.</Typography>
             )}
             {validity && (
-                          <Button
-                          variant="contained"
-                          color="primary"
-                          onClick={handleDisplayGeneticDisease}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleDisplayGeneticDisease}>
                             Display Genetic Disease Information
-                          </Button>)}
+              </Button>)}
           </DialogContent>
         </Dialog>
       </Paper>
       {showModal && (
-      <DiseaseModal
-        diseases={geneticDiseaseData}
-        onClose={() => setShowModal(false)}
+        <DiseaseModal
+          diseases={geneticDiseaseData}
+          onClose={() => setShowModal(false)}
         />)}
     </Container>
   );

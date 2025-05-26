@@ -18,6 +18,15 @@ import { getFileIcon } from '@/utils/FileManagerUtils';
 import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
 import { Dialog, DialogTitle, DialogContent, CircularProgress } from '@mui/material';
 import { DiseaseModal } from '@/components/modals';
+import HowTo from '@/components/buttons/HowTo';
+
+const howTos = [
+  {
+    media: 'ExtractButton.gif',
+    title: 'Extract genetic diseases from found variations',
+    description: 'Select the .fasta file with three dots (as shown in the video), press \'Analyze\', you will receive a list of genetic diseases that are associated with the variations found. WARNING: File may not have any variations or diseases.'
+  }
+];
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -333,6 +342,11 @@ export default function FileManager() {
         <Typography variant="h4" component="h1" gutterBottom>
           File Manager
         </Typography>
+        <Box sx={{ position: 'relative' }}>
+          <Box sx={{ position: 'absolute', right: 0, top: -90, zIndex: 1 }}>
+            <HowTo media={howTos[0].media} title={howTos[0].title} description={howTos[0].description} />
+          </Box>
+        </Box>
 
         {/* Path Bar */}
         <Box sx={{ mt: 2, mb: 3, display: 'flex', alignItems: 'center' }}>

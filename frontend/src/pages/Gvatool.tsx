@@ -80,23 +80,12 @@ export default function GVATool(): JSX.Element {
 
   // Show main content if setup is completed
 
-  const howTos = [
-    {
-      media: 'GeneDownloading.gif',
-      title: 'Human reference genome download',
-      description: 'You can download the reference genome from the button below. The .fasta file will be present in the /.kath/shared/data/fasta_files/reference folder.'
-    },
-    {
-      media: 'DownloadFasta.gif',
-      title: 'Download disease fasta files',
-      description: 'Download specific disease fasta files for testing or analysis purposes. You can select how many references from found variations you want to download.'
-    },
-    {
-      media: 'ExtractString.gif',
-      title: 'Extract genetic diseases from found variations',
-      description: 'Select the .fasta file and copy it as a string (You are free to use our File Manager as a substitute for this step), with the analyze button you will receive a list of genetic diseases that are associated with the variations found. WARNING: File may not have any variations or diseases.'
-    }
-  ];
+  const howTo =
+  {
+    media: 'GeneDownloading.gif',
+    title: 'Human reference genome download',
+    description: 'You can download the reference genome from the button below. The .fasta file will be present in the /.kath/shared/data/fasta_files/reference folder.'
+  };
 
   return (
     <Box
@@ -115,8 +104,12 @@ export default function GVATool(): JSX.Element {
                 borderRadius: 4,
                 boxShadow: 6,
                 textAlign: 'center',
+                position: 'relative',
               }}
             >
+              <Box sx={{ position: 'absolute', top: 5, right: 5 }}>
+                <HowTo media={howTo.media} title={howTo.title} description={howTo.description} />
+              </Box>
               <Typography
                 variant="h3"
                 component="h1"
@@ -137,9 +130,6 @@ export default function GVATool(): JSX.Element {
 								latest reference genome and start your analysis.
               </Typography>
               <Box sx={{ position: 'relative' }}>
-                <Box sx={{ position: 'absolute', right: -40, top: -260, zIndex: 1 }}>
-                  <HowTo media={howTos[0].media} title={howTos[0].title} description={howTos[0].description} />
-                </Box>
                 <Stack
                   direction="row"
                   spacing={2}
@@ -211,22 +201,8 @@ export default function GVATool(): JSX.Element {
               </Snackbar>
             </Paper>
             <Box sx={{ mt: 4 }}>
-              <Box sx={{ position: 'relative' }}>
-                <Box
-                  sx={{ position: 'absolute', right: 0, top: 10, zIndex: 1 }}
-                >
-                  <HowTo media={howTos[1].media} title={howTos[1].title} description={howTos[1].description} />
-                </Box>
-                <DiseaseDownloadCard />
-              </Box>
-              <Box sx={{ position: 'relative' }}>
-                <Box
-                  sx={{ position: 'absolute', right: 0, top: -20, zIndex: 1 }}
-                >
-                  <HowTo media={howTos[2].media} title={howTos[2].title} description={howTos[2].description} />
-                </Box>
-                <DiseaseOptionCard />
-              </Box>
+              <DiseaseDownloadCard />
+              <DiseaseOptionCard />
             </Box>
           </Container>
         </Grid2>

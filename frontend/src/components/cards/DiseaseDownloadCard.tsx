@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import HowTo from '../buttons/HowTo';
 
 export default function DiseaseDownloadCard(): JSX.Element {
   const [queryParams, setQueryParams] = useState<{
@@ -68,18 +69,29 @@ export default function DiseaseDownloadCard(): JSX.Element {
     return 'default';
   };
 
+  const howTo = 
+  {
+    media: 'DownloadFasta.gif',
+    title: 'Download disease fasta files',
+    description: 'Download specific disease fasta files for testing or analysis purposes. You can select how many references from found variations you want to download.'
+  };
+
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Fade in>
         <Card
-          elevation={6}
+          elevation={4}
           sx={{
-            mb: 4,
+            p: 5,
             borderRadius: 4,
-            boxShadow: 8,
+            boxShadow: 6,
+            position: 'relative'
           }}
         >
           <CardContent>
+            <Box sx={{ position: 'absolute', top: 5, right: 5 }}>
+              <HowTo media={howTo.media} title={howTo.title} description={howTo.description} />
+            </Box>
             <Typography
               variant="h4"
               component="h1"

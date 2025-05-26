@@ -20,13 +20,12 @@ import { Dialog, DialogTitle, DialogContent, CircularProgress } from '@mui/mater
 import { DiseaseModal } from '@/components/modals';
 import HowTo from '@/components/buttons/HowTo';
 
-const howTos = [
-  {
-    media: 'ExtractButton.gif',
-    title: 'Extract genetic diseases from found variations',
-    description: 'Select the .fasta file with three dots (as shown in the video), press \'Analyze\', you will receive a list of genetic diseases that are associated with the variations found. WARNING: File may not have any variations or diseases.'
-  }
-];
+const howTo = 
+{
+  media: 'ExtractButton.gif',
+  title: 'Extract genetic diseases from found variations',
+  description: 'Select the .fasta file with three dots (as shown in the video), press \'Analyze\', you will receive a list of genetic diseases that are associated with the variations found. WARNING: File may not have any variations or diseases.'
+};
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -338,15 +337,22 @@ export default function FileManager() {
         py: 4
       }}
     >
-      <Paper elevation={0} sx={{ p: 3, width: '100%' }}>
+      <Paper 
+        elevation={4}
+        sx={{
+          p: 5,
+          width: '100%',
+          borderRadius: 4,
+          boxShadow: 6,
+          textAlign: 'center',
+          position: 'relative',
+        }}>
+        <Box sx={{ position: 'absolute', top: 5, right: 5 }}>
+          <HowTo media={howTo.media} title={howTo.title} description={howTo.description} />
+        </Box>
         <Typography variant="h4" component="h1" gutterBottom>
           File Manager
         </Typography>
-        <Box sx={{ position: 'relative' }}>
-          <Box sx={{ position: 'absolute', right: 0, top: -90, zIndex: 1 }}>
-            <HowTo media={howTos[0].media} title={howTos[0].title} description={howTos[0].description} />
-          </Box>
-        </Box>
 
         {/* Path Bar */}
         <Box sx={{ mt: 2, mb: 3, display: 'flex', alignItems: 'center' }}>

@@ -1,5 +1,9 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Inventory as InventoryIcon,
+  KeyboardReturn as KeyboardReturnIcon,
+} from '@mui/icons-material';
 import {
   Typography,
   Box,
@@ -9,15 +13,18 @@ import {
   TextField,
   Menu,
   MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  CircularProgress
 } from '@mui/material';
-
-import { KeyboardReturn } from '@mui/icons-material';
-import DragAndDrop from '../components/cards/DragAndDrop';
-import FileList from '../components/cards/FileListCard';
-import { getFileIcon } from '@/utils/FileManagerUtils';
-import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '../components/Dialogs';
-import { Dialog, DialogTitle, DialogContent, CircularProgress } from '@mui/material';
+import { getFileIcon } from '@/utils';
+import { RenameDialog, DeleteDialog, CreateDatabaseDialog } from '@/components/Dialogs';
+import DragAndDrop from '@/components/cards/DragAndDrop';
+import FileList from '@/components/cards/FileListCard';
 import { DiseaseModal } from '@/components/modals';
+import { RouteHeader } from '@/components';
+import { handleScroll } from '@/utils';
 
 export default function FileManager() {
   const navigate = useNavigate();
@@ -320,149 +327,162 @@ export default function FileManager() {
     }
   };
 
+  // Reset scroll position on initial load
+  useEffect(() => {
+    handleScroll('File Manager');
+  }, []);
+
   return (
-    <Container
-      maxWidth="md"
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        py: 4
-      }}
-    >
-      <Paper elevation={0} sx={{ p: 3, width: '100%' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
+    <Fragment>
+      <RouteHeader
+        icon={InventoryIcon}
+        title="File Manager"
+        description="Organize and manage genetic files effortlessly. Upload, rename, and keep your data in order."
+      />
+
+      <Container
+        maxWidth="md"
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          py: 4
+        }}
+      >
+        <Paper elevation={0} sx={{ p: 3, width: '100%' }}>
+          <Typography variant="h4" component="h1" gutterBottom>
           File Manager
-        </Typography>
+          </Typography>
 
-        {/* Path Bar */}
-        <Box sx={{ mt: 2, mb: 3, display: 'flex', alignItems: 'center' }}>
-          <TextField
-            fullWidth
-            value={inputPath}
-            onChange={handlePathChange}
-            onKeyDown={handlePathSubmit}
-            variant="outlined"
-            size="small"
-            sx={{ flexGrow: 1 }}
-          />
-          <KeyboardReturn
-            sx={{
-              ml: 1,
-              cursor: 'pointer',
-              color: 'primary.main',
+          {/* Path Bar */}
+          <Box sx={{ mt: 2, mb: 3, display: 'flex', alignItems: 'center' }}>
+            <TextField
+              fullWidth
+              value={inputPath}
+              onChange={handlePathChange}
+              onKeyDown={handlePathSubmit}
+              variant="outlined"
+              size="small"
+              sx={{ flexGrow: 1 }}
+            />
+            <KeyboardReturnIcon
+              sx={{
+                ml: 1,
+                cursor: 'pointer',
+                color: 'primary.main',
+              }}
+              onClick={() => setCurrentPath(inputPath)}
+            />
+          </Box>
+
+          {/* Drag-and-Drop Area */}
+          <DragAndDrop onDrop={onDrop} />
+
+          {/* File List Component */}
+          <Box sx={{ mt: 3 }}>
+            <FileList
+              files={sortedFiles}
+              currentPath={currentPath}
+              sortConfig={sortConfig}
+              onSort={handleSort}
+              onNavigateUp={handleNavigateUp}
+              onFolderClick={handleFolderClick}
+              onOptionsClick={handleOptionsClick}
+              getFileIcon={getFileIcon}
+            />
+          </Box>
+
+          <Menu
+            id="options-menu"
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            MenuListProps={{
+              'aria-labelledby': 'options-button',
             }}
-            onClick={() => setCurrentPath(inputPath)}
-          />
-        </Box>
-
-        {/* Drag-and-Drop Area */}
-        <DragAndDrop onDrop={onDrop} />
-
-        {/* File List Component */}
-        <Box sx={{ mt: 3 }}>
-          <FileList
-            files={sortedFiles}
-            currentPath={currentPath}
-            sortConfig={sortConfig}
-            onSort={handleSort}
-            onNavigateUp={handleNavigateUp}
-            onFolderClick={handleFolderClick}
-            onOptionsClick={handleOptionsClick}
-            getFileIcon={getFileIcon}
-          />
-        </Box>
-
-        <Menu
-          id="options-menu"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          MenuListProps={{
-            'aria-labelledby': 'options-button',
-          }}
-        >
-          {selectedFileForMenu && (
-            <>
-              {selectedFileForMenu?.endsWith('.fasta') && (
-                <MenuItem onClick={() => {
-                  handleAnalyzeFasta(selectedFileForMenu);
-                  handleClose();
-                }}>
-                  Analyze
-                </MenuItem>
-              )}
-              <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
-              <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
-            </>
-          )}
-        </Menu>
-
-        <Box sx={{ mt: 3 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate('/dashboard')}
           >
-            Back to Dashboard
-          </Button>
-        </Box>
-        <Box sx={{ mt: 3 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => setOpenDbDialog(true)}
-          >
-            Create personalized gene database
-          </Button>
-        </Box>
-
-        <RenameDialog
-          open={openRenameDialog}
-          onClose={() => setOpenRenameDialog(false)}
-          onConfirm={handleRenameConfirm}
-        />
-        <DeleteDialog
-          open={openDeleteDialog}
-          onClose={() => setOpenDeleteDialog(false)}
-          onConfirm={handleDeleteConfirm}
-        />
-        <CreateDatabaseDialog
-          open={openDbDialog}
-          onClose={() => setOpenDbDialog(false)}
-          dbFilename={dbFilename}
-          setDbFilename={setDbFilename}
-          onConfirm={handleCreateDatabase}
-        />
-        <Dialog open={analysisDialogOpen} onClose={() => setAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>FASTA Analysis Result</DialogTitle>
-          <DialogContent dividers>
-            {isAnalyzing ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                <CircularProgress />
-              </Box>
-            ) : analysisResult ? (
+            {selectedFileForMenu && (
               <>
-                <Typography variant="h6">Status: {analysisResult.status}</Typography>
-                <Typography variant="body1">Result File: {analysisResult.result_file}</Typography>
+                {selectedFileForMenu?.endsWith('.fasta') && (
+                  <MenuItem onClick={() => {
+                    handleAnalyzeFasta(selectedFileForMenu);
+                    handleClose();
+                  }}>
+                  Analyze
+                  </MenuItem>
+                )}
+                <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
+                <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
               </>
-            ) : (
-              <Typography variant="body1">No result.</Typography>
             )}
-            {validity && (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleDisplayGeneticDisease}>
+          </Menu>
+
+          <Box sx={{ mt: 3 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate('/dashboard')}
+            >
+            Back to Dashboard
+            </Button>
+          </Box>
+          <Box sx={{ mt: 3 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => setOpenDbDialog(true)}
+            >
+            Create personalized gene database
+            </Button>
+          </Box>
+
+          <RenameDialog
+            open={openRenameDialog}
+            onClose={() => setOpenRenameDialog(false)}
+            onConfirm={handleRenameConfirm}
+          />
+          <DeleteDialog
+            open={openDeleteDialog}
+            onClose={() => setOpenDeleteDialog(false)}
+            onConfirm={handleDeleteConfirm}
+          />
+          <CreateDatabaseDialog
+            open={openDbDialog}
+            onClose={() => setOpenDbDialog(false)}
+            dbFilename={dbFilename}
+            setDbFilename={setDbFilename}
+            onConfirm={handleCreateDatabase}
+          />
+          <Dialog open={analysisDialogOpen} onClose={() => setAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
+            <DialogTitle>FASTA Analysis Result</DialogTitle>
+            <DialogContent dividers>
+              {isAnalyzing ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+                  <CircularProgress />
+                </Box>
+              ) : analysisResult ? (
+                <>
+                  <Typography variant="h6">Status: {analysisResult.status}</Typography>
+                  <Typography variant="body1">Result File: {analysisResult.result_file}</Typography>
+                </>
+              ) : (
+                <Typography variant="body1">No result.</Typography>
+              )}
+              {validity && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleDisplayGeneticDisease}>
                             Display Genetic Disease Information
-              </Button>)}
-          </DialogContent>
-        </Dialog>
-      </Paper>
-      {showModal && (
-        <DiseaseModal
-          diseases={geneticDiseaseData}
-          onClose={() => setShowModal(false)}
-        />)}
-    </Container>
+                </Button>)}
+            </DialogContent>
+          </Dialog>
+        </Paper>
+        {showModal && (
+          <DiseaseModal
+            diseases={geneticDiseaseData}
+            onClose={() => setShowModal(false)}
+          />)}
+      </Container>
+    </Fragment>
   );
 }

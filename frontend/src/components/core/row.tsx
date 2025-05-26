@@ -1,6 +1,6 @@
-import { Box, styled } from '@mui/material';
+import { Box as MuiBox, styled } from '@mui/material';
 
-const Row = styled(Box)(({ theme }) => ({
+const Row = styled(MuiBox)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'center',

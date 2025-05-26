@@ -1,5 +1,12 @@
-import { JSX, useState } from 'react';
+import { Fragment, JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Plagiarism as PlagiarismIcon,
+  CloudDownload as CloudDownloadIcon,
+  CheckCircle as CheckCircleIcon,
+  Replay as ReplayIcon,
+  ArrowBack as ArrowBackIcon
+} from '@mui/icons-material';
 import {
   Typography,
   Box,
@@ -12,13 +19,10 @@ import {
   CircularProgress,
   Fade
 } from '@mui/material';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ReplayIcon from '@mui/icons-material/Replay';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-
 import DiseaseDownloadCard from '@/components/cards/DiseaseDownloadCard';
 import DiseaseOptionCard from '@/components/cards/DiseaseOptionCard';
+import { RouteHeader } from '@/components';
+import { handleScroll } from '@/utils';
 // import { SetupCard } from '@/components/cards';
 // import { useSetupState } from '@/states/setup';
 
@@ -76,14 +80,20 @@ export default function GVATool(): JSX.Element {
   //   return <SetupCard {...setupState} />;
   // }
 
+  // Reset scroll position on initial load
+  useEffect(() => {
+    handleScroll('GVATool');
+  }, []);
+
   // Show main content if setup is completed
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        py: 6,
-      }}
-    >
+    <Fragment>
+      <RouteHeader
+        icon={PlagiarismIcon}
+        title="GVATool"
+        description="Analyze genetic data efficiently, detect mutations, and access clear visualizations for informed decisions."
+      />
+
       <Fade in>
         <Container maxWidth="sm">
           <Paper
@@ -164,6 +174,6 @@ export default function GVATool(): JSX.Element {
           </Box>
         </Container>
       </Fade>
-    </Box>
+    </Fragment>
   );
 }

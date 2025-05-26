@@ -19,9 +19,8 @@ function customToolbarActions(): JSX.Element {
     <Stack direction='row' alignItems='center' spacing={2} px={0.5}>
       <ThemeSwitcher />
       <IconButton
-        color="primary"
         onClick={() => window.pywebview.api.ui_controller.fullscreen()}
-        sx={{ mb: 4 }}
+        sx={{ mb: 4, color: 'primary.dark' }}
       >
         <FullscreenIcon />
       </IconButton>

@@ -45,8 +45,7 @@ class BlastService:
             if not db_file:
                 raise Exception("Failed to insert data into the database")
             
-            raise Exception("No diseases found or failed to process variants")
-
+            
             # +++++++++++++++++++++++++++++++++++++++++++++++++
             # Takes in Json file and returns csv file
             disease_file = process_variants(result_file)

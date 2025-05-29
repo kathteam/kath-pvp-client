@@ -10,9 +10,9 @@ import {
   Stack,
   CircularProgress,
 } from '@mui/material';
-import DiseaseModal from '@/components/modals/DiseaseModal';
 import ScienceIcon from '@mui/icons-material/Science';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import TableModal from '@/components/modals/tableModal';
 
 export default function DiseaseOptionCard(): JSX.Element {
   const [fastaFilePath, setFastaFilePath] = useState<string>('');
@@ -20,13 +20,9 @@ export default function DiseaseOptionCard(): JSX.Element {
     status: string;
     result_file: string;
   }>();
-  const [geneticDiseaseData, setGeneticDiseaseData] = useState<{
-    clinicalSignificance: string;
-    disease: string;
-  }[]>([]);
-
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isExtracting, setIsExtracting] = useState<boolean>(false);
+  const [tableData, setTableData] = useState<any[]>([]);
 
   const theme = useTheme();
 
@@ -81,46 +77,15 @@ export default function DiseaseOptionCard(): JSX.Element {
     }
 
     try {
-      const diseaseData =
-        await window.pywebview.api.disease_service.get_disease_data(
-          extractionResult.result_file
-        );
-
-      if (!diseaseData || diseaseData.length === 0) {
-        // TODO UNCOMMENT
-        // alert('No disease data found.');
-        setGeneticDiseaseData([
-          {
-            clinicalSignificance: 'Pathogenic',
-            disease: 'Type 1 Diabetes Mellitus',
-          },
-          {
-            clinicalSignificance: 'Likely Pathogenic',
-            disease: 'Maturity-Onset Diabetes of the Young (MODY)',
-          },
-          {
-            clinicalSignificance: 'Benign',
-            disease: 'Gestational Diabetes',
-          },
-          {
-            clinicalSignificance: 'Uncertain Significance',
-            disease: 'Latent Autoimmune Diabetes in Adults (LADA)',
-          },
-          {
-            clinicalSignificance: 'Likely Benign',
-            disease: 'Prediabetes',
-          },
-        ]);
-      } else {
-        setGeneticDiseaseData(diseaseData.map((item: any) => ({
-          clinicalSignificance: item.clinical_significance,
-          disease: item.disease_name,
-        })));
-      }
+      // Fetch your table data from your backend or API
+      // Example: fetch from Flask API or your backend endpoint
+      const res = await fetch('http://localhost:5000/api/variants'); // Adjust URL as needed
+      const data = await res.json();
+      setTableData(data);
       setShowModal(true);
     } catch (error) {
-      console.error('Failed to fetch disease data:', error);
-      alert('Failed to fetch disease data.');
+      console.error('Failed to fetch table data:', error);
+      alert('Failed to fetch table data.');
     }
   };
 
@@ -226,9 +191,11 @@ export default function DiseaseOptionCard(): JSX.Element {
         )}
       </Paper>
       {showModal && (
-        <DiseaseModal
-          diseases={geneticDiseaseData}
+        <TableModal
+          open={showModal}
           onClose={() => setShowModal(false)}
+          data={tableData}
+          title="All Variants"
         />
       )}
     </>

@@ -10,7 +10,8 @@ import {
   Stack,
   Alert,
   CircularProgress,
-  Fade
+  Fade,
+  Grid2,
 } from '@mui/material';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -19,6 +20,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import DiseaseDownloadCard from '@/components/cards/DiseaseDownloadCard';
 import DiseaseOptionCard from '@/components/cards/DiseaseOptionCard';
+import HowTo from '@/components/buttons/HowTo';
 // import { SetupCard } from '@/components/cards';
 // import { useSetupState } from '@/states/setup';
 
@@ -26,17 +28,17 @@ export default function GVATool(): JSX.Element {
   const navigate = useNavigate();
 
   const [referenceGenomePath, setReferenceGenomePath] = useState<{
-    status: string;
-    reference_genome: string;
-  }>();
+		status: string;
+		reference_genome: string;
+	}>();
 
   const downloadReferenceGenome = async () => {
     setReferenceGenomePath({ status: 'processing', reference_genome: '' });
     try {
-      const response = await window.pywebview.api.fasta_service.download_reference_genome_grch38();
+      const response =
+				await window.pywebview.api.fasta_service.download_reference_genome_grch38();
       setReferenceGenomePath(response);
-    }
-    catch (error) {
+    } catch (error) {
       console.error(error);
       setReferenceGenomePath({ status: 'error', reference_genome: '' });
     }
@@ -77,6 +79,14 @@ export default function GVATool(): JSX.Element {
   // }
 
   // Show main content if setup is completed
+
+  const howTo =
+  {
+    media: 'GeneDownloading.gif',
+    title: 'Human reference genome download',
+    description: 'You can download the reference genome from the button below. The .fasta file will be present in the /.kath/shared/data/fasta_files/reference folder.'
+  };
+
   return (
     <Box
       sx={{
@@ -85,84 +95,117 @@ export default function GVATool(): JSX.Element {
       }}
     >
       <Fade in>
-        <Container maxWidth="sm">
-          <Paper
-            elevation={4}
-            sx={{
-              p: 5,
-              borderRadius: 4,
-              boxShadow: 6,
-              textAlign: 'center',
-            }}
-          >
-            <Typography variant="h3" component="h1" gutterBottom fontWeight={700}>
-              GVATool
-            </Typography>
-            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-              Gene Variation Analysis Tool
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 3 }}>
-              Analyze gene variations with reference genome data. Download the latest reference genome and start your analysis.
-            </Typography>
-            <Stack direction="row" spacing={2} justifyContent="center" sx={{ mb: 3 }}>
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate('/dashboard')}
-              >
-                Dashboard
-              </Button>
-              <Button
-                variant="contained"
-                color={getButtonColor()}
-                startIcon={
-                  referenceGenomePath?.status === 'success' ? <CheckCircleIcon /> :
-                    referenceGenomePath?.status === 'processing' ? <CircularProgress size={20} color="inherit" /> :
-                      referenceGenomePath?.status === 'error' ? <ReplayIcon /> :
-                        <CloudDownloadIcon />
-                }
-                onClick={downloadReferenceGenome}
-                sx={{ minWidth: 220 }}
-                disabled={referenceGenomePath?.status === 'processing'}
-              >
-                {referenceGenomePath?.status === 'processing'
-                  ? 'Downloading...'
-                  : referenceGenomePath?.status === 'success'
-                    ? 'Downloaded'
-                    : referenceGenomePath?.status === 'error'
-                      ? 'Retry Download'
-                      : 'Download Reference Genome'}
-              </Button>
-            </Stack>
-            <Snackbar
-              open={Boolean(referenceGenomePath)}
-              autoHideDuration={6000}
-              onClose={() => setReferenceGenomePath(undefined)}
-              anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        <Grid2 container justifyContent="center" sx={{ mb: 3 }}>
+          <Container maxWidth="sm">
+            <Paper
+              elevation={4}
+              sx={{
+                p: 5,
+                borderRadius: 4,
+                boxShadow: 6,
+                textAlign: 'center',
+                position: 'relative',
+              }}
             >
-              <Alert
-                severity={
-                  referenceGenomePath?.status === 'success' ? 'success' :
-                    referenceGenomePath?.status === 'processing' ? 'warning' : 'error'
-                }
-                onClose={() => setReferenceGenomePath(undefined)}
-                sx={{ width: '100%' }}
+              <Box sx={{ position: 'absolute', top: 5, right: 5 }}>
+                <HowTo media={howTo.media} title={howTo.title} description={howTo.description} />
+              </Box>
+              <Typography
+                variant="h3"
+                component="h1"
+                gutterBottom
+                fontWeight={700}
               >
-                {!referenceGenomePath ? 'Processing...' :
-                  referenceGenomePath.status === 'success'
-                    ? `Reference genome downloaded to: ${referenceGenomePath.reference_genome}`
-                    : referenceGenomePath.status === 'processing'
-                      ? 'Downloading reference genome...'
-                      : 'Failed to download reference genome'}
-              </Alert>
-            </Snackbar>
-          </Paper>
-          <Box sx={{ mt: 4 }}>
-            <DiseaseDownloadCard />
-            <DiseaseOptionCard />
-          </Box>
-        </Container>
+								GVATool
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                color="text.secondary"
+                gutterBottom
+              >
+								Gene Variation Analysis Tool
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 3 }}>
+								Analyze gene variations with reference genome data. Download the
+								latest reference genome and start your analysis.
+              </Typography>
+              <Box sx={{ position: 'relative' }}>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  justifyContent="center"
+                  sx={{ mb: 3 }}
+                >
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<ArrowBackIcon />}
+                    onClick={() => navigate('/dashboard')}
+                  >
+										Dashboard
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color={getButtonColor()}
+                    startIcon={
+                      referenceGenomePath?.status === 'success' ? (
+                        <CheckCircleIcon />
+                      ) : referenceGenomePath?.status === 'processing' ? (
+                        <CircularProgress size={20} color="inherit" />
+                      ) : referenceGenomePath?.status === 'error' ? (
+                        <ReplayIcon />
+                      ) : (
+                        <CloudDownloadIcon />
+                      )
+                    }
+                    onClick={downloadReferenceGenome}
+                    sx={{ minWidth: 220 }}
+                    disabled={referenceGenomePath?.status === 'processing'}
+                  >
+                    {referenceGenomePath?.status === 'processing'
+                      ? 'Downloading...'
+                      : referenceGenomePath?.status === 'success'
+                        ? 'Downloaded'
+                        : referenceGenomePath?.status === 'error'
+                          ? 'Retry Download'
+                          : 'Download Reference Genome'}
+                  </Button>
+                </Stack>
+              </Box>
+
+              <Snackbar
+                open={Boolean(referenceGenomePath)}
+                autoHideDuration={6000}
+                onClose={() => setReferenceGenomePath(undefined)}
+                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+              >
+                <Alert
+                  severity={
+                    referenceGenomePath?.status === 'success'
+                      ? 'success'
+                      : referenceGenomePath?.status === 'processing'
+                        ? 'warning'
+                        : 'error'
+                  }
+                  onClose={() => setReferenceGenomePath(undefined)}
+                  sx={{ width: '100%' }}
+                >
+                  {!referenceGenomePath
+                    ? 'Processing...'
+                    : referenceGenomePath.status === 'success'
+                      ? `Reference genome downloaded to: ${referenceGenomePath.reference_genome}`
+                      : referenceGenomePath.status === 'processing'
+                        ? 'Downloading reference genome...'
+                        : 'Failed to download reference genome'}
+                </Alert>
+              </Snackbar>
+            </Paper>
+            <Box sx={{ mt: 4 }}>
+              <DiseaseDownloadCard />
+              <DiseaseOptionCard />
+            </Box>
+          </Container>
+        </Grid2>
       </Fade>
     </Box>
   );

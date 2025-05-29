@@ -13,6 +13,7 @@ import {
 import DiseaseModal from '@/components/modals/DiseaseModal';
 import ScienceIcon from '@mui/icons-material/Science';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import HowTo from '../buttons/HowTo';
 
 export default function DiseaseOptionCard(): JSX.Element {
   const [fastaFilePath, setFastaFilePath] = useState<string>('');
@@ -124,21 +125,28 @@ export default function DiseaseOptionCard(): JSX.Element {
     }
   };
 
+  const howTo = 
+  {
+    media: 'ExtractString.gif',
+    title: 'Extract genetic diseases from found variations',
+    description: 'Select the .fasta file and copy it as a string (You are free to use our File Manager as a substitute for this step), with the analyze button you will receive a list of genetic diseases that are associated with the variations found. WARNING: File may not have any variations or diseases.'
+  };
+
   return (
     <>
       <Paper
-        elevation={6}
+        elevation={4}
         sx={{
-          p: 4,
-          mt: 4,
-          width: '95%',
-          maxWidth: 800,
-          mx: 'auto',
+          p: 5,
           textAlign: 'center',
           borderRadius: 4,
-          boxShadow: 8,
+          boxShadow: 6,
+          position: 'relative'
         }}
       >
+        <Box sx={{ position: 'absolute', top: 5, right: 5 }}>
+          <HowTo media={howTo.media} title={howTo.title} description={howTo.description} />
+        </Box>
         <Typography variant="h5" component="h2" gutterBottom fontWeight={700}>
           Disease Extraction
         </Typography>

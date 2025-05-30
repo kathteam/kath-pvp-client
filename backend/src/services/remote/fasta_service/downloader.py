@@ -21,7 +21,6 @@ FolderSetup()
 
 logger = get_logger(__name__)
 
-# Default timeout for HTTP requests (in seconds)
 DEFAULT_TIMEOUT = 60
 
 
@@ -59,7 +58,6 @@ def download_reference_genome_direct(
         logger.info(f"Reference genome {version} already exists at {output_file}")
         return str(output_file)
 
-    # URLs for complete reference genomes
     # pylint: disable=line-too-long
     urls = {
         "GRCh38": "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.gz",
@@ -74,7 +72,6 @@ def download_reference_genome_direct(
     logger.info(f"Downloading and decompressing {version} from {url}...")
 
     try:
-        # Download and decompress in a single operation directly to the output file
         response = requests.get(url, stream=True, timeout=DEFAULT_TIMEOUT * 2)
         response.raise_for_status()
 
@@ -106,21 +103,17 @@ def handle_gene_download_nucleotide(
     symbol, seq_id, i, disease_term, output_dir = download_info
 
     try:
-        # Generate a descriptive filename
         filename = f"{symbol}_transcript{i+1}_{seq_id}.fasta"
         file_path = os.path.join(output_dir, filename)
 
-        # Skip if already downloaded
         if os.path.exists(file_path):
             logger.info(f"File already exists: {file_path}")
             return str(file_path)
 
         logger.info(f"Downloading sequence for nucleotide ID: {seq_id}")
 
-        # Download sequence
         seq_handle = Entrez.efetch(db="nucleotide", id=seq_id, rettype="fasta", retmode="text")
 
-        # Handle content as both string or bytes
         content = seq_handle.read()
         if isinstance(content, bytes):
             content = content.decode("utf-8")
@@ -133,7 +126,6 @@ def handle_gene_download_nucleotide(
         logger.info(f"Downloaded {seq_id} for gene {symbol} to {file_path}")
         log_download("Disease", f"{disease_term}:{symbol}", str(file_path), fasta_dir)
 
-        # Be nice to NCBI by adding a delay
         time.sleep(2)
         return str(file_path)
 
@@ -254,7 +246,6 @@ def download_disease_related_genes_clinvar(
     try:
         logger.info(f"Searching for genes related to {disease_term}...")
 
-        # First search for gene IDs related to the disease
         search_handle = Entrez.esearch(
             db="gene",
             term=f'(("{disease_term}"[Disease/Phenotype]) AND Pathogenic[Clinical_Significance]) AND "homo sapiens"[Organism]',
@@ -271,35 +262,29 @@ def download_disease_related_genes_clinvar(
 
         logger.info(f"Found {len(gene_ids)} genes related to {disease_term}")
 
-        # For each gene, get the nucleotide sequences
         for gene_id in gene_ids:
             try:
                 logger.info(f"Processing gene ID: {gene_id}")
 
-                # Direct search for nucleotide sequences by gene ID
                 nucleotide_ids = search_nucleotide_by_gene_id(gene_id, 20)
 
                 gene_symbol = "unknown"
                 if not nucleotide_ids:
                     logger.info(f"No direct nucleotide sequences found for gene ID: {gene_id}")
 
-                    # Try to get gene symbol
                     gene_symbol = get_gene_symbol(gene_id)
                     logger.info(f"Found gene symbol: {gene_symbol}")
 
-                    # Try searching by gene symbol
                     nucleotide_ids = search_nucleotide_by_symbol(gene_symbol, 20)
                     logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene symbol")
                 else:
                     logger.info(f"Found {len(nucleotide_ids)} nucleotide sequences by gene ID")
                     gene_symbol = get_gene_symbol(gene_id)
 
-                # If we still don"t have any nucleotide IDs, skip this gene
                 if not nucleotide_ids:
                     logger.warning(f"No nucleotide sequences found for gene ID: {gene_id}")
                     continue
 
-                # Download each nucleotide sequence
                 for i, nucleotide_id in enumerate(nucleotide_ids):
                     download_info = (
                         gene_symbol,

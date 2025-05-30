@@ -6,11 +6,9 @@ from webview import Window, create_window, start
 from utils import init_logging, get_logger, get_entrypoint, initial_func
 from services import Api
 
-# Initialize logging
 init_logging()
 logger: Logger = get_logger(__name__)
 
-# Entry point for the application
 if __name__ == "__main__":
     try:
         entrypoint: str = get_entrypoint()
@@ -28,7 +26,6 @@ if __name__ == "__main__":
             "/proc/sys/fs/binfmt_misc/WSLInterop"
         )
 
-        # If in WSL, don't pass icon to prevent creating a file
         if is_wsl:
             start(func=initial_func, args=window, debug=True)
         else:

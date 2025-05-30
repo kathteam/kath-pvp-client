@@ -16,11 +16,7 @@ class Api:
         # Remote functionality
         # --------------------
 
-        # Initialize HTTP client that will be shared across all services
         self.http_client: HttpClient = HttpClient()
-        # Initialize fasta service
         self.fasta_service = FastaService()
-        # Initialize blast service
         self.blast_service = BlastService()
-        # Initialize disease service
         self.disease_service = DiseaseService()

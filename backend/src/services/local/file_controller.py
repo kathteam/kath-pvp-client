@@ -110,7 +110,6 @@ class FileController:
         connection = sqlite3.connect(db_path)
         cursor = connection.cursor()
 
-        # Create a table for VCF data
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS vcf_data (

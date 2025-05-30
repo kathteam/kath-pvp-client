@@ -26,7 +26,6 @@ class BlastService:
 
         try:
             print(f"Processing file: {fasta_file}")
-            # Perform blast aligning
             result_file = process_single_fasta(fasta_file)
 
             if not result_file:

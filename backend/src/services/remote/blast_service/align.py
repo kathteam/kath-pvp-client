@@ -127,7 +127,6 @@ def blast_cmdline(query_fasta_path: str, reference_genome_path: str, output_dir:
         logger.debug(f"blastn stderr:\n{process.stderr}")
     except subprocess.CalledProcessError as e:
         logger.error(f"BLAST alignment failed: {e.stderr}")
-        # Log stdout as well, might contain info even on failure
         logger.error(f"BLAST stdout: {e.stdout}")
         raise RuntimeError(f"blastn failed with exit code {e.returncode}") from e
     except FileNotFoundError:
@@ -153,7 +152,6 @@ def extract_chromosome(subject_id: str) -> str:
         chrom = chr_match.group(1).upper()
         return "MT" if chrom == "M" else chrom
 
-    # 2. Check for RefSeq chromosome format (NC_0000XX.version)
     nc_match = re.search(r"NC_0000(\d{2})\.\d+", subject_id)
     if nc_match:
         num = int(nc_match.group(1))
@@ -240,7 +238,7 @@ def parse_blast_results(
                         total_hsps_processed += 1
                         percent_identity = (hsp.identities / hsp.align_length) * 100
 
-                        # --- Quality Filtering ---
+
                         if (
                             hsp.expect > evalue_threshold
                             or hsp.bits < min_hsp_score
@@ -265,8 +263,8 @@ def parse_blast_results(
                         match_seq = hsp.match
                         sbjct_seq = hsp.sbjct
 
-                        query_pos = hsp.query_start - 1  # 0-based index
-                        sbjct_pos = hsp.sbjct_start - 1  # 0-based index
+                        query_pos = hsp.query_start - 1 
+                        sbjct_pos = hsp.sbjct_start - 1 
 
                         hsp_variations = 0
                         for i in range(hsp.align_length):
@@ -284,7 +282,6 @@ def parse_blast_results(
                                 sbjct_pos += 1
                                 s_pos_current = sbjct_pos
 
-                            # Identify variation type
                             variation_type = None
                             ref_allele = None
                             alt_allele = None
@@ -298,10 +295,10 @@ def parse_blast_results(
                                     variation_type = "deletion"
                                     ref_allele = q_base
                                     alt_allele = "-"
-                                else:  # Substitution (Mismatch)
+                                else:
                                     variation_type = "substitution"
-                                    ref_allele = s_base  # Reference base from subject
-                                    alt_allele = q_base  # Alternative base from query
+                                    ref_allele = s_base
+                                    alt_allele = q_base
 
                             if variation_type:
                                 hsp_variations += 1
@@ -349,10 +346,6 @@ def parse_blast_results(
     return variations
 
 
-# ... (keep existing imports and constants) ...
-# ... (keep blast_cmdline, extract_chromosome, parse_blast_results functions) ...
-
-
 def _run_blast_and_parse_single(
     actual_query_path: Path,
     reference_fasta: Path,
@@ -372,7 +365,6 @@ def _run_blast_and_parse_single(
     logger.info(f"--- Processing Query File: {actual_query_path.name} ---")
     query_stem = actual_query_path.stem
     reference_stem = reference_fasta.stem
-    # Define unique output filenames based on query and reference
     results_json_filename = f"{query_stem}_vs_{reference_stem}_variations.json"
     json_output_path = blast_output_dir / results_json_filename
 
@@ -386,19 +378,17 @@ def _run_blast_and_parse_single(
 
     except (RuntimeError, FileNotFoundError) as e:
         logger.error(f"BLAST command execution failed for {actual_query_path.name}: {e}")
-        return None  # Indicate failure for this file
+        return None
     except Exception as e:
         logger.exception(
             f"An unexpected error occurred during BLAST execution for {actual_query_path.name}: {e}"
         )
-        return None  # Indicate failure for this file
+        return None
 
     # --- Parse Results ---
     try:
         variations = parse_blast_results(blast_result_xml)
 
-        # --- Save Variations to JSON ---
-        # Always save a JSON file, even if empty, to indicate processing occurred
         with open(json_output_path, "w", encoding="utf-8") as f:
             json.dump(variations if variations else [], f, indent=2)
 
@@ -411,13 +401,13 @@ def _run_blast_and_parse_single(
             print(
                 f"Analysis complete for {actual_query_path.name}. No significant variations found. Results file: {json_output_path}"
             )
-        return str(json_output_path)  # Return path whether variations were found or not
+        return str(json_output_path)
 
     except Exception as e:
         logger.exception(
             f"An unexpected error occurred during BLAST parsing or saving results for {actual_query_path.name}: {e}"
         )
-        return None  # Indicate failure for this file
+        return None
 
 
 def process_single_fasta(
@@ -439,7 +429,6 @@ def process_single_fasta(
     """
     logger.info(f"Starting single file BLAST analysis for: {query_fasta_path}")
 
-    # --- Sanity Checks and Setup ---
     try:
         subprocess.run(["blastn", "-version"], capture_output=True, text=True, check=True)
         subprocess.run(["makeblastdb", "-version"], capture_output=True, text=True, check=True)
@@ -459,7 +448,6 @@ def process_single_fasta(
     reference_fasta = ref_files[0]
     logger.info(f"Using reference genome: {reference_fasta}")
 
-    # --- Validate Query File ---
     query_path_obj = Path(query_fasta_path)
     if not query_path_obj.is_file() or query_path_obj.suffix.lower() not in [
         ".fasta",
@@ -470,11 +458,9 @@ def process_single_fasta(
             f"Provided query file is not a valid FASTA file or does not exist: {query_fasta_path}"
         )
         return None
-
-    # Ensure output directory exists
+    
     blast_output_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- Process the Single File ---
     result_path = _run_blast_and_parse_single(
         actual_query_path=query_path_obj,
         reference_fasta=reference_fasta,
@@ -510,7 +496,6 @@ def process_fasta_directory(
     logger.info(f"Starting directory BLAST analysis for: {uploads_dir}")
     processed_json_files = []
 
-    # --- Sanity Checks and Setup ---
     try:
         subprocess.run(["blastn", "-version"], capture_output=True, text=True, check=True)
         subprocess.run(["makeblastdb", "-version"], capture_output=True, text=True, check=True)
@@ -530,7 +515,6 @@ def process_fasta_directory(
     reference_fasta = ref_files[0]
     logger.info(f"Using reference genome: {reference_fasta}")
 
-    # --- Find Query Files ---
     if not uploads_dir.is_dir():
         logger.error(f"Uploads directory does not exist: {uploads_dir}")
         return []
@@ -547,10 +531,8 @@ def process_fasta_directory(
         return []
     logger.info(f"Found {len(query_files_to_process)} query files in uploads directory.")
 
-    # Ensure output directory exists
     blast_output_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- Process Each Query File ---
     for actual_query_path in query_files_to_process:
         result_path = _run_blast_and_parse_single(
             actual_query_path=actual_query_path,
@@ -559,7 +541,6 @@ def process_fasta_directory(
         )
         if result_path:
             processed_json_files.append(result_path)
-        # If result_path is None, the error was already logged in the helper function
 
     logger.info(
         f"Directory workflow finished. Successfully processed {len(processed_json_files)} out of {len(query_files_to_process)} files."
@@ -567,34 +548,13 @@ def process_fasta_directory(
     return processed_json_files
 
 
-# Example usage:
 if __name__ == "__main__":
     dummy_query_path = (
         "C:/Users/Kajus/.kath/shared/found_diseases/unknown_transcript1_1732746177_leukema.fasta"
     )
-    # # if not dummy_query_path.exists():
-    # #     dummy_query_path.parent.mkdir(parents=True, exist_ok=True)
-    # #     with open(dummy_query_path, "w") as f:
-    # #         f.write(">TestQuery1\nACGTACGT\n") # Replace with actual sequence if needed
-    # #     print(f"Created dummy query file: {dummy_query_path}")
-
-    # print(f"\n--- Running analysis for a single specified file: {dummy_query_path} ---")
-    # # Make sure the dummy file exists and reference exists before running
-    # if dummy_query_path:
-    #      single_result = process_single_fasta(query_fasta_path=str(dummy_query_path))
-    #      if single_result:
-    #          print(f"Single file processing complete. Result JSON: {single_result}")
-    #      else:
-    #          print(f"Single file processing failed for {dummy_query_path}.")
-    # else:
-    #      print(f"Skipping single file test, query file not found: {dummy_query_path}")
-
-    # --- Example for processing a directory ---
     print("\n--- Running analysis using file(s) from uploads directory ---")
-    # Ensure upload dir exists and contains FASTA files
-    # Ensure reference genome exists in ./fasta_data/reference/
 
-    result_json_list = process_fasta_directory()  # Uses default uploads_dir
+    result_json_list = process_fasta_directory()
     if result_json_list:
         print(f"Directory processing complete. Result JSON files generated:")
         print(f"Directory processing complete. Result JSON files generated:")
@@ -602,10 +562,7 @@ if __name__ == "__main__":
             print(f"- {json_path}")
             from find import process_variants
 
-            process_variants(json_path)  # Process each JSON file for variants
+            process_variants(json_path)
 
     else:
         "Directory analysis failed, found no query files, or encountered errors during processing."
-
-# Remove the old perform_blast_alignment_and_find_variations function
-# del perform_blast_alignment_and_find_variations

@@ -16,7 +16,6 @@ class DiseaseService:
         :return: List of dictionaries with prepared disease data.
         """
         try:
-            # Read and prepare disease data
             prepared_data = generate_json_diseases(file_path)
             json_format = []
             for _, row in enumerate(prepared_data):

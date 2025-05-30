@@ -38,7 +38,6 @@ def initial_func(window: Window) -> None:
 
 
 def _initial_setup(window: Window) -> None:
-    # Notify frontend that setup has started
     window.evaluate_js(
         """
         window.dispatchEvent(new CustomEvent('setup-status', {
@@ -48,13 +47,11 @@ def _initial_setup(window: Window) -> None:
     )
     from services.remote.fasta_service import FastaService
 
-    # Define setup tasks
     fastaService = FastaService()
     tasks: list[tuple[function, str]] = [
         (fastaService.download_reference_genome_grch38, "Downloading reference genome"),
     ]
 
-    # Perform setup tasks
     for i, (task, message) in enumerate(tasks):
         progress = i / len(tasks)
         window.evaluate_js(
@@ -70,7 +67,6 @@ def _initial_setup(window: Window) -> None:
         )
         task()
 
-    # Notify frontend that setup is complete
     window.evaluate_js(
         """
         window.dispatchEvent(new CustomEvent('setup-status', {

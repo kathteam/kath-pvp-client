@@ -7,7 +7,8 @@ import {
   Plagiarism as PlagiarismIcon,
   Inventory as InventoryIcon,
   AutoAwesome as AutoAwesomeIcon,
-  MenuBook as MenuBookIcon
+  MenuBook as MenuBookIcon,
+  Storage as StorageIcon
 } from '@mui/icons-material';
 import { createTheme } from '@mui/material';
 import { SetupProvider } from '@/states/setup';
@@ -29,6 +30,11 @@ const navigation: Navigation = [
     segment: 'features/gvatool',
     title: 'GVATool',
     icon: <PlagiarismIcon />,
+  },
+  {
+    segment: 'features/analysis_history',
+    title: 'Analysis History',
+    icon: <StorageIcon />,
   },
   {
     kind: 'divider',

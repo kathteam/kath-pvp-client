@@ -1,7 +1,7 @@
 import { Navigate, RouteObject } from 'react-router-dom';
 import App from '@/App';
 import { MainLayout } from '@/layouts';
-import { Dashboard, GVATool, FileManager, Macros, Manual } from '@/pages';
+import { Dashboard, GVATool, FileManager, Macros, Manual, AnalysisHistory } from '@/pages';
 
 const publicRoutes: RouteObject[] = [
   {
@@ -22,6 +22,10 @@ const publicRoutes: RouteObject[] = [
           {
             path: 'features/gvatool',
             Component: GVATool
+          },
+          {
+            path: 'features/analysis_history',
+            Component: AnalysisHistory
           },
           {
             path: 'system/file_manager',

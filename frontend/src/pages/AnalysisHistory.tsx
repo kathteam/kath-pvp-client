@@ -71,7 +71,16 @@ const AnalysisHistory: React.FC = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    View Genome
+                    View Genome (UCSC)
+                  </a>
+                </Typography>
+                <Typography variant="body2" color="primary">
+                  <a
+                    href={`https://www.ensembl.org/Homo_sapiens/Location/View?db=core;r=${entry.chromosome}:${entry.position}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Genome (Ensembl)
                   </a>
                 </Typography>
               </Paper>

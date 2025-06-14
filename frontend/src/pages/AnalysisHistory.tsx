@@ -5,12 +5,6 @@ import {
   Paper,
   Box,
   CircularProgress,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
 } from '@mui/material';
 
 interface MutationEntry {
@@ -56,38 +50,33 @@ const AnalysisHistory: React.FC = () => {
             <CircularProgress />
           </Box>
         ) : mutationEntries.length > 0 ? (
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>File Name</TableCell>
-                  <TableCell>Clinical Significance</TableCell>
-                  <TableCell>Disease Name</TableCell>
-                  <TableCell>Synonyms</TableCell>
-                  <TableCell>Chromosome</TableCell>
-                  <TableCell>Position</TableCell>
-                  <TableCell>Reference</TableCell>
-                  <TableCell>Alternate</TableCell>
-                  <TableCell>HGVS ID</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {mutationEntries.map((entry, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{entry.file_name}</TableCell>
-                    <TableCell>{entry.clinical_significance}</TableCell>
-                    <TableCell>{entry.disease_name}</TableCell>
-                    <TableCell>{entry.synonyms}</TableCell>
-                    <TableCell>{entry.chromosome}</TableCell>
-                    <TableCell>{entry.position}</TableCell>
-                    <TableCell>{entry.reference}</TableCell>
-                    <TableCell>{entry.alternate}</TableCell>
-                    <TableCell>{entry.hgvs_id}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Box>
+            {mutationEntries.map((entry, index) => (
+              <Paper key={index} elevation={3} sx={{ p: 2, mb: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {entry.clinical_significance} - {entry.disease_name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  File Name: {entry.file_name}
+                </Typography>
+                <Typography variant="body2">
+                  Chromosome: {entry.chromosome}, Position: {entry.position}, Ref: {entry.reference}, Alt: {entry.alternate}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  HGVS ID: {entry.hgvs_id}
+                </Typography>
+                <Typography variant="body2" color="primary">
+                  <a
+                    href={`https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=chr${entry.chromosome}%3A${entry.position}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    View Genome
+                  </a>
+                </Typography>
+              </Paper>
+            ))}
+          </Box>
         ) : (
           <Typography variant="body1" color="text.secondary">
             No mutation entries found.

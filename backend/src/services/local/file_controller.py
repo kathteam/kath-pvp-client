@@ -206,3 +206,37 @@ class FileController:
             raise
         finally:
             connection.close()
+
+    def get_mutation_entries(
+            self,
+        ) -> list[dict]:
+            
+            kath_dir = self.get_kath_directory()
+            db_path = os.path.join(kath_dir, "mutations.db")
+
+            if not os.path.exists(db_path):
+                return []
+        
+            connection = sqlite3.connect(db_path)
+            cursor = connection.cursor()
+        
+            query = "SELECT * FROM mutation_data WHERE 1=1"
+            params = []
+    
+        
+            try:
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+        
+                # Map rows to dictionaries
+                columns = [column[0] for column in cursor.description]
+                entries = [dict(zip(columns, row)) for row in rows]
+        
+                self.logger.info(f"Retrieved {len(entries)} mutation entries from database")
+                return entries
+        
+            except sqlite3.Error as e:
+                self.logger.error(f"Error retrieving mutation entries: {e}")
+                raise
+            finally:
+                connection.close()

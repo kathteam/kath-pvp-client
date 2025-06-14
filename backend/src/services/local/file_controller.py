@@ -220,7 +220,7 @@ class FileController:
             connection = sqlite3.connect(db_path)
             cursor = connection.cursor()
         
-            query = "SELECT * FROM mutation_data WHERE 1=1"
+            query = "SELECT * FROM mutation_data ORDER BY mutation_id DESC"
             params = []
     
         

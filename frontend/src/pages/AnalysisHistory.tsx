@@ -34,7 +34,7 @@ interface MutationEntry {
 }
 
 // Function to determine chip color based on clinical significance using semantic colors
-const getSignificanceColor = (significance: string): "error" | "success" | "warning" | "default" => {
+const getSignificanceColor = (significance: string): 'error' | 'success' | 'warning' | 'default' => {
   const significanceLower = significance.toLowerCase();
   if (significanceLower.includes('pathogenic')) return 'error';
   if (significanceLower.includes('benign')) return 'success';

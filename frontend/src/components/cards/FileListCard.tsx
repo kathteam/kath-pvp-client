@@ -119,7 +119,7 @@ const FileList: React.FC<FileListProps> = ({
               }}
               onClick={() => file.type === 'folder' && onFolderClick(file.filename)}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {getFileIcon(file.type)}
                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                   {file.filename}

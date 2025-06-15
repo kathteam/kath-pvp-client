@@ -58,11 +58,7 @@ export default function DiseaseOptionCard(): JSX.Element {
         );
       setExtractionResult({
         status: response.status || 'success',
-        result_file:
-          // TODO REMOVE
-          'Extraction completed',
-        // TODO UNCOMMENT
-        // response.result_file || `Extraction completed for ${formattedPath}`,
+        result_file: response.result_file || `Extraction completed for ${formattedPath}`,
       });
     } catch (error) {
       console.error('Disease extraction failed:', error);
@@ -89,7 +85,7 @@ export default function DiseaseOptionCard(): JSX.Element {
 
       if (!diseaseData || diseaseData.length === 0) {
         // TODO UNCOMMENT
-        // alert('No disease data found.');
+        alert('No disease data found.');
         setGeneticDiseaseData([
           {
             clinicalSignificance: 'Pathogenic',

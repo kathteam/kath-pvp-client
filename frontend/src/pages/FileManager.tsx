@@ -411,6 +411,14 @@ export default function FileManager() {
                   Analyze
                 </MenuItem>
               )}
+              {selectedFileForMenu?.endsWith('.pdf') && (
+                <MenuItem onClick={async () => {
+                  await window.pywebview.api.ui_controller.open_pdf_in_browser(selectedFileForMenu);
+                  handleClose();
+                }}>
+                  Open
+                </MenuItem>
+              )}
               <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
               <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
             </>

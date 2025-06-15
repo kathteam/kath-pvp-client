@@ -22,7 +22,7 @@ import {
 } from '@mui/icons-material';
 import Ephasize from '@/components/text/Ephasize';
 
-interface MutationEntry {
+export interface MutationEntry {
   file_name: string;
   clinical_significance: string;
   disease_name: string;
@@ -47,6 +47,7 @@ const AnalysisHistory: React.FC = () => {
   const theme = useTheme();
   const [mutationEntries, setMutationEntries] = useState<MutationEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [pdfGeneratingStatus, setPdfGeneratingStatus] = useState<Record<string, 'idle' | 'processing' | 'success' | 'error'>>({});
 
   useEffect(() => {
     const fetchMutationEntries = async () => {
@@ -63,6 +64,26 @@ const AnalysisHistory: React.FC = () => {
 
     fetchMutationEntries();
   }, []);
+
+  // Group mutationEntries by file_name
+  const groupedEntries = mutationEntries.reduce((acc, entry) => {
+    if (!acc[entry.file_name]) {
+      acc[entry.file_name] = [];
+    }
+    acc[entry.file_name].push(entry);
+    return acc;
+  }, {} as Record<string, MutationEntry[]>);
+
+  const handlePdfGeneration = async (entries: MutationEntry[], fileName: string) => {
+    try {
+      setPdfGeneratingStatus(prev => ({ ...prev, [fileName]: 'processing' }));
+      await window.pywebview.api.ui_controller.generate_pdf(entries, `${fileName}_report.pdf`);
+      setPdfGeneratingStatus(prev => ({ ...prev, [fileName]: 'success' }));
+    } catch (error) {
+      alert('Failed to generate PDF report. Please try again later.');
+      setPdfGeneratingStatus(prev => ({ ...prev, [fileName]: 'error' }));
+    }
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -92,91 +113,124 @@ const AnalysisHistory: React.FC = () => {
             <CircularProgress color="primary" />
           </Box>
         ) : mutationEntries.length > 0 ? (
-          <Grid container spacing={3}>
-            {mutationEntries.map((entry, index) => (
-              <Grid item xs={12} md={6} key={index}>
-                <Card 
-                  elevation={3} 
-                  sx={{ 
-                    height: '100%', 
-                    display: 'flex', 
-                    flexDirection: 'column',
-                    bgcolor: 'background.paper',
-                    borderRadius: theme.shape.borderRadius
-                  }}
+          <>
+            {Object.entries(groupedEntries).map(([fileName, entries]) => (
+              <Box key={fileName} sx={{ mb: 4, display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                maxWidth: '100%' }}>
+                <Typography variant="h5" sx={{ mb: 2, fontWeight: 600 }}>
+                  {fileName}
+                </Typography>
+                <Button
+                  key={fileName}
+                  variant="contained"
+                  sx={{ mb: 2, mr: 1 }}
+                  startIcon={pdfGeneratingStatus[fileName] == 'processing' ? <CircularProgress size={20} color="inherit" /> : <DescriptionIcon/>}
+                  onClick={() => handlePdfGeneration(entries, fileName)}
                 >
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                      <Typography 
-                        variant="h6" 
-                        gutterBottom 
-                        component="div" 
+                  Generate Report
+                </Button>
+                { pdfGeneratingStatus[fileName] === 'success' && (
+                  <Button
+                    key={fileName}
+                    variant="contained"
+                    sx={{ mb: 2 }}
+                    onClick={() => window.pywebview.api.ui_controller.open_pdf_in_browser(`${fileName}_report.pdf`)}
+                  >
+                    Open Report
+                  </Button>
+                )}
+                <Grid container spacing={3}>
+                  {entries.map((entry, index) => (
+                    <Grid item xs={12} md={6} key={index}>
+                      <Card 
+                        elevation={3} 
                         sx={{ 
-                          fontWeight: 500,
-                          color: theme.palette.text.primary
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          bgcolor: 'background.paper',
+                          borderRadius: theme.shape.borderRadius
                         }}
                       >
-                        {entry.disease_name}
-                      </Typography>
-                      <Chip 
-                        label={entry.clinical_significance} 
-                        color={getSignificanceColor(entry.clinical_significance)}
-                        size="small"
-                        sx={{
-                          fontWeight: 500,
-                        }}
-                      />
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <DescriptionIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.primary }} />
-                      <Ephasize label="File:" text={entry.file_name} />
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <LocationIcon fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                      <Ephasize label="Chr:" text={entry.chromosome} />
-                      <Ephasize label="Pos:" text={entry.position} />
-                      <Ephasize label="Ref:" text={entry.reference} />
-                      <Ephasize label="Alt:" text={entry.alternate} />
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <DnsIcon fontSize="small" sx={{ mr: 1, color: theme.palette.info.main }} />
-                      <Ephasize label="HGVS:" text={entry.hgvs_id} />
-                    </Box>
-                  </CardContent>
-                  
-                  <Divider sx={{ bgcolor: 'divider' }} />
-                  
-                  <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5 }}>
-                    <Button 
-                      size="small" 
-                      startIcon={<LinkIcon />}
-                      variant="outlined"
-                      color="primary"
-                      href={`https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=chr${entry.chromosome}%3A${entry.position}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      UCSC
-                    </Button>
-                    <Button
-                      size="small"
-                      startIcon={<LinkIcon />}
-                      variant="outlined"
-                      color="primary"
-                      href={`https://www.ensembl.org/Homo_sapiens/Location/View?db=core;r=${entry.chromosome}:${entry.position}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Ensembl
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                            <Typography 
+                              variant="h6" 
+                              gutterBottom 
+                              component="div" 
+                              sx={{ 
+                                fontWeight: 500,
+                                color: theme.palette.text.primary
+                              }}
+                            >
+                              {entry.disease_name}
+                            </Typography>
+                            <Chip 
+                              label={entry.clinical_significance} 
+                              color={getSignificanceColor(entry.clinical_significance)}
+                              size="small"
+                              sx={{
+                                fontWeight: 500,
+                              }}
+                            />
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <DescriptionIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.primary }} />
+                            <Ephasize label="File:" text={entry.file_name} />
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <LocationIcon fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
+                            <Ephasize label="Chr:" text={entry.chromosome} />
+                            <Ephasize label="Pos:" text={entry.position} />
+                            <Ephasize label="Ref:" text={entry.reference} />
+                            <Ephasize label="Alt:" text={entry.alternate} />
+                          </Box>
+                          
+                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                            <DnsIcon fontSize="small" sx={{ mr: 1, color: theme.palette.info.main }} />
+                            <Ephasize label="HGVS:" text={entry.hgvs_id} />
+                          </Box>
+                        </CardContent>
+                        
+                        <Divider sx={{ bgcolor: 'divider' }} />
+                        
+                        <CardActions sx={{ justifyContent: 'space-between', px: 2, py: 1.5 }}>
+                          <Button 
+                            size="small" 
+                            startIcon={<LinkIcon />}
+                            variant="outlined"
+                            color="primary"
+                            href={`https://genome.ucsc.edu/cgi-bin/hgTracks?db=hg38&position=chr${entry.chromosome}%3A${entry.position}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            UCSC
+                          </Button>
+                          <Button
+                            size="small"
+                            startIcon={<LinkIcon />}
+                            variant="outlined"
+                            color="primary"
+                            href={`https://www.ensembl.org/Homo_sapiens/Location/View?db=core;r=${entry.chromosome}:${entry.position}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Ensembl
+                          </Button>
+                        </CardActions>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
             ))}
-          </Grid>
+          </>
         ) : (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.secondary' }}>

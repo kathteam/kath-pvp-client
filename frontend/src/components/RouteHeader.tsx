@@ -12,7 +12,7 @@ export default function RouteHeader({ icon: Icon, title, description }: RouteHea
   const theme = useTheme();
 
   return (
-    <Column id={title}>
+    <Column id={title} sx={{ borderBottom: 1, borderColor: 'divider' }}>
       <Container>
         <Row sx={{ p: 0 }}>
           <Icon sx={{ fontSize: 48, color: theme.palette.mode === 'dark' ? theme.palette.primary.dark : theme.palette.primary.main }}/>

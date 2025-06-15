@@ -14,6 +14,7 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import FullscreenIcon from '@mui/icons-material/Fullscreen';
+import StorageIcon from '@mui/icons-material/Storage';
 
 export default function Dashboard(): JSX.Element {
   const navigate = useNavigate();
@@ -68,6 +69,15 @@ export default function Dashboard(): JSX.Element {
               onClick={() => navigate('/features/gvatool')}
             >
               GVATool
+            </Button>
+            <Button
+              variant="outlined"
+              startIcon={<StorageIcon />}
+              fullWidth
+              size="large"
+              onClick={() => navigate('/features/analysis_history')}
+            >
+              Analysis History
             </Button>
             <Button
               variant="outlined"

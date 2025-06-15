@@ -18,20 +18,34 @@ declare global {
         },
 
         file_controller: {
-          list_files: (path: string) => Promise<{
-            filename: string; 
-            type: string; 
-            size_kb: number | null; 
-            item_count: number | null; 
+          list_files: (path: string) => Promise<
+            {
+              filename: string;
+              type: string;
+              size_kb: number | null;
+              item_count: number | null;
           }[]>;
           upload_file: (path: string, file_name: string, file_content: number[]) => Promise<void>;
           rename_file: (path: string, old_name: string, new_name: string) => Promise<void>;
           delete_file: (path: string, file_name: string) => Promise<void>;
-          [method: string]: (...args: any[]) => Promise<any>;
           get_kath_directory: () => Promise<string>;
           create_vcf_database: (db_path: string) => Promise<void>;
+          get_mutation_entries: () => Promise<
+            {
+              file_name: string;
+              clinical_significance: string;
+              disease_name: string;
+              synonyms: string;
+              chromosome: string;
+              position: string;
+              reference: string;
+              alternate: string;
+              hgvs_id: string;
+            }[]
+          >;
+          [method: string]: (...args: any[]) => Promise<any>;
         },
-        
+
         fasta_service: {
           create_disease_download: (disease: string, ref_max: number) => Promise<{
             status: string;
@@ -64,9 +78,10 @@ declare global {
         },
 
         disease_service: {
-          get_disease_data: (file_path: string) => Promise<{
-            clinicalSignificance: string;
-            disease: string;
+          get_disease_data: (file_path: string) => Promise<
+            {
+              clinicalSignificance: string;
+              disease: string;
           }[]>;
           [method: string]: (...args: any[]) => Promise<any>;
         },

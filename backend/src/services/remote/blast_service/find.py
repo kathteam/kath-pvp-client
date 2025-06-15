@@ -9,8 +9,10 @@ import requests
 from utils import get_logger
 from shared import PROGRAM_STORAGE_DIR_SHARED_BLAST, PROGRAM_STORAGE_DIR_SHARED_DATA_DISEASES
 from services.helpers import EnvSetup, FolderSetup, parse_hgvs, format_to_hgvs
+from services.local.file_controller import FileController
 
 logger = get_logger(__name__)
+file_controller = FileController()
 
 EnvSetup()
 FolderSetup()
@@ -467,6 +469,27 @@ def process_variants(variants_file=str, batch_size=MYVARIANT_BATCH_SIZE) -> str:
             f"disease_associations_{timestamp}.csv",
         )
         save_to_csv(all_disease_data, output_file)
+        
+        base_filename = os.path.basename(variants_file)
+        logger.info(f"Adding {len(all_disease_data)} disease associations to database")
+        
+        # Add each disease association to the database
+        for disease_data in all_disease_data:
+            try:
+                file_controller.add_mutation_entry(
+                    file_name=base_filename,
+                    chromosome=disease_data.get("chromosome"),
+                    position=disease_data.get("position"),
+                    reference=disease_data.get("reference"),
+                    alternate=disease_data.get("alternate"),
+                    clinical_significance=disease_data.get("clinical_significance"),
+                    disease_name=disease_data.get("disease_name"),
+                    synonyms=disease_data.get("synonyms"),
+                    hgvs_id=disease_data.get("hgvs_id")
+                )
+            except Exception as e:
+                logger.error(f"Error adding mutation to database: {e}")
+
         logger.info(f"Found total of {len(all_disease_data)} disease associations")
         return output_file
     else:

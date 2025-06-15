@@ -102,29 +102,141 @@ class FileController:
 
     def create_vcf_database(self, db_path: str) -> None:
         """
-        Creates a SQLite database with a table to store VCF data.
+        Creates a SQLite database with a table to store mutation and disease data.
+        Only creates the database if it doesn't already exist.
 
         Args:
             db_path (str): Path to the SQLite database file.
         """
+        if os.path.exists(db_path):
+            self.logger.info(f"Database already exists at {db_path}")
+            return
+
         connection = sqlite3.connect(db_path)
         cursor = connection.cursor()
 
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS vcf_data (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                chrom TEXT NOT NULL,
-                pos INTEGER NOT NULL,
-                identifier TEXT,
-                ref TEXT NOT NULL,
-                alt TEXT NOT NULL,
-                qual TEXT,
-                filter TEXT,
-                info TEXT
+            CREATE TABLE IF NOT EXISTS mutation_data (
+                mutation_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                file_name TEXT NOT NULL,
+                clinical_significance TEXT,
+                disease_name TEXT,
+                synonyms TEXT,
+                chromosome TEXT NOT NULL,
+                position INTEGER NOT NULL,
+                reference TEXT NOT NULL,
+                alternate TEXT NOT NULL,
+                hgvs_id TEXT
             )
         """
         )
 
         connection.commit()
         connection.close()
+        self.logger.info(f"Created new mutation database at {db_path}")
+
+    def add_mutation_entry(
+        self,
+        file_name: str,
+        chromosome: str,
+        position: int,
+        reference: str,
+        alternate: str,
+        clinical_significance: str = None,
+        disease_name: str = None,
+        synonyms: list = None,
+        hgvs_id: str = None,
+        db_path: str = None,
+    ) -> int:
+        """
+        Adds a mutation entry to the database.
+        
+        Args:
+            file_name: Source file name for the mutation
+            chromosome: Chromosome identifier (e.g., '1', 'X', 'MT')
+            position: Genomic position of the mutation
+            reference: Reference nucleotide(s)
+            alternate: Alternate nucleotide(s)
+            clinical_significance: Clinical significance (e.g., 'Pathogenic')
+            disease_name: Associated disease name
+            synonyms: List of disease synonyms
+            hgvs_id: HGVS identifier for the mutation
+            db_path: Optional custom path to database file. If None, uses default in ~/.kath/
+            
+        Returns:
+            int: ID of the newly inserted mutation entry
+        """
+        if db_path is None:
+            kath_dir = self.get_kath_directory()
+            db_path = os.path.join(kath_dir, "mutations.db")
+        
+        self.create_vcf_database(db_path)
+        
+        if synonyms is not None:
+            import json
+            synonyms_str = json.dumps(synonyms)
+        else:
+            synonyms_str = None
+        
+        connection = sqlite3.connect(db_path)
+        cursor = connection.cursor()
+        
+        try:
+            cursor.execute(
+                """
+                INSERT INTO mutation_data
+                (file_name, clinical_significance, disease_name, synonyms,
+                chromosome, position, reference, alternate, hgvs_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (file_name, clinical_significance, disease_name, synonyms_str,
+                chromosome, position, reference, alternate, hgvs_id)
+            )
+            
+            mutation_id = cursor.lastrowid
+            
+            connection.commit()
+            self.logger.info(f"Added mutation entry (ID: {mutation_id}) to database")
+            return mutation_id
+            
+        except sqlite3.Error as e:
+            self.logger.error(f"Error adding mutation to database: {e}")
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+
+    def get_mutation_entries(
+            self,
+        ) -> list[dict]:
+            
+            kath_dir = self.get_kath_directory()
+            db_path = os.path.join(kath_dir, "mutations.db")
+
+            if not os.path.exists(db_path):
+                return []
+        
+            connection = sqlite3.connect(db_path)
+            cursor = connection.cursor()
+        
+            query = "SELECT * FROM mutation_data ORDER BY mutation_id DESC"
+            params = []
+    
+        
+            try:
+                cursor.execute(query, params)
+                rows = cursor.fetchall()
+        
+                # Map rows to dictionaries
+                columns = [column[0] for column in cursor.description]
+                entries = [dict(zip(columns, row)) for row in rows]
+        
+                self.logger.info(f"Retrieved {len(entries)} mutation entries from database")
+                return entries
+        
+            except sqlite3.Error as e:
+                self.logger.error(f"Error retrieving mutation entries: {e}")
+                raise
+            finally:
+                connection.close()

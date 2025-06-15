@@ -13,7 +13,6 @@ import PlagiarismIcon from '@mui/icons-material/Plagiarism';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
-import FullscreenIcon from '@mui/icons-material/Fullscreen';
 import StorageIcon from '@mui/icons-material/Storage';
 
 export default function Dashboard(): JSX.Element {
@@ -46,15 +45,6 @@ export default function Dashboard(): JSX.Element {
           <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
             Access all features and resources from here.
           </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<FullscreenIcon />}
-            onClick={() => window.pywebview.api.ui_controller.fullscreen()}
-            sx={{ mb: 4 }}
-          >
-            Fullscreen Mode
-          </Button>
           <Stack
             direction="column"
             spacing={2}

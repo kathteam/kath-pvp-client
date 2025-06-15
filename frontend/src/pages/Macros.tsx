@@ -1,42 +1,22 @@
-import { JSX } from 'react';
-import { useNavigate } from 'react-router-dom';
-import {
-  Typography,
-  Box,
-  Button,
-  Container,
-  Paper
-} from '@mui/material';
+import { Fragment, JSX, useEffect } from 'react';
+import { AutoAwesome as AutoAwesomeIcon } from '@mui/icons-material';
+import { RouteHeader } from '@/components';
+import { handleScroll } from '@/utils';
 
 export default function Macros(): JSX.Element {
-  const navigate = useNavigate();
 
+  // Reset scroll position on initial load
+  useEffect(() => {
+    handleScroll('Macros');
+  }, []);
+  
   return (
-    <Container
-      maxWidth="md"
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        py: 4
-      }}
-    >
-      <Paper elevation={0} sx={{ p: 3, width: '100%', textAlign: 'center' }}>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Macros Page
-        </Typography>
-        <Typography variant="body1">
-          This is the macros page of our application.
-        </Typography>
-        <Box sx={{ mt: 3 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => navigate('/dashboard')}
-          >
-            Back to Dashboard
-          </Button>
-        </Box>
-      </Paper>
-    </Container>
+    <Fragment>
+      <RouteHeader
+        icon={AutoAwesomeIcon}
+        title="Macros"
+        description="Record and reuse actions for repetitive tasks to save time and improve accuracy in your workflows."
+      />
+    </Fragment>
   );
 }

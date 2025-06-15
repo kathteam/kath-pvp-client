@@ -15,7 +15,7 @@ const mediaMap: Record<string, string> = {
   'DownloadFasta.gif': downloadFastaGif,
 };
 
-interface HowToProps {
+export interface HowToProps {
 	media?: string;
 	title?: string;
 	description?: string;

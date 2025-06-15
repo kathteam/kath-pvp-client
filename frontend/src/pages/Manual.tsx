@@ -27,7 +27,7 @@ const data = [
         description: 'GVATool is an advanced genetic data processing tool designed to simplify the work of genetics professionals when analyzing patients’ genetic information. The platform enables efficient detection of critical genetic mutations, supports multiple file formats (.fasta, .fastq, .vcf), and converts them into a standardized .vcf format. GVATool also integrates gene variation databases for mutation analysis, offering interactive visualizations that help users interpret results and make critical healthcare decisions.',
         subitems: [
           {
-            text: 'Placeholder for video.',
+            text: '',
             video: VideoPlaceholder,
           }
         ]
@@ -62,7 +62,7 @@ const data = [
         description: 'The File Manager is a tool for conveniently managing genetic data within the platform. It allows users to upload, view, rename, delete, and organize genetic files in one place. The File Manager simplifies working with large datasets, ensuring that genetics professionals can easily access and manage the files they are analyzing, providing a clear and streamlined workflow.',
         subitems: [
           {
-            text: 'Placeholder for video.',
+            text: '',
             video: VideoPlaceholder,
           }
         ]
@@ -75,7 +75,7 @@ const data = [
         description: 'The Macros functionality enables users to automate frequently repeated analysis steps. Genetics professionals can record a sequence of actions - such as applying filters or performing mutation analyses and reuse them for similar queries in the future. This feature saves time, reduces the risk of errors, and ensures consistency when working with genetic data.',
         subitems: [
           {
-            text: 'Placeholder for video.',
+            text: '',
             video: VideoPlaceholder,
           }
         ]
@@ -182,11 +182,13 @@ export default function Manual(): JSX.Element {
                 </Row>
                 {item.subitems.map((subitem, subidx) => (
                   <Fragment key={`section${idx}-item${itemidx}-subitem${subidx}`}>
-                    <Row sx={{ p: 0 }}>
-                      <Typography variant="body1" textAlign="justify">
-                        {subitem.text}
-                      </Typography>
-                    </Row>
+                    {subitem.text && (
+                      <Row sx={{ p: 0 }}>
+                        <Typography variant="body1" textAlign="justify">
+                          {subitem.text}
+                        </Typography>
+                      </Row>
+                    )}
                     {subitem.video && (
                       <Video src={subitem.video} />
                     )}

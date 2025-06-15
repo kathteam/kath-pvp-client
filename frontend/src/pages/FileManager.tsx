@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Inventory as InventoryIcon,
   KeyboardReturn as KeyboardReturnIcon,
@@ -7,8 +6,6 @@ import {
 import {
   Typography,
   Box,
-  Container,
-  Paper,
   TextField,
   Menu,
   MenuItem,
@@ -24,8 +21,7 @@ import FileList from '@/components/cards/FileListCard';
 import { DiseaseModal } from '@/components/modals';
 import { RouteHeader } from '@/components';
 import { handleScroll } from '@/utils';
-import HowTo from '@/components/buttons/HowTo';
-import { Button } from '@/components/core';
+import { Button, Row } from '@/components/core';
 
 const howTo = 
 {
@@ -35,7 +31,6 @@ const howTo =
 };
 
 export default function FileManager() {
-  const navigate = useNavigate();
   const [fileList, setFileList] = useState<{
     filename: string;
     type: string;
@@ -314,7 +309,7 @@ export default function FileManager() {
   
       if (!diseaseData) {
         // TODO UNCOMMENT
-        // alert('No disease data found.');
+        alert('No disease data found.');
         setGeneticDiseaseData([
           {
             clinicalSignificance: 'Pathogenic',
@@ -346,171 +341,141 @@ export default function FileManager() {
         icon={InventoryIcon}
         title="File Manager"
         description="Organize and manage genetic files effortlessly. Upload, rename, and keep your data in order."
+        howTo={howTo}
       />
-
-      <Container
-        maxWidth="md"
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          py: 4
+      <Row>
+        <TextField
+          fullWidth
+          value={inputPath}
+          onChange={handlePathChange}
+          onKeyDown={handlePathSubmit}
+          variant="outlined"
+          size="small"
+          sx={{ flexGrow: 1 }}
+        />
+        <KeyboardReturnIcon
+          sx={{
+            ml: 1,
+            cursor: 'pointer',
+            color: 'primary.main',
+          }}
+          onClick={() => {
+            const pathSegments = currentPath.split(/[\\/]/);
+            pathSegments.pop();
+            const newPath = pathSegments.join('\\');
+            if (newPath.startsWith(kathRootDirectory)) {
+              setCurrentPath(newPath);
+              setInputPath(newPath);
+            }
+          }}
+        />
+      </Row>
+      <Row sx={{ py: 0 }}>
+        <Box sx={{ width: '100%' }}>
+          {/* Drag-and-Drop Area */}
+          <DragAndDrop onDrop={onDrop}/>
+        </Box>
+      </Row>
+      <Row>
+        {/* File List Component */}
+        <FileList
+          files={sortedFiles}
+          currentPath={currentPath}
+          sortConfig={sortConfig}
+          onSort={handleSort}
+          onNavigateUp={handleNavigateUp}
+          onFolderClick={handleFolderClick}
+          onOptionsClick={handleOptionsClick}
+          getFileIcon={getFileIcon}
+        />
+      </Row>
+      <Menu
+        id="options-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        MenuListProps={{
+          'aria-labelledby': 'options-button',
         }}
       >
-        <Paper 
-          elevation={4}
-          sx={{
-            p: 5,
-            width: '100%',
-            borderRadius: 4,
-            boxShadow: 6,
-            textAlign: 'center',
-            position: 'relative',
-          }}>
-          <Box sx={{ position: 'absolute', top: 5, right: 5 }}>
-            <HowTo media={howTo.media} title={howTo.title} description={howTo.description} />
-          </Box>
-          <Typography variant="h4" component="h1" gutterBottom>
-            File Manager
-          </Typography>
-
-          {/* Path Bar */}
-          <Box sx={{ mt: 2, mb: 3, display: 'flex', alignItems: 'center' }}>
-            <TextField
-              fullWidth
-              value={inputPath}
-              onChange={handlePathChange}
-              onKeyDown={handlePathSubmit}
-              variant="outlined"
-              size="small"
-              sx={{ flexGrow: 1 }}
-            />
-            <KeyboardReturnIcon
-              sx={{
-                ml: 1,
-                cursor: 'pointer',
-                color: 'primary.main',
-              }}
-              onClick={() => setCurrentPath(inputPath)}
-            />
-          </Box>
-
-          {/* Drag-and-Drop Area */}
-          <DragAndDrop onDrop={onDrop} />
-
-          {/* File List Component */}
-          <Box sx={{ mt: 3 }}>
-            <FileList
-              files={sortedFiles}
-              currentPath={currentPath}
-              sortConfig={sortConfig}
-              onSort={handleSort}
-              onNavigateUp={handleNavigateUp}
-              onFolderClick={handleFolderClick}
-              onOptionsClick={handleOptionsClick}
-              getFileIcon={getFileIcon}
-            />
-          </Box>
-
-          <Menu
-            id="options-menu"
-            anchorEl={anchorEl}
-            open={open}
-            onClose={handleClose}
-            MenuListProps={{
-              'aria-labelledby': 'options-button',
-            }}
-          >
-            {selectedFileForMenu && (
-              <>
-                {selectedFileForMenu?.endsWith('.fasta') && (
-                  <MenuItem onClick={() => {
-                    handleAnalyzeFasta(selectedFileForMenu);
-                    handleClose();
-                  }}>
+        {selectedFileForMenu && (
+          <>
+            {selectedFileForMenu?.endsWith('.fasta') && (
+              <MenuItem onClick={() => {
+                handleAnalyzeFasta(selectedFileForMenu);
+                handleClose();
+              }}>
                     Analyze
-                  </MenuItem>
-                )}
-                {selectedFileForMenu?.endsWith('.pdf') && (
-                  <MenuItem onClick={async () => {
-                    await window.pywebview.api.ui_controller.open_pdf_in_browser(selectedFileForMenu);
-                    handleClose();
-                  }}>
-                    Open
-                  </MenuItem>
-                )}
-                <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
-                <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
-              </>
+              </MenuItem>
             )}
-          </Menu>
-
-          <Box sx={{ mt: 3 }}>
+            {selectedFileForMenu?.endsWith('.pdf') && (
+              <MenuItem onClick={async () => {
+                await window.pywebview.api.ui_controller.open_pdf_in_browser(selectedFileForMenu);
+                handleClose();
+              }}>
+                    Open
+              </MenuItem>
+            )}
+            <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
+            <MenuItem onClick={(e) => handleDeleteFile(selectedFileForMenu)(e)}>Delete</MenuItem>
+          </>
+        )}
+      </Menu>
+      <Row sx={{ pt: 0, borderBottom: 1, borderColor: 'divider' }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setOpenDbDialog(true)}
+        >
+            Create personalized gene database
+        </Button>
+      </Row>
+      <RenameDialog
+        open={openRenameDialog}
+        onClose={() => setOpenRenameDialog(false)}
+        onConfirm={handleRenameConfirm}
+      />
+      <DeleteDialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        onConfirm={handleDeleteConfirm}
+      />
+      <CreateDatabaseDialog
+        open={openDbDialog}
+        onClose={() => setOpenDbDialog(false)}
+        dbFilename={dbFilename}
+        setDbFilename={setDbFilename}
+        onConfirm={handleCreateDatabase}
+      />
+      <Dialog open={analysisDialogOpen} onClose={() => setAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>FASTA Analysis Result</DialogTitle>
+        <DialogContent dividers>
+          {isAnalyzing ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : analysisResult ? (
+            <>
+              <Typography variant="h6">Status: {analysisResult.status}</Typography>
+              <Typography variant="body1">Result File: {analysisResult.result_file}</Typography>
+            </>
+          ) : (
+            <Typography variant="body1">No result.</Typography>
+          )}
+          {validity && (
             <Button
               variant="contained"
               color="primary"
-              onClick={() => navigate('/dashboard')}
-            >
-              Back to Dashboard
-            </Button>
-          </Box>
-          <Box sx={{ mt: 3 }}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => setOpenDbDialog(true)}
-            >
-              Create personalized gene database
-            </Button>
-          </Box>
-
-          <RenameDialog
-            open={openRenameDialog}
-            onClose={() => setOpenRenameDialog(false)}
-            onConfirm={handleRenameConfirm}
-          />
-          <DeleteDialog
-            open={openDeleteDialog}
-            onClose={() => setOpenDeleteDialog(false)}
-            onConfirm={handleDeleteConfirm}
-          />
-          <CreateDatabaseDialog
-            open={openDbDialog}
-            onClose={() => setOpenDbDialog(false)}
-            dbFilename={dbFilename}
-            setDbFilename={setDbFilename}
-            onConfirm={handleCreateDatabase}
-          />
-          <Dialog open={analysisDialogOpen} onClose={() => setAnalysisDialogOpen(false)} maxWidth="sm" fullWidth>
-            <DialogTitle>FASTA Analysis Result</DialogTitle>
-            <DialogContent dividers>
-              {isAnalyzing ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
-                  <CircularProgress />
-                </Box>
-              ) : analysisResult ? (
-                <>
-                  <Typography variant="h6">Status: {analysisResult.status}</Typography>
-                  <Typography variant="body1">Result File: {analysisResult.result_file}</Typography>
-                </>
-              ) : (
-                <Typography variant="body1">No result.</Typography>
-              )}
-              {validity && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={handleDisplayGeneticDisease}>
+              onClick={handleDisplayGeneticDisease}>
                               Display Genetic Disease Information
-                </Button>)}
-            </DialogContent>
-          </Dialog>
-        </Paper>
-        {showModal && (
-          <DiseaseModal
-            diseases={geneticDiseaseData}
-            onClose={() => setShowModal(false)}
-          />)}
-      </Container>
+            </Button>)}
+        </DialogContent>
+      </Dialog>
+      {showModal && (
+        <DiseaseModal
+          diseases={geneticDiseaseData}
+          onClose={() => setShowModal(false)}
+        />)}
     </Fragment>
   );
 }

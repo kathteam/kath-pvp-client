@@ -82,7 +82,7 @@ const theme = createTheme({
           main: '#5D8D9D',
         },
         background: {
-          default: '#FFF8F0',
+          default: '#FFFFFB',
           paper: '#FFF9FB',
         },
         divider: '#ebecf0',

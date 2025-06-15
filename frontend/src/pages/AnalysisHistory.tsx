@@ -20,6 +20,7 @@ import {
   LocationOn as LocationIcon,
   Link as LinkIcon,
 } from '@mui/icons-material';
+import Ephasize from '@/components/text/Ephasize';
 
 interface MutationEntry {
   file_name: string;
@@ -128,24 +129,21 @@ const AnalysisHistory: React.FC = () => {
                     </Box>
                     
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                      <DescriptionIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.secondary }} />
-                      <Typography variant="body2" sx={{ fontWeight: 500, color: theme.palette.text.secondary }}>
-                        File: {entry.file_name}
-                      </Typography>
+                      <DescriptionIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.primary }} />
+                      <Ephasize label="File:" text={entry.file_name} />
                     </Box>
                     
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <LocationIcon fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main }} />
-                      <Typography variant="body2" sx={{ fontWeight: 500, color: theme.palette.text.primary }}>
-                        Chr: {entry.chromosome}, Pos: {entry.position}, Ref: {entry.reference}, Alt: {entry.alternate}
-                      </Typography>
+                      <Ephasize label="Chr:" text={entry.chromosome} />
+                      <Ephasize label="Pos:" text={entry.position} />
+                      <Ephasize label="Ref:" text={entry.reference} />
+                      <Ephasize label="Alt:" text={entry.alternate} />
                     </Box>
                     
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                       <DnsIcon fontSize="small" sx={{ mr: 1, color: theme.palette.info.main }} />
-                      <Typography variant="body2" sx={{ fontWeight: 500, color: theme.palette.text.secondary }}>
-                        HGVS: {entry.hgvs_id}
-                      </Typography>
+                      <Ephasize label="HGVS:" text={entry.hgvs_id} />
                     </Box>
                   </CardContent>
                   

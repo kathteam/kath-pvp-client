@@ -2,7 +2,6 @@ import { JSX, useState } from 'react';
 import {
   Container,
   TextField,
-  Button,
   Typography,
   Card,
   CardContent,
@@ -17,6 +16,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import HowTo from '../buttons/HowTo';
+import { Button } from '@/components/core';
 
 export default function DiseaseDownloadCard(): JSX.Element {
   const [queryParams, setQueryParams] = useState<{
@@ -146,11 +146,6 @@ export default function DiseaseDownloadCard(): JSX.Element {
                     disabled={loading || !queryParams.disease}
                     sx={{
                       fontWeight: 600,
-                      background: 'linear-gradient(90deg, #4C7380 0%, #5D8D9D 100%)',
-                      color: '#fff',
-                      '&:hover': {
-                        background: 'linear-gradient(90deg, #3a5a68 0%, #4c7380 100%)',
-                      },
                     }}
                   >
                     {loading ? 'Searching...' : 'Search'}

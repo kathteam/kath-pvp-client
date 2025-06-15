@@ -7,7 +7,6 @@ import {
 import {
   Typography,
   Box,
-  Button,
   Container,
   Paper,
   TextField,
@@ -26,6 +25,7 @@ import { DiseaseModal } from '@/components/modals';
 import { RouteHeader } from '@/components';
 import { handleScroll } from '@/utils';
 import HowTo from '@/components/buttons/HowTo';
+import { Button } from '@/components/core';
 
 const howTo = 
 {

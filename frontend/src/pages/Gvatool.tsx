@@ -1,9 +1,8 @@
-import { JSX, useState } from 'react';
+import { Fragment, JSX, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
-  Button,
   Container,
   Paper,
   Snackbar,
@@ -13,16 +12,22 @@ import {
   Fade,
   Grid2,
 } from '@mui/material';
-import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ReplayIcon from '@mui/icons-material/Replay';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import {
+  Plagiarism as PlagiarismIcon,
+  CloudDownload as CloudDownloadIcon,
+  CheckCircle as CheckCircleIcon,
+  Replay as ReplayIcon,
+  ArrowBack as ArrowBackIcon
+} from '@mui/icons-material';
 
 import DiseaseDownloadCard from '@/components/cards/DiseaseDownloadCard';
 import DiseaseOptionCard from '@/components/cards/DiseaseOptionCard';
 import HowTo from '@/components/buttons/HowTo';
-// import { SetupCard } from '@/components/cards';
-// import { useSetupState } from '@/states/setup';
+import { SetupCard } from '@/components/cards';
+import { useSetupState } from '@/states/setup';
+import { handleScroll } from '@/utils';
+import { RouteHeader } from '@/components';
+import { Button } from '@/components/core';
 
 export default function GVATool(): JSX.Element {
   const navigate = useNavigate();
@@ -44,39 +49,31 @@ export default function GVATool(): JSX.Element {
     }
   };
 
-  // const setupState = useSetupState();
-  // const [showMainContent, setShowMainContent] = useState(() => {
-  //   if (setupState.status === 'completed') {
-  //     return true;
-  //   }
-  //   return false;
-  // });
+  const setupState = useSetupState();
+  const [showMainContent, setShowMainContent] = useState(() => {
+    if (setupState.status === 'completed') {
+      return true;
+    }
+    return false;
+  });
 
-  // useEffect(() => {
-  //   if (setupState.status === 'completed' && !showMainContent) {
-  //     setTimeout(() => {
-  //       setShowMainContent(true);
-  //     }, 1000);
-  //   }
-  // }, [setupState.status, showMainContent]);
+  useEffect(() => {
+    if (setupState.status === 'completed' && !showMainContent) {
+      setTimeout(() => {
+        setShowMainContent(true);
+      }, 1000);
+    }
+  }, [setupState.status, showMainContent]);
 
-  const getButtonColor = () => {
-    if (!referenceGenomePath) {
-      return 'info';
-    }
-    if (referenceGenomePath?.status === 'processing') {
-      return 'warning';
-    }
-    if (referenceGenomePath?.status === 'success') {
-      return 'success';
-    }
-    return 'error';
-  };
+  // Reset scroll position on initial load
+  useEffect(() => {
+    handleScroll('GVATool');
+  }, []);
 
   // Show setup screen if not completed
-  // if (setupState.status !== 'completed' || !showMainContent) {
-  //   return <SetupCard {...setupState} />;
-  // }
+  if (setupState.status !== 'completed' || !showMainContent) {
+    return <SetupCard {...setupState} />;
+  }
 
   // Show main content if setup is completed
 
@@ -88,12 +85,13 @@ export default function GVATool(): JSX.Element {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        py: 6,
-      }}
-    >
+    <Fragment>
+      <RouteHeader
+        icon={PlagiarismIcon}
+        title="GVATool"
+        description="Analyze genetic data efficiently, detect mutations, and access clear visualizations for informed decisions."
+      />
+
       <Fade in>
         <Grid2 container justifyContent="center" sx={{ mb: 3 }}>
           <Container maxWidth="sm">
@@ -137,8 +135,7 @@ export default function GVATool(): JSX.Element {
                   sx={{ mb: 3 }}
                 >
                   <Button
-                    variant="outlined"
-                    color="primary"
+                    variant="contained"
                     startIcon={<ArrowBackIcon />}
                     onClick={() => navigate('/dashboard')}
                   >
@@ -146,7 +143,6 @@ export default function GVATool(): JSX.Element {
                   </Button>
                   <Button
                     variant="contained"
-                    color={getButtonColor()}
                     startIcon={
                       referenceGenomePath?.status === 'success' ? (
                         <CheckCircleIcon />
@@ -207,6 +203,6 @@ export default function GVATool(): JSX.Element {
           </Container>
         </Grid2>
       </Fade>
-    </Box>
+    </Fragment>
   );
 }

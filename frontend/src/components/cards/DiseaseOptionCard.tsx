@@ -2,7 +2,6 @@ import { useState, JSX } from 'react';
 import {
   Typography,
   Box,
-  Button,
   Paper,
   Alert,
   TextField,
@@ -14,6 +13,7 @@ import DiseaseModal from '@/components/modals/DiseaseModal';
 import ScienceIcon from '@mui/icons-material/Science';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import HowTo from '../buttons/HowTo';
+import { Button } from '@/components/core';
 
 export default function DiseaseOptionCard(): JSX.Element {
   const [fastaFilePath, setFastaFilePath] = useState<string>('');
@@ -176,18 +176,12 @@ export default function DiseaseOptionCard(): JSX.Element {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" sx={{ mt: 2 }}>
           <Button
             variant="contained"
-            color="primary"
             onClick={handleDiseaseExtraction}
             disabled={isExtracting || !fastaFilePath}
             startIcon={isExtracting ? <CircularProgress size={20} color="inherit" /> : <ScienceIcon />}
             sx={{
               fontWeight: 600,
               minWidth: 220,
-              background: 'linear-gradient(90deg, #4C7380 0%, #5D8D9D 100%)',
-              color: '#fff',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #3a5a68 0%, #4c7380 100%)',
-              },
             }}
           >
             {isExtracting ? 'Processing...' : 'Extract Disease Information'}
@@ -195,18 +189,12 @@ export default function DiseaseOptionCard(): JSX.Element {
 
           <Button
             variant="contained"
-            color="secondary"
             disabled={!extractionResult?.result_file}
             startIcon={<VisibilityIcon />}
             onClick={handleDisplayGeneticDisease}
             sx={{
               fontWeight: 600,
               minWidth: 220,
-              background: 'linear-gradient(90deg, #5D8D9D 0%, #4C7380 100%)',
-              color: '#fff',
-              '&:hover': {
-                background: 'linear-gradient(90deg, #4C7380 0%, #5D8D9D 100%)',
-              },
             }}
           >
             Display Genetic Disease Info

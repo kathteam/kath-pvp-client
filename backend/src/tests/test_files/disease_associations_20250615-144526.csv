@@ -1,0 +1,4 @@
+clinical_significance,disease_name,synonyms,chromosome,position,reference,alternate,hgvs_id
+Likely benign,"Neurofibromatosis, type 1 (NF1)","['NEUROFIBROMATOSIS, TYPE I, SOMATIC', ""Recklinghausen's disease"", 'Von Recklinghausen disease', 'Peripheral type neurofibromatosis', 'NEUROFIBROMATOSIS, TYPE I']",17,31358476,T,G,chr17:g.31358476T>G
+Uncertain significance,Hereditary cancer-predisposing syndrome,"['Neoplastic Syndromes, Hereditary', 'Cancer predisposition', 'Tumor predisposition', 'Hereditary Cancer Syndrome', 'Hereditary neoplastic syndrome']",17,31358476,T,G,chr17:g.31358476T>G
+Uncertain significance,Cardiovascular phenotype,"['Neoplastic Syndromes, Hereditary', 'Cancer predisposition', 'Tumor predisposition', 'Hereditary Cancer Syndrome', 'Hereditary neoplastic syndrome']",17,31358476,T,G,chr17:g.31358476T>G

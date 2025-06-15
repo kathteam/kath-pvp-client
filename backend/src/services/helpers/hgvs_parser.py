@@ -19,9 +19,7 @@ DNV_MNV_PATTERN = re.compile(
 )  # Di/Multi-nucleotide variant
 DELETION_PATTERN = re.compile(r"chr([0-9XYM]+):g\.(\d+)(?:_(\d+))?del(?:[ACGT]*)?")  # Deletion
 INSERTION_PATTERN = re.compile(r"chr([0-9XYM]+):g\.(\d+)_(\d+)ins([ACGT]+)")  # Insertion
-DELINS_PATTERN = re.compile(
-    r"chr([0-9XYM]+):g\.(\d+)(?:_(\d+))?delins([ACGT]+)"
-)  # Deletion-insertion
+DELINS_PATTERN = re.compile(r"chr([0-9XYM]+):g\.(\d+)(?:_(\d+))?delins([ACGT]+)")  # Deletion-insertion
 DUPLICATION_PATTERN = re.compile(
     r"chr([0-9XYM]+):g\.(\d+)(?:_(\d+))?dup(?:[ACGT]*)?"
 )  # Duplication
@@ -76,6 +74,25 @@ def parse_hgvs(hgvs_id: str) -> Optional[Dict[str, Union[str, int]]]:
             "hgvs": hgvs_id,
             "end_position": int(pos) + len(ref) - 1,
         }
+        
+    # Deletion-insertion variant
+    match = DELINS_PATTERN.match(hgvs_id)
+    if match:
+        groups = match.groups()
+        chrom = groups[0]
+        start = int(groups[1])
+        end = int(groups[2]) if groups[2] else start
+        inserted = groups[3]
+
+        return {
+            "chromosome": chrom,
+            "position": start,
+            "end_position": end,
+            "reference": "",  # Would need sequence context
+            "alternate": inserted,
+            "type": "DELINS",
+            "hgvs": hgvs_id,
+        }
 
     # Deletion variant
     match = DELETION_PATTERN.match(hgvs_id)
@@ -106,25 +123,6 @@ def parse_hgvs(hgvs_id: str) -> Optional[Dict[str, Union[str, int]]]:
             "reference": "-",  # Represent insertion as having no reference
             "alternate": inserted,
             "type": "INS",
-            "hgvs": hgvs_id,
-        }
-
-    # Deletion-insertion variant
-    match = DELINS_PATTERN.match(hgvs_id)
-    if match:
-        groups = match.groups()
-        chrom = groups[0]
-        start = int(groups[1])
-        end = int(groups[2]) if groups[2] else start
-        inserted = groups[3]
-
-        return {
-            "chromosome": chrom,
-            "position": start,
-            "end_position": end,
-            "reference": "",  # Would need sequence context
-            "alternate": inserted,
-            "type": "DELINS",
             "hgvs": hgvs_id,
         }
 
@@ -176,7 +174,9 @@ def parse_hgvs(hgvs_id: str) -> Optional[Dict[str, Union[str, int]]]:
             pos_match = re.search(r"(\d+)", pos_part)
             if pos_match:
                 position = int(pos_match.group(1))
-
+                # If only position is available (no reference or alternate), return None
+                if not re.search(r"[ACGT]", pos_part):
+                    return None
                 return {
                     "chromosome": chrom,
                     "position": position,

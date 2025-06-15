@@ -7,6 +7,7 @@ import {
   MenuBook as MenuBookIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
+  Storage as StorageIcon,
 } from '@mui/icons-material';
 import { Collapse, Divider, IconButton, List, ListItemButton, ListItemIcon, Typography } from '@mui/material';
 import { Column, Row, Container, Button, Header } from '@/components/core';
@@ -29,6 +30,23 @@ const data = [
             text: 'Placeholder for video.',
             video: VideoPlaceholder,
           }
+        ]
+      },
+      {
+        title: 'Analysis History',
+        icon: <StorageIcon />,
+        buttonText: 'Open Analysis History',
+        link: '/features/analysis_history',
+        description: 'The Analysis History feature allows users to review the history of detected diseases and genetic mutations across uploaded genetic files. It provides a comprehensive log of all findings, linked to specific files and analysis sessions. Users can generate detailed PDF reports summarizing the detected diseases, mutations, and relevant metadata for record-keeping or further consultation.',
+        subitems: [
+          {
+            text: 'Browse history of detected diseases linked to specific genetic files.',
+            video: VideoPlaceholder,
+          },
+          {
+            text: 'Generate detailed PDF reports of past analyses.',
+            video: VideoPlaceholder,
+          },
         ]
       },
     ]
@@ -94,7 +112,7 @@ export default function Manual(): JSX.Element {
         description="A guide to help you explore the application's tools and features step by step."
       />
 
-      <Column sx={{ borderTop: 1, borderColor: 'divider' }}>
+      <Column sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Container>
           <Row sx={{ p: 0, justifyContent: 'space-between' }}>
             <Header variant="h5" fontWeight={600}>
@@ -135,7 +153,7 @@ export default function Manual(): JSX.Element {
       </Column>
 
       {data.map((section, idx) => (
-        <Column key={`section${idx}`} id={section.header} sx={{ borderTop: 1, borderColor: 'divider' }}>
+        <Column key={`section${idx}`} id={section.header} sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Container>
             <Row sx={{ p: 0 }}>
               <Header variant="h5" fontWeight={600}>
@@ -158,18 +176,20 @@ export default function Manual(): JSX.Element {
                   </Button>
                 </Row>
                 <Row sx={{ px: 0, pt: 0 }}>
-                  <Typography variant="body1">
+                  <Typography variant="body1" textAlign="justify">
                     {item.description}
                   </Typography>
                 </Row>
                 {item.subitems.map((subitem, subidx) => (
                   <Fragment key={`section${idx}-item${itemidx}-subitem${subidx}`}>
                     <Row sx={{ p: 0 }}>
-                      <Typography variant="body1">
+                      <Typography variant="body1" textAlign="justify">
                         {subitem.text}
                       </Typography>
                     </Row>
-                    <Video src={subitem.video} />
+                    {subitem.video && (
+                      <Video src={subitem.video} />
+                    )}
                   </Fragment>
                 ))}
               </Fragment>

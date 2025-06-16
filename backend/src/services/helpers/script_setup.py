@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 from Bio import Entrez
+import openai
 
 from shared.constants import *
 from utils import get_logger
@@ -29,6 +30,13 @@ class EnvSetup:
             )
             return
 
+        openai.api_key = os.getenv("OPENAI_API_KEY", "")
+        if not openai.api_key:
+            logger.warning(
+                "OpenAI API key is not set in the environment variables. Please set it in the .env file."
+            )
+            return
+
 
 class FolderSetup:
     def __init__(self):
@@ -41,6 +49,7 @@ class FolderSetup:
         self.create_directory(PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_SAMPLES)
         self.create_directory(PROGRAM_STORAGE_DIR_SHARED_DATA_FASTA_UPLOADS)
         self.create_directory(PROGRAM_STORAGE_DIR_ENVIRONMENT)
+        self.create_directory(PROGRAM_STORAGE_DIR_PDFS)
 
     def create_directory(self, path: str):
         try:

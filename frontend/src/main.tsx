@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { createHashRouter, RouterProvider } from 'react-router-dom';
 import routes from '@/routes';
 import '@/index.css';
+import { MutationEntry } from './pages/AnalysisHistory';
 
 declare global {
   interface Window {
@@ -15,6 +16,8 @@ declare global {
 
         ui_controller: {
           fullscreen: () => Promise<void>;
+          generate_pdf: (diseases: MutationEntry[], filename: string) => Promise<{status: number}>;
+          open_pdf_in_browser: (filename: string) => Promise<void>;
         },
 
         file_controller: {

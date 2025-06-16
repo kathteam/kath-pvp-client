@@ -31,7 +31,7 @@ const FileList: React.FC<FileListProps> = ({
   getFileIcon,
 }) => {
   return (
-    <Box sx={{ mt: 3 }}>
+    <Box sx={{ mt: 3, width: '100%', border: files.length > 0 ? 1 : 0, borderRadius: 2, borderColor: 'divider', overflow: 'hidden' }}>
       {files.length > 0 ? (
         <>
           {/* Column Headers */}
@@ -42,12 +42,11 @@ const FileList: React.FC<FileListProps> = ({
               justifyContent: 'space-between',
               p: 2,
               fontWeight: 'bold',
-              borderTop: '1px solid #ddd',
             }}
           >
             <Typography
               variant="body1"
-              sx={{ flex: 2, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              sx={{ flex: 2, cursor: 'pointer', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
               onClick={() => onSort('Name')}
             >
               Name
@@ -85,12 +84,13 @@ const FileList: React.FC<FileListProps> = ({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 p: 2,
-                borderBottom: '1px solid #ddd',
+                borderTop: 1,
+                borderColor: 'divider',
                 cursor: 'pointer',
               }}
               onClick={onNavigateUp}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 <Folder sx={{ mr: 1, color: 'primary.main' }} />
                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                   ..
@@ -114,12 +114,13 @@ const FileList: React.FC<FileListProps> = ({
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 p: 2,
-                borderBottom: '1px solid #ddd',
+                borderTop: 1,
+                borderColor: 'divider',
                 cursor: file.type === 'folder' ? 'pointer' : 'default',
               }}
               onClick={() => file.type === 'folder' && onFolderClick(file.filename)}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', flex: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', flex: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {getFileIcon(file.type)}
                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
                   {file.filename}
@@ -128,15 +129,20 @@ const FileList: React.FC<FileListProps> = ({
               <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
                 {file.type}
               </Typography>
-              <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
-                {file.type === 'folder'
-                  ? `${file.item_count} items`
-                  : `${file.size_kb?.toFixed(2)} KB`}
-              </Typography>
-              <MoreVert
-                onClick={(e) => onOptionsClick(e, file.filename)}
-                sx={{ cursor: 'pointer' }}
-              />
+              <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
+                <Typography variant="body2" sx={{ flex: 1 }} color="textSecondary">
+                  {file.type === 'folder'
+                    ? `${file.item_count} items`
+                    : `${file.size_kb?.toFixed(2)} KB`}
+                </Typography>
+                <MoreVert
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOptionsClick(e, file.filename);
+                  }}
+                  sx={{ cursor: 'pointer' }}
+                />
+              </Box>
             </Box>
           ))}
         </>

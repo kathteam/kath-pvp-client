@@ -66,7 +66,7 @@ export default function GVATool(): JSX.Element {
     handleScroll('GVATool');
   }, []);
 
-  Show setup screen if not completed
+  // Show setup screen if not completed
   if (setupState.status !== 'completed' || !showMainContent) {
     return <SetupCard {...setupState} />;
   }

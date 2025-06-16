@@ -1,19 +1,15 @@
-import { useState, JSX } from 'react';
+import { useState, JSX, Fragment } from 'react';
 import {
-  Typography,
-  Box,
-  Paper,
   Alert,
   TextField,
   useTheme,
-  Stack,
   CircularProgress,
 } from '@mui/material';
 import DiseaseModal from '@/components/modals/DiseaseModal';
 import ScienceIcon from '@mui/icons-material/Science';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import HowTo from '../buttons/HowTo';
-import { Button } from '@/components/core';
+import { Button, Column, Row } from '@/components/core';
+import RouteHeader from '../RouteHeader';
 
 export default function DiseaseOptionCard(): JSX.Element {
   const [fastaFilePath, setFastaFilePath] = useState<string>('');
@@ -129,51 +125,29 @@ export default function DiseaseOptionCard(): JSX.Element {
   };
 
   return (
-    <>
-      <Paper
-        elevation={4}
-        sx={{
-          p: 5,
-          textAlign: 'center',
-          borderRadius: 4,
-          boxShadow: 6,
-          position: 'relative'
-        }}
-      >
-        <Box sx={{ position: 'absolute', top: 5, right: 5 }}>
-          <HowTo media={howTo.media} title={howTo.title} description={howTo.description} />
-        </Box>
-        <Typography variant="h5" component="h2" gutterBottom fontWeight={700}>
-          Disease Extraction
-        </Typography>
-        <Typography variant="body2" sx={{ mb: 3 }}>
-          Specify a FASTA file path to extract disease information.
-        </Typography>
-
-        <Box
+    <Fragment>
+      <RouteHeader
+        title="Disease Extraction"
+        description="Specify a FASTA file path to extract disease information."
+        howTo={howTo}
+        sx={true}
+      />
+      <Row>
+        <TextField
+          fullWidth
+          label="FASTA File Path"
+          variant="outlined"
+          value={fastaFilePath}
+          onChange={(e) => setFastaFilePath(e.target.value)}
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            mb: 2,
-            gap: 2,
+            input: { color: theme.palette.text.primary },
+            label: { color: theme.palette.text.secondary },
+            borderRadius: 2,
           }}
-        >
-          <TextField
-            fullWidth
-            label="FASTA File Path"
-            variant="outlined"
-            value={fastaFilePath}
-            onChange={(e) => setFastaFilePath(e.target.value)}
-            sx={{
-              input: { color: theme.palette.text.primary },
-              label: { color: theme.palette.text.secondary },
-              borderRadius: 2,
-            }}
-          />
-        </Box>
-
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+        />
+      </Row>
+      <Column sx={{ pt: 0, borderBottom: 1, borderColor: 'divider' }}>
+        <Row sx={{ p: 0 }}>
           <Button
             variant="contained"
             onClick={handleDiseaseExtraction}
@@ -189,7 +163,7 @@ export default function DiseaseOptionCard(): JSX.Element {
 
           <Button
             variant="contained"
-            disabled={!extractionResult?.result_file}
+            disabled={extractionResult?.status !== 'success'}
             startIcon={<VisibilityIcon />}
             onClick={handleDisplayGeneticDisease}
             sx={{
@@ -199,8 +173,7 @@ export default function DiseaseOptionCard(): JSX.Element {
           >
             Display Genetic Disease Info
           </Button>
-        </Stack>
-
+        </Row>
         {extractionResult && (
           <Alert
             severity={
@@ -216,13 +189,13 @@ export default function DiseaseOptionCard(): JSX.Element {
             {extractionResult.result_file}
           </Alert>
         )}
-      </Paper>
+      </Column>
       {showModal && (
         <DiseaseModal
           diseases={geneticDiseaseData}
           onClose={() => setShowModal(false)}
         />
       )}
-    </>
+    </Fragment>
   );
 }

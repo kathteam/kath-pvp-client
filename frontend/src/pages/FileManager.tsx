@@ -405,7 +405,7 @@ export default function FileManager() {
                 handleAnalyzeFasta(selectedFileForMenu);
                 handleClose();
               }}>
-                    Analyze
+                Analyze
               </MenuItem>
             )}
             {selectedFileForMenu?.endsWith('.pdf') && (
@@ -413,7 +413,7 @@ export default function FileManager() {
                 await window.pywebview.api.ui_controller.open_pdf_in_browser(selectedFileForMenu);
                 handleClose();
               }}>
-                    Open
+                Open
               </MenuItem>
             )}
             <MenuItem onClick={(e) => handleRenameFile(selectedFileForMenu)(e)}>Rename</MenuItem>
@@ -421,15 +421,6 @@ export default function FileManager() {
           </>
         )}
       </Menu>
-      <Row sx={{ pt: 0, borderBottom: 1, borderColor: 'divider' }}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setOpenDbDialog(true)}
-        >
-            Create personalized gene database
-        </Button>
-      </Row>
       <RenameDialog
         open={openRenameDialog}
         onClose={() => setOpenRenameDialog(false)}
@@ -467,7 +458,7 @@ export default function FileManager() {
               variant="contained"
               color="primary"
               onClick={handleDisplayGeneticDisease}>
-                              Display Genetic Disease Information
+              Display Genetic Disease Information
             </Button>)}
         </DialogContent>
       </Dialog>

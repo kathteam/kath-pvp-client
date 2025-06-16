@@ -1,5 +1,6 @@
 import { Box, Button, Modal, Typography } from '@mui/material';
 import { JSX, useState } from 'react';
+import { Button as ButtonCore } from '@/components/core';
 
 // Import all GIF files from the Media directory
 import extractButtonGif from '../../assets/ExtractButton.gif';
@@ -11,7 +12,7 @@ import downloadFastaGif from '../../assets/DownloadFasta.gif';
 const mediaMap: Record<string, string> = {
   'ExtractButton.gif': extractButtonGif,
   'ExtractString.gif': extractStringGif,
-  'GeneDownloading.gif': geneDownloadGif,
+  'GeneDownload.gif': geneDownloadGif,
   'DownloadFasta.gif': downloadFastaGif,
 };
 
@@ -77,14 +78,13 @@ export default function HowTo({
           <Typography variant="body1" component="p" sx={{ mb: 3 }}>
             {description}
           </Typography>
-          <Button
+          <ButtonCore
             variant="contained"
-            color="primary"
             onClick={handleClose}
             sx={{ mt: 2 }}
           >
 						Close
-          </Button>
+          </ButtonCore>
         </Box>
       </Modal>
     </>

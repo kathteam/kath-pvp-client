@@ -21,7 +21,7 @@ import {
 import Ephasize from '@/components/text/Ephasize';
 import { RouteHeader } from '@/components';
 import { handleScroll } from '@/utils';
-import { Column, Row } from '@/components/core';
+import { Column, Row, Button as ButtonCore } from '@/components/core';
 
 export interface MutationEntry {
   file_name: string;
@@ -80,6 +80,7 @@ export default function AnalysisHistory(): JSX.Element {
       setPdfGeneratingStatus(prev => ({ ...prev, [fileName]: 'processing' }));
       await window.pywebview.api.ui_controller.generate_pdf(entries, `${fileName}_report.pdf`);
       setPdfGeneratingStatus(prev => ({ ...prev, [fileName]: 'success' }));
+      window.pywebview.api.ui_controller.open_pdf_in_browser(`${fileName}_report.pdf`);
     } catch (error) {
       alert('Failed to generate PDF report. Please try again later.');
       setPdfGeneratingStatus(prev => ({ ...prev, [fileName]: 'error' }));
@@ -112,22 +113,22 @@ export default function AnalysisHistory(): JSX.Element {
                 </Typography>
               </Row>
               <Row sx={{ py: 0 }}>
-                <Button
+                <ButtonCore
                   key={fileName}
                   variant="contained"
                   startIcon={pdfGeneratingStatus[fileName] == 'processing' ? <CircularProgress size={20} color="inherit" /> : <DescriptionIcon/>}
                   onClick={() => handlePdfGeneration(entries, fileName)}
                 >
                   Generate Report
-                </Button>
-                <Button
+                </ButtonCore>
+                <ButtonCore
                   key={fileName}
                   variant="contained"
                   sx={{ visibility: pdfGeneratingStatus[fileName] === 'success' ? 'visible' : 'hidden' }}
                   onClick={() => window.pywebview.api.ui_controller.open_pdf_in_browser(`${fileName}_report.pdf`)}
                 >
                   Open Report
-                </Button>
+                </ButtonCore>
               </Row>
               <Row sx={{ flexWrap: 'wrap' }}>
                 {entries.map((entry, index) => (

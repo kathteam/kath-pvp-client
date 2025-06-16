@@ -3,6 +3,7 @@ import { Modal, Box, Typography, Chip, Button, Divider, Paper } from '@mui/mater
 import HealthAndSafetyIcon from '@mui/icons-material/HealthAndSafety';
 import CloseIcon from '@mui/icons-material/Close';
 import { Disease } from '@/models';
+import { Button as ButtonCore } from '@/components/core';
 
 
 export default function DiseaseModal(props: {
@@ -95,12 +96,12 @@ export default function DiseaseModal(props: {
           ))}
 
           <Box sx={{ mt: 4, display: 'flex', justifyContent: 'flex-end' }}>
-            <Button 
+            <ButtonCore 
               variant="contained" 
               onClick={handleClose}
             >
               Close
-            </Button>
+            </ButtonCore>
           </Box>
         </Box>
       </Paper>
